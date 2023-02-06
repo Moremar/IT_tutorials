@@ -1,0 +1,17 @@
+  <!-- row with a single column with full width for all screen sizes -->
+  <div class="row">
+  <div class="col-md-12">
+    <button class="btn btn-success my-3" (click)="onCreateRecipe()">Create Recipe</button>
+  </div>
+</div>
+
+<!-- row with a single column with full width for all screen sizes -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="list-group">
+      <li href="#" class="list-group-item" *ngFor="let recipe of recipes">
+        <app-recipe-item [recipe]="recipe" (click)="onItemClicked(recipe)"></app-recipe-item>
+      </li>
+    </div>
+  </div>
+</div>

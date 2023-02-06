@@ -1,0 +1,43 @@
+<!-- recipe image -->
+<div class="row">
+  <div class="col-md-12 text-center">
+    <img src="{{ recipe.imageUrl }}" alt="" class="img-fluid border border-dark">
+  </div>
+</div>
+
+<!-- recipe title -->
+<div class="row">
+  <div class="col-md-12">
+    <h1>{{ recipe.name }}</h1>
+  </div>
+</div>
+
+<!-- dropdown to perform actions on the recipe -->
+<div class="row">
+  <div class="col-md-12">
+    <div class="dropdown">
+      <button class="btn btn-primary dropdown-toggle my-2" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Manage Recipe
+      </button>
+      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <a class="dropdown-item" (click)="onAddToShoppingList()">To shopping list</a>
+        <a class="dropdown-item" (click)="onEditRecipe()">Edit recipe</a>
+        <a class="dropdown-item" (click)="onDeleteRecipe()">Delete recipe</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- recipe description -->
+<div class="row">
+  <div class="col-md-12">
+    <div>{{ recipe.description }}</div>
+  </div>
+</div>
+
+<!-- recipe ingredients -->
+<div class="row">
+  <div class="col-md-12">
+    <div>Ingredients</div>
+  </div>
+</div>

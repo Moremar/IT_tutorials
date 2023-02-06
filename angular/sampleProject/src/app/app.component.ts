@@ -7,4 +7,19 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'sampleProject';
+
+  pageDisplayed : string = "recipes";
+
+  onPageSelected(pageName: string) {
+    console.log("selected " + pageName);
+    this.pageDisplayed = pageName;
+  }
+
+  shouldDisplayRecipes() {
+    return this.pageDisplayed === "recipes";
+  }
+
+  shouldDisplayShoppingList() {
+    return this.pageDisplayed === "shopping-list";
+  }
 }
