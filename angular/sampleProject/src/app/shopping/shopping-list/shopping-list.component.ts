@@ -1,5 +1,7 @@
-import { Component } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
+import { Subscription } from "rxjs";
 import { Ingredient } from "src/app/models/ingredient.model";
+import { ShoppingListService } from "src/app/services/shopping-list.service";
 
 
 @Component({
@@ -7,29 +9,32 @@ import { Ingredient } from "src/app/models/ingredient.model";
   templateUrl: 'shopping-list.component.html',
   styleUrls: [ 'shopping-list.component.css']
 })
-export class ShoppingList {
+export class ShoppingList implements OnInit, OnDestroy {
 
-  ingredients : Ingredient[] = [
-    new Ingredient("Apples", 5),
-    new Ingredient("Tomatoes", 10)
-  ];
+  ingredients : Ingredient[] = [];
+  private ingredientsSubscription : Subscription;
+
+
+  constructor(public shoppingListService : ShoppingListService) {}
+
+  ngOnInit(): void {
+    this.ingredients = this.shoppingListService.getIngredients();
+    this.ingredientsSubscription = this.shoppingListService.ingredientsChanged.subscribe(
+      (ingredientsList : Ingredient[]) => {
+        this.ingredients = ingredientsList;
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.ingredientsSubscription.unsubscribe();
+  }
 
   addIngredient(ingredient : Ingredient) {
-    this.ingredients.push(ingredient);
+    this.shoppingListService.addIngredient(ingredient);
   }
 
   deleteIngredient(ingredient : Ingredient) {
-    console.log(ingredient);
-    for (let i = 0; i < this.ingredients.length; i++) {
-      if (this.ingredients[i].name == ingredient.name) {
-        if (this.ingredients[i].amount > ingredient.amount) {
-          this.ingredients[i].amount -= ingredient.amount;
-        } else {
-          this.ingredients.splice(i, 1);
-        }
-        break;
-      }
-    }
+    this.shoppingListService.deleteIngredient(ingredient);
   }
-
 }

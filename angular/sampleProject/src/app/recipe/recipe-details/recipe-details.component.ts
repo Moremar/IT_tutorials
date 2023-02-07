@@ -1,21 +1,35 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Recipe } from 'src/app/models/recipe.model';
+import { RecipeService } from 'src/app/services/recipe.service';
 
 @Component({
   selector: 'app-recipe-details',
   templateUrl: './recipe-details.component.html',
   styleUrls: ['./recipe-details.component.css']
 })
-export class RecipeDetailsComponent implements OnInit {
+export class RecipeDetailsComponent implements OnInit, OnDestroy {
 
-  @Input() recipe: Recipe;
+  recipe: Recipe;
+  private recipeSubscription : Subscription;
 
-  constructor() {}
+  constructor(public recipeService : RecipeService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.recipe = this.recipeService.getSelectedRecipe();
+    this.recipeSubscription = this.recipeService.selectedRecipeChanged.subscribe(
+      (selectedRecipe : Recipe) => {
+        this.recipe = selectedRecipe;
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.recipeSubscription.unsubscribe();
+  }
 
   onAddToShoppingList() {
-    alert("TODO : Add to shopping list!");
+    this.recipeService.addIngredientsToShoppingList(this.recipe);
   }
 
   onEditRecipe() {
