@@ -1,1 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* useful class to show a pointer moinse cursor on hover */
+.pointer {
+  cursor: pointer;
+}

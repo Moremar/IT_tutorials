@@ -25,6 +25,12 @@ export class RecipeService {
   // We can inject a service from another service !
   constructor(public shoppingListService : ShoppingListService) {}
 
+  getRecipe(recipeId : number) {
+    // Note that this is the actual recipe
+    // if we want to protect it, we can return a clone of that recipe
+    return this.recipes[recipeId];
+  }
+
   getRecipes() {
     return this.recipes.slice();
   }

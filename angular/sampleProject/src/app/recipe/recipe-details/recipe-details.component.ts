@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Recipe } from 'src/app/models/recipe.model';
 import { RecipeService } from 'src/app/services/recipe.service';
@@ -11,21 +12,26 @@ import { RecipeService } from 'src/app/services/recipe.service';
 export class RecipeDetailsComponent implements OnInit, OnDestroy {
 
   recipe: Recipe;
-  private recipeSubscription : Subscription;
+  private routeSub : Subscription;
 
-  constructor(public recipeService : RecipeService) {}
+  constructor(
+    public recipeService : RecipeService,
+    public route : ActivatedRoute,
+    public router : Router
+  ){}
 
   ngOnInit(): void {
-    this.recipe = this.recipeService.getSelectedRecipe();
-    this.recipeSubscription = this.recipeService.selectedRecipeChanged.subscribe(
-      (selectedRecipe : Recipe) => {
-        this.recipe = selectedRecipe;
+    this.routeSub = this.route.params.subscribe(
+      (params : Params) => {
+        this.recipe = this.recipeService.getRecipe(Number(params.id));
       }
     );
   }
 
   ngOnDestroy(): void {
-    this.recipeSubscription.unsubscribe();
+    // not strictly required, because Angular unsubscribes automatically for ANGULAR subcriptions
+    // required for custom subscriptions though (for example to a custom EventEmitter)
+    this.routeSub.unsubscribe();
   }
 
   onAddToShoppingList() {
@@ -33,7 +39,7 @@ export class RecipeDetailsComponent implements OnInit, OnDestroy {
   }
 
   onEditRecipe() {
-    alert("TODO : Edit Recipe!");
+    this.router.navigate(['edit'], {relativeTo: this.route});
   }
 
   onDeleteRecipe() {

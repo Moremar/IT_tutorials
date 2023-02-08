@@ -9,7 +9,7 @@ import { ShoppingListService } from "src/app/services/shopping-list.service";
   templateUrl: 'shopping-list.component.html',
   styleUrls: [ 'shopping-list.component.css']
 })
-export class ShoppingList implements OnInit, OnDestroy {
+export class ShoppingListComponent implements OnInit, OnDestroy {
 
   ingredients : Ingredient[] = [];
   private ingredientsSubscription : Subscription;

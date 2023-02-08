@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-header',
@@ -7,23 +7,9 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 })
 export class HeaderComponent implements OnInit {
 
-  @Output() pageSelected = new EventEmitter<string>();
-
   constructor() { }
 
   ngOnInit(): void { }
-
-  selectPage(pageName : string) {
-    this.pageSelected.emit(pageName);
-  }
-
-  onSelectRecipes() {
-    this.selectPage("recipes");
-  }
-
-  onSelectShoppingList() {
-    this.selectPage("shopping-list");
-  }
 
   onSaveData() {
     alert("TODO : Save Data");

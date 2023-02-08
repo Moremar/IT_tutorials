@@ -29,7 +29,7 @@ export class ShoppingListService {
       }
     }
     // add the ingredient to the list if it does not exist yet
-    this.ingredients.push(ingredient);
+    this.ingredients.push(new Ingredient(ingredient.name, ingredient.amount));
     this.ingredientsChanged.emit(this.ingredients.slice());
   }
 
