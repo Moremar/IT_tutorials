@@ -1,4 +1,4 @@
-import { EventEmitter, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Ingredient } from '../models/ingredient.model';
 import { Recipe } from '../models/recipe.model';
 import { ShoppingListService } from "./shopping-list.service";
@@ -18,9 +18,6 @@ export class RecipeService {
         [new Ingredient("Pasta", 1), new Ingredient("Tomato", 2)])
   ];
 
-  private selectedRecipe : Recipe = this.recipes[0];
-  selectedRecipeChanged = new EventEmitter<Recipe>();
-
 
   // We can inject a service from another service !
   constructor(public shoppingListService : ShoppingListService) {}
@@ -33,15 +30,6 @@ export class RecipeService {
 
   getRecipes() {
     return this.recipes.slice();
-  }
-
-  getSelectedRecipe() {
-    return this.selectedRecipe;
-  }
-
-  setSelectedRecipe(recipeId : number) {
-    this.selectedRecipe = this.recipes[recipeId];
-    this.selectedRecipeChanged.emit(this.selectedRecipe);
   }
 
   addIngredientsToShoppingList(recipe : Recipe) {

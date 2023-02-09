@@ -1,4 +1,5 @@
-import { EventEmitter, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { Ingredient } from '../models/ingredient.model';
 
 
@@ -11,7 +12,7 @@ export class ShoppingListService {
     new Ingredient("Chicken", 2),
     new Ingredient("Tomato", 10)
   ];
-  ingredientsChanged = new EventEmitter<Ingredient[]>();
+  ingredientsChanged = new Subject<Ingredient[]>();
 
 
   constructor() {}
@@ -30,7 +31,7 @@ export class ShoppingListService {
     }
     // add the ingredient to the list if it does not exist yet
     this.ingredients.push(new Ingredient(ingredient.name, ingredient.amount));
-    this.ingredientsChanged.emit(this.ingredients.slice());
+    this.ingredientsChanged.next(this.ingredients.slice());
   }
 
   deleteIngredient(ingredient : Ingredient) {
@@ -44,6 +45,6 @@ export class ShoppingListService {
         break;
       }
     }
-    this.ingredientsChanged.emit(this.ingredients.slice());
+    this.ingredientsChanged.next(this.ingredients.slice());
   }
 }
