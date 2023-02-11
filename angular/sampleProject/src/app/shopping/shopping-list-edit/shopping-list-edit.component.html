@@ -1,25 +1,27 @@
 <div class="row">
   <div class="col-md-12">
-    <form>
+    <form (ngSubmit)="onAddOrUpdateIngredient()" #myForm="ngForm">
 
-      <!-- name and amount textboxes -->
+      <!-- ingredient name and amount form inputs -->
       <div class="row">
         <div class="col-md-5 form-group">
           <label for="ingredient_name">Name</label>
-          <input type="text" id="ingredient_name" class="form-control" #ingredientName>
+          <input type="text" id="ingredient_name" class="form-control"
+                 name="ingredientName" ngModel required>
         </div>
         <div class="col-md-2 form-group">
           <label for="ingredient_amount">Amount</label>
-          <input type="number" id="ingredient_amount" class="form-control" #ingredientAmount>
+          <input type="number" id="ingredient_amount" class="form-control"
+                 name="ingredientAmount" ngModel required pattern="^[1-9][0-9]*$">
         </div>
       </div>
 
       <!-- buttons to create/delete/add ingredients in the shopping list -->
       <div class="row">
         <div class="col-md-12">
-          <button class="btn btn-primary mx-1" type="button" (click)="onClear(ingredientName, ingredientAmount)">Clear</button>
-          <button class="btn btn-danger mx-1" type="button"  (click)="onDelete(ingredientName, ingredientAmount)">Delete</button>
-          <button class="btn btn-success mx-1" type="button" (click)="onAdd(ingredientName, ingredientAmount)">Add</button>
+          <button class="btn btn-primary mx-1" type="button" (click)="onClear()">Clear</button>
+          <button class="btn btn-danger mx-1" type="button"  *ngIf="myEditMode" (click)="onDelete()">Delete</button>
+          <button class="btn btn-success mx-1" type="submit" [disabled]="!myForm.valid">{{ myEditMode ? 'Update' : 'Add' }}</button>
         </div>
       </div>
 
