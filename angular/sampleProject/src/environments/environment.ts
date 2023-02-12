@@ -3,7 +3,10 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+  firebase: {
+    url: 'https://recipe-sample-project-default-rtdb.asia-southeast1.firebasedatabase.app'
+  }
 };
 
 /*

@@ -36,4 +36,8 @@ export class RecipeListComponent implements OnInit, OnDestroy {
     this.router.navigate(["recipe", "new"]);
   }
 
+  onLoadSampleRecipes() {
+    this.recipeService.loadSampleRecipes();
+  }
+
 }

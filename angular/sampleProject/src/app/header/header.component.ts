@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { DataStorageService } from '../services/data-storage.service';
 
 @Component({
   selector: 'app-header',
@@ -7,15 +8,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class HeaderComponent implements OnInit {
 
-  constructor() { }
+  constructor(public dataStorageService : DataStorageService) { }
 
   ngOnInit(): void { }
 
   onSaveData() {
-    alert("TODO : Save Data");
+    this.dataStorageService.saveRecipesToBackend();
   }
 
   onLoadData() {
-    alert("TODO : Load Data");
+    // nothing to do with the result, but we need to subscribe for the HTTP request to be generated
+    this.dataStorageService.loadRecipesFromBackend().subscribe();
   }
+
 }

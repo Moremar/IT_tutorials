@@ -10,14 +10,7 @@ import { ShoppingListService } from "./shopping-list.service";
 })
 export class RecipeService {
 
-  private _recipes : Recipe[] = [
-    new Recipe("Roast Chicken", "Garlic Herb Butter Roast Chicken packed with unbelievable flavours, crispy skin, and so juicy!", "https://media.istockphoto.com/id/1317600394/photo/whole-roasted-chicken.jpg?s=612x612&w=0&k=20&c=2Z9NmYoQA2Wrys-EqvjYetVzbRdXdLho1Wbcqbl1PdQ=",
-        [new Ingredient("Chicken", 1), new Ingredient("Potato", 3)]),
-    new Recipe("French Fries", "Get the McDonald's–style fries of your dreams at home with this recipe for perfect thin and crispy french fries.", "https://www.healthifyme.com/blog/wp-content/uploads/2022/07/shutterstock_1927479248-1.jpg",
-        [new Ingredient("Potato", 4)]),
-    new Recipe("Italian spaguetti", "Best ever spaghetti bolognese is super easy and a true Italian classic with a meaty, chilli sauce.", "https://staticfanpage.akamaized.net/wp-content/uploads/sites/22/2021/06/THUMB-LINK-2020-2-1200x675.jpg",
-        [new Ingredient("Pasta", 1), new Ingredient("Tomato", 2)])
-  ];
+  private _recipes : Recipe[] = [];
 
   // subject emitting every time the recipes are modified
   recipesChanged = new Subject<Recipe[]>();
@@ -25,6 +18,7 @@ export class RecipeService {
 
   // We can inject a service from another service !
   constructor(public shoppingListService : ShoppingListService) {}
+
 
   getRecipe(recipeId : number) {
     // Note that this is the actual recipe
@@ -57,6 +51,29 @@ export class RecipeService {
   deleteRecipe(recipeId : number) {
     this._recipes.splice(recipeId, 1);
     this.recipesChanged.next(this._recipes.slice());
+  }
+
+  loadSampleRecipes() {
+    const sampleRecipes : Recipe[] = [
+      new Recipe("Roast Chicken",
+                 "Garlic Herb Butter Roast Chicken packed with unbelievable flavours, crispy skin, and so juicy!",
+                 "https://media.istockphoto.com/id/1317600394/photo/whole-roasted-chicken.jpg?s=612x612&w=0&k=20&c=2Z9NmYoQA2Wrys-EqvjYetVzbRdXdLho1Wbcqbl1PdQ=",
+                 [new Ingredient("Chicken", 1), new Ingredient("Potato", 3)]),
+      new Recipe("French Fries",
+                 "Get the McDonald's–style fries of your dreams at home with this recipe for perfect thin and crispy french fries.",
+                 "https://www.healthifyme.com/blog/wp-content/uploads/2022/07/shutterstock_1927479248-1.jpg",
+                 [new Ingredient("Potato", 4)]),
+      new Recipe("Italian spaguetti",
+                 "Best ever spaghetti bolognese is super easy and a true Italian classic with a meaty, chilli sauce.",
+                 "https://staticfanpage.akamaized.net/wp-content/uploads/sites/22/2021/06/THUMB-LINK-2020-2-1200x675.jpg",
+                 [new Ingredient("Pasta", 1), new Ingredient("Tomato", 2)])
+    ];
+    this.loadRecipes(sampleRecipes);
+  }
+
+  loadRecipes(recipes : Recipe[]) {
+    this._recipes = recipes;
+    this.recipesChanged.next(this._recipes);
   }
 
 }
