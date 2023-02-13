@@ -1,0 +1,37 @@
+<div class="row">
+  <div class="col-md-6 mx-auto my-3">
+
+    <!-- error message if any -->
+    <div class="alert alert-danger" *ngIf="myErrorMessage !== null">
+      {{ myErrorMessage }}
+    </div>
+
+    <form #myForm="ngForm" (ngSubmit)="onLogin(myForm)" *ngIf="!myIsLoading">
+
+      <!-- email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="text" id="email" class="form-control" name="userEmail" ngModel required email />
+      </div>
+
+      <!-- password -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" class="form-control" autocomplete="off" name="userPassword" ngModel required minlength="6" />
+      </div>
+
+      <!-- login/signup buttons -->
+      <div class="my-4">
+        <button type="button" class="btn btn-success mx-1" (click)="onSignup(myForm)" [disabled]="!myForm.valid">Sign up</button>
+        <button type="submit" class="btn btn-success" [disabled]="!myForm.valid">Login</button>
+      </div>
+
+    </form>
+
+    <!-- spinner when the auth is loading -->
+    <div class="text-center my-5" *ngIf="myIsLoading">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+  </div>
+</div>

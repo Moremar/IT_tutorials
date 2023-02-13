@@ -8,7 +8,12 @@
 export const environment = {
   production: true,
   firebase: {
-    // replace this URL with the realtime database URL of the associated Firebase backend project
-    url: 'https://recipe-sample-project-default-rtdb.asia-southeast1.firebasedatabase.app'
+    // URL of the Firebase database, found in the Firebase project dashboard under Realtime Database
+    db_url: '<FIREBASE_REALTIME_DATABASE_URL>',
+    // Web API key of the Firebase project, found in in the Firebase project dashboard : Project Overview > Settings
+    api_key: '<FIREBASE_PROJECT_WEB_API_KEY>',
+    // URLs of signup and login endpoints
+    signup_url: 'https://identitytoolkit.googleapis.com/v1/accounts:signUp',
+    login_url: 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword'
   }
 };

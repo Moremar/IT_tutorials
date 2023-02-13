@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { RecipeService } from './recipe.service';
 import { Recipe } from '../models/recipe.model';
 import { environment } from '../../environments/environment';
-import { Observable } from 'rxjs';
 
 /**
  * This service handles the storage and retrieval of recipes from the Firebase backend.
@@ -22,7 +22,7 @@ import { Observable } from 'rxjs';
 })
 export class DataStorageService {
 
-  private backendUrl : string = environment.firebase.url  + '/recipes.json';
+  readonly BACKEND_URL : string = environment.firebase.db_url  + '/recipes.json';
 
   constructor(
     private http : HttpClient,
@@ -35,7 +35,7 @@ export class DataStorageService {
     // subscribe from this method
     const recipes : Recipe[] = this.recipeService.getRecipes();
     this.http
-      .put<Recipe[]>(this.backendUrl, recipes)
+      .put<Recipe[]>(this.BACKEND_URL, recipes)
       .subscribe(
         (responseData : Recipe[]) => {
           console.log("Recipes saved in the backend.");
@@ -48,8 +48,8 @@ export class DataStorageService {
     // we do not subscribe from this method when a user of this method (for example a component)
     // cares about the response and needs to sbscribe to update the GUI (adding a spinner for ex),
     // or when a user (for example a resolve guard in this case) needs to get the observable.
-    return this.http
-      .get<Recipe[]>(this.backendUrl)
+     return this.http
+      .get<Recipe[]>(this.BACKEND_URL)
       .pipe(
         // recipes with no ingredients will not have an "ingredients" property in Firebase
         // here we add an empty Ingredient[] in recipes where this property is missing
