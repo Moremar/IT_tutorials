@@ -1,10 +1,14 @@
 <div class="row">
   <div class="col-md-6 mx-auto my-3">
 
-    <!-- error message if any -->
-    <div class="alert alert-danger" *ngIf="myErrorMessage !== null">
+    <!-- error message if any (use a modal instead now) -->
+    <!-- <div class="alert alert-danger" *ngIf="myErrorMessage !== null">
       {{ myErrorMessage }}
-    </div>
+    </div> -->
+
+    <!-- It would be much easier to use this to achieve the same result : -->
+    <!-- <app-error-modal *ngIf="myErrorMessage" [message]="myErrorMessage" (modalClosed)="onCloseModal()"></app-error-modal> -->
+    <ng-template appPlaceholder></ng-template>
 
     <form #myForm="ngForm" (ngSubmit)="onLogin(myForm)" *ngIf="!myIsLoading">
 

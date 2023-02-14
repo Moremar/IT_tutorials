@@ -1,0 +1,12 @@
+<div class="backdrop" (click)="onClose()"></div>
+<div class="modalBox">
+  <div class="header">
+    <p>ERROR</p>
+  </div>
+  <div class="px-3 py-3">
+    <p>{{ message }}</p>
+    <div class="text-right">
+      <button class="btn btn-danger" (click)="onClose()">OK</button>
+    </div>
+  </div>
+</div>

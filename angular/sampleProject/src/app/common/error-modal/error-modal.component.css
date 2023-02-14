@@ -1,0 +1,30 @@
+
+/* backdrop that covers all the screen and darkens it to highlight the popup */
+.backdrop {
+  position: fixed;
+  top: 0;
+  left : 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 50;
+}
+
+.header {
+  height: 35px;
+  padding-left: 15px;
+  padding-top: 5px;
+  background-color: #dc3545;
+  color: #eee;
+}
+
+.modalBox {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 500px;
+  background: #eee;
+  border: 1px #dc3545 solid;
+  z-index: 100; /* must be above the backdrop */
+}

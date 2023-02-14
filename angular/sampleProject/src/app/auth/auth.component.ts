@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ComponentFactoryResolver, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { ErrorModalComponent } from '../common/error-modal/error-modal.component';
+import { PlaceholderDirective } from '../common/placeholder.directive';
 import { AuthResponse } from '../models/auth-response.model';
 import { Credentials } from '../models/credentials.model';
 import { AuthService } from '../services/auth.service';
@@ -19,12 +21,16 @@ export class AuthComponent implements OnInit {
   myIsLoading : boolean = false;
   myErrorMessage : string = null;
 
+  // get a reference on the template where we want to insert the modal
+  @ViewChild(PlaceholderDirective) modalHost : PlaceholderDirective;
+
 
   /* Constructor and life cycle hooks */
 
   constructor(
     private authService : AuthService,
-    public router : Router
+    private router : Router,
+    private componentFactoryResolver : ComponentFactoryResolver
   ) {}
 
   ngOnInit(): void {}
@@ -56,6 +62,33 @@ export class AuthComponent implements OnInit {
       (errorMessage : string) => {
         this.myErrorMessage = errorMessage;
         this.myIsLoading = false;
+        this.showErrorModal();
+      }
+    );
+  }
+
+
+  /**
+   * This method shows how to create programmatically a component and display it on the screen.
+   *
+   * Note that it is not the best way to do it in this example, it would have been much simpler to use *ngIf :
+   *  <app-error-modal *ngIf="myErrorMessage" [message]="myErrorMessage" (modalClosed)="onCloseModal()"></app-error-modal>
+   */
+  showErrorModal() {
+    // find where to insert the component
+    const factory = this.componentFactoryResolver.resolveComponentFactory(ErrorModalComponent);
+    const viewContainerRef = this.modalHost.viewContainerRef;
+    viewContainerRef.clear();
+    // create the component
+    const modalRef = viewContainerRef.createComponent(factory);
+    // handle its Input (error message) and Output (close event)
+    modalRef.instance.message = this.myErrorMessage;
+    let subscription = modalRef.instance.modalClosed.subscribe(
+      () => {
+        subscription.unsubscribe();
+        // clearing the placeholder container closes the modal
+        this.myErrorMessage = null;
+        viewContainerRef.clear();
       }
     );
   }

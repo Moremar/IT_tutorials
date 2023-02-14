@@ -14,12 +14,14 @@ import { RecipeListComponent } from './recipe/recipe-list/recipe-list.component'
 import { RecipeItemComponent } from './recipe/recipe-item/recipe-item.component';
 import { RecipesComponent } from './recipe/recipes/recipes.component';
 import { RecipeDetailsComponent } from './recipe/recipe-details/recipe-details.component';
-import { DropdownDirective } from './directives/dropdown.directive';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { RecipeEditComponent } from './recipe/recipe-edit/recipe-edit.component';
 import { RecipeStartComponent } from './recipe/recipe-start/recipe-start.component';
 import { AuthComponent } from './auth/auth.component';
 import { LoadingSpinnerComponent } from './common/loading-spinner/loading-spinner.component';
+import { ErrorModalComponent } from './common/error-modal/error-modal.component';
+import { DropdownDirective } from './directives/dropdown.directive';
+import { PlaceholderDirective } from './common/placeholder.directive';
 
 // interceptor imports
 import { AuthInterceptor } from './services/auth.interceptor';
@@ -36,11 +38,13 @@ import { AuthInterceptor } from './services/auth.interceptor';
     RecipeEditComponent,
     ShoppingListComponent,
     ShoppingListEditComponent,
-    DropdownDirective,
     NotFoundComponent,
     RecipeStartComponent,
     AuthComponent,
     LoadingSpinnerComponent,
+    ErrorModalComponent,
+    DropdownDirective,
+    PlaceholderDirective,
   ],
   imports: [
     AppRoutingModule,

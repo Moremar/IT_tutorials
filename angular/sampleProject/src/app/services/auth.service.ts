@@ -84,7 +84,7 @@ export class AuthService {
           errorMessage = "This user is no longer active.";
           break;
         default:
-          errorMessage = "An unknown Firebase REST API error occured.";
+          errorMessage = "A Firebase REST API error occured :" + errorResponse.error.error.message;
           break;
       }
     }
