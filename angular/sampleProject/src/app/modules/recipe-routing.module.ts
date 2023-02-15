@@ -10,9 +10,16 @@ import { RecipesComponent } from '../recipe/recipes/recipes.component';
 import { AuthGuard } from '../services/auth.guard';
 import { RecipesResolverGuard } from '../services/recipes-resolver.guard';
 
+/**
+ * This module contains the routes for RecipeModule that is lazily loaded.
+ * The "/recipe" route is only "" here, because the "/recipe" part is already included
+ * in the AppRoutingModule when specifying the module to load lazily.
+ */
+
 
 const routes: Routes = [
-  { path: "recipe", component: RecipesComponent, canActivate: [AuthGuard], children: [
+
+  { path: "", component: RecipesComponent, canActivate: [AuthGuard], children: [
       { path: "", pathMatch: "full", component: RecipeStartComponent },
       { path: "new", component: RecipeEditComponent },
       { path: ":id", component: RecipeDetailsComponent, resolve: [RecipesResolverGuard] },

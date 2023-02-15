@@ -5,7 +5,6 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { SharedModule } from './shared.module';
-import { RecipeModule } from './recipe.module';
 import { ShoppingModule } from './shopping.module';
 
 // component imports
@@ -30,7 +29,7 @@ import { AuthInterceptor } from '../services/auth.interceptor';
     SharedModule,
     ReactiveFormsModule,
     HttpClientModule,
-    RecipeModule,
+//    RecipeModule,   // no longer imported, as it is now lazily loaded
     ShoppingModule,
     AppRoutingModule  // need to be imported after all feature modules including routes, since it contains the wildcard route
   ],
