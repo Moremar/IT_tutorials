@@ -5,6 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { RecipeService } from './recipe.service';
 import { Recipe } from '../models/recipe.model';
 import { environment } from '../../environments/environment';
+import { Ingredient } from '../models/ingredient.model';
 
 /**
  * This service handles the storage and retrieval of recipes from the Firebase backend.
@@ -53,11 +54,16 @@ export class DataStorageService {
       .pipe(
         // recipes with no ingredients will not have an "ingredients" property in Firebase
         // here we add an empty Ingredient[] in recipes where this property is missing
+        // we also convert the amount of ingredients to numbers (they are stored as strings in Firebase)
         map(
           (responseData) => {
             return responseData.map(
               (recipe) => {
-                return new Recipe(recipe.name, recipe.description, recipe.imageUrl, recipe.ingredients ? recipe.ingredients : []);
+                let ingredients : Ingredient[] = [];
+                for (let ingredient of recipe.ingredients) {
+                  ingredients.push(new Ingredient(ingredient.name, Number(ingredient.amount)));
+                }
+                return new Recipe(recipe.name, recipe.description, recipe.imageUrl, ingredients);
               }
             );
           }

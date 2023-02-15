@@ -3,7 +3,7 @@ import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { ErrorModalComponent } from '../common/error-modal/error-modal.component';
-import { PlaceholderDirective } from '../common/placeholder.directive';
+import { PlaceholderDirective } from '../directives/placeholder.directive';
 import { AuthResponse } from '../models/auth-response.model';
 import { Credentials } from '../models/credentials.model';
 import { AuthService } from '../services/auth.service';
