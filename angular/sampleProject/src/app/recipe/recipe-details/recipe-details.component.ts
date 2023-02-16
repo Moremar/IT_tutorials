@@ -12,21 +12,21 @@ import { RecipeService } from 'src/app/services/recipe.service';
 })
 export class RecipeDetailsComponent implements OnInit, OnDestroy {
 
-  myRecipe: Recipe = null;
+  myRecipe!: Recipe;
   myRecipeId : number = -1;
-  myRouteSub : Subscription = null;
+  myRouteSub! : Subscription;
 
 
   constructor(
-    public recipeService : RecipeService,
-    public route : ActivatedRoute,
-    public router : Router
+    private recipeService : RecipeService,
+    private route : ActivatedRoute,
+    private router : Router
   ){}
 
   ngOnInit(): void {
     this.myRouteSub = this.route.params.subscribe(
       (params : Params) => {
-        this.myRecipeId = Number(params.id);
+        this.myRecipeId = Number(params['id']);
         this.myRecipe = this.recipeService.getRecipe(this.myRecipeId);
       }
     );

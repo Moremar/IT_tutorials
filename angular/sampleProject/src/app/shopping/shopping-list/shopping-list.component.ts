@@ -12,10 +12,10 @@ import { ShoppingListService } from "src/app/services/shopping-list.service";
 export class ShoppingListComponent implements OnInit, OnDestroy {
 
   myIngredients : Ingredient[] = [];
-  myIngredientsSub : Subscription = null;
+  myIngredientsSub! : Subscription;
 
 
-  constructor(public shoppingListService : ShoppingListService) {}
+  constructor(private shoppingListService : ShoppingListService) {}
 
   ngOnInit(): void {
     this.myIngredients = this.shoppingListService.getIngredients();

@@ -21,9 +21,9 @@ export class AuthService {
 
   // subject emitting the logged user everytime it changes
   // behavioral subject so we can access the last emitted value even when subscribing after its emission
-  public loggedUser = new BehaviorSubject<User>(null);
+  public loggedUser = new BehaviorSubject<User | null>(null);
 
-  private myTimeoutTimer = null;
+  private myTimeoutTimer : any;
 
   constructor(
     private http: HttpClient,
@@ -88,7 +88,7 @@ export class AuthService {
           break;
       }
     }
-    return throwError(errorMessage);
+    return throwError(() => errorMessage);
   }
 
   logout() {
@@ -112,7 +112,7 @@ export class AuthService {
   }
 
   autoLogin() {
-    const userObj = JSON.parse(localStorage.getItem(this.LOCAL_STORAGE_USER));
+    const userObj = JSON.parse(localStorage.getItem(this.LOCAL_STORAGE_USER) || '');
     if (!userObj) {
       // no user authentication info in the persistent storage
       return;

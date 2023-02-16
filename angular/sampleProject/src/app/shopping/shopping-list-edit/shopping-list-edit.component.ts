@@ -22,14 +22,14 @@ import { ShoppingListService } from 'src/app/services/shopping-list.service';
 })
 export class ShoppingListEditComponent implements OnInit, OnDestroy {
 
-  @ViewChild("myForm") myForm : NgForm;
+  @ViewChild("myForm") myForm! : NgForm;
 
   myEditMode : boolean = false;
   myEditedIngredientIndex : number = -1;
-  myIngredientSelectedSub : Subscription = null;
+  myIngredientSelectedSub! : Subscription;
 
 
-  constructor(public shoppingListService : ShoppingListService) {}
+  constructor(private shoppingListService : ShoppingListService) {}
 
   ngOnInit(): void {
     this.myIngredientSelectedSub = this.shoppingListService.startedEditing.subscribe(

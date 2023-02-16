@@ -8,11 +8,19 @@ import { Recipe } from 'src/app/models/recipe.model';
 })
 export class RecipeItemComponent implements OnInit {
 
-  @Input() recipe: Recipe;
-  @Input() recipeId: number;
+  // mandatory inputs
+  @Input() recipe!: Recipe;
+  @Input() recipeId!: number;
 
   constructor() {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    if (this.recipe === undefined) {
+      throw new Error("The mandatory 'recipe' @Input is not defined");
+    }
+    if (this.recipeId === undefined) {
+      throw new Error("The mandatory 'recipeId' @Input is not defined");
+    }
+  }
 
 }

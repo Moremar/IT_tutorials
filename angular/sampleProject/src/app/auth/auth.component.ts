@@ -1,4 +1,4 @@
-import { Component, ComponentFactoryResolver, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -19,18 +19,17 @@ export class AuthComponent implements OnInit {
   /* Member variables */
 
   myIsLoading : boolean = false;
-  myErrorMessage : string = null;
+  myErrorMessage : string | null = null;
 
   // get a reference on the template where we want to insert the modal
-  @ViewChild(PlaceholderDirective) modalHost : PlaceholderDirective;
+  @ViewChild(PlaceholderDirective) modalHost! : PlaceholderDirective;
 
 
   /* Constructor and life cycle hooks */
 
   constructor(
     private authService : AuthService,
-    private router : Router,
-    private componentFactoryResolver : ComponentFactoryResolver
+    private router : Router
   ) {}
 
   ngOnInit(): void {}
@@ -76,13 +75,12 @@ export class AuthComponent implements OnInit {
    */
   showErrorModal() {
     // find where to insert the component
-    const factory = this.componentFactoryResolver.resolveComponentFactory(ErrorModalComponent);
     const viewContainerRef = this.modalHost.viewContainerRef;
     viewContainerRef.clear();
     // create the component
-    const modalRef = viewContainerRef.createComponent(factory);
+    const modalRef = viewContainerRef.createComponent(ErrorModalComponent);
     // handle its Input (error message) and Output (close event)
-    modalRef.instance.message = this.myErrorMessage;
+    modalRef.instance.message = this.myErrorMessage || '';
     let subscription = modalRef.instance.modalClosed.subscribe(
       () => {
         subscription.unsubscribe();

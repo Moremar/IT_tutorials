@@ -26,10 +26,10 @@ export class AuthInterceptor implements HttpInterceptor {
         take(1),
         // replace the current Observable by another Observable
         exhaustMap(
-          (loggedUser : User) => {
+          (loggedUser : User | null) => {
             if (loggedUser) {
               // when a logged user object is available, attach the auth token to the request
-              const modifiedReq = req.clone({ params: req.params.set('auth', loggedUser.token) });
+              const modifiedReq = req.clone({ params: req.params.set('auth', loggedUser.token || '') });
               // Pass the cloned request to the next handler.
               return next.handle(modifiedReq);
             } else {

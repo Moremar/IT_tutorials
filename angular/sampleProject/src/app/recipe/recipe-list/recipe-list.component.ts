@@ -13,10 +13,13 @@ import { Recipe } from '../../models/recipe.model';
 export class RecipeListComponent implements OnInit, OnDestroy {
 
   myRecipes : Recipe[] = [];
-  myRecipesSub : Subscription = null;
+  myRecipesSub! : Subscription;
 
 
-  constructor(public recipeService : RecipeService, public router: Router) {}
+  constructor(
+    private recipeService : RecipeService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.myRecipes = this.recipeService.getRecipes();

@@ -15,7 +15,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   /* Member variables */
 
   public myIsLogged : boolean = false;
-  private myLoggedUserSub : Subscription = null;
+  private myLoggedUserSub! : Subscription;
 
 
   /* Constructor and life cycle hooks */
@@ -27,7 +27,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.myLoggedUserSub = this.authService.loggedUser.subscribe(
-      (loggedUser: User) => {
+      (loggedUser: User | null) => {
         this.myIsLogged = loggedUser !== null && loggedUser.token !== null;
       }
     );

@@ -30,7 +30,7 @@ export class AuthGuard implements CanActivate {
         take(1),
         // return true only if the user is authenticated
         map(
-          (loggedUser : User) => {
+          (loggedUser : User | null) => {
             // user is logged in, the route can be activated
             if (loggedUser && loggedUser.token !== null) {
               return true;
