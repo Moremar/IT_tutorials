@@ -1,12 +1,17 @@
 
 /**
- * In a real project, these environment files should be in the .gitignore file.
- * Note that the content of this file is not secret and should not contain API secret keys or credentials.
+ * This file is used to replace environment.ts when we are in development mode (for
+ * example when starting a local server with "ng serve -o").
+ * This replacement is driven by the "fileReplacements" field in the development
+ * configuration of angular.json
+ *
+ * To start a project, the backend firebase DB URL and API key must be set in the below properties.
+
+* Note that the content of this file is not secret and should not contain API secret keys or credentials.
  * It can be read by any user checking the JS code of the frontend.
  */
 
 export const environment = {
-  production: true,
   firebase: {
     // URL of the Firebase database, found in the Firebase project dashboard under Realtime Database
     db_url: '<FIREBASE_REALTIME_DATABASE_URL>',

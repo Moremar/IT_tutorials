@@ -1,9 +1,13 @@
-// This file can be replaced during build by using the `fileReplacements` array.
-// `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
-// The list of file replacements can be found in `angular.json`.
+/**
+ * This file is used with the production configuration, for example when running "ng build".
+ *
+ * To start a project, the backend firebase DB URL and API key must be set in the below properties.
+
+* Note that the content of this file is not secret and should not contain API secret keys or credentials.
+ * It can be read by any user checking the JS code of the frontend.
+ */
 
 export const environment = {
-  production: false,
   firebase: {
     // URL of the Firebase database, found in the Firebase project dashboard under Realtime Database
     db_url: '<FIREBASE_REALTIME_DATABASE_URL>',
@@ -14,12 +18,3 @@ export const environment = {
     login_url: 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword'
   }
 };
-
-/*
- * For easier debugging in development mode, you can import the following file
- * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.
- *
- * This import should be commented out in production mode because it will have a negative impact
- * on performance if an error is thrown.
- */
-// import 'zone.js/dist/zone-error';  // Included with Angular CLI.
