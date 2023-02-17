@@ -1,0 +1,9 @@
+/* grey border for the recipe image preview */
+img {
+  border: solid 1px #bbb;
+}
+
+/* red border for invalid inputs */
+input.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched {
+  border: solid red 1px;
+}

@@ -1,0 +1,19 @@
+div.d1, div.d2 {
+}
+
+.wrapper {
+  height: 300px;
+  font-size: larger;
+  color: #884444;
+  border-radius: 20px;
+  background-color: hsl(0, 100%, 97%);
+  border: #cc9999 2px solid;
+
+}
+
+.wrapped {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
