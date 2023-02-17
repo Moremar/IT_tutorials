@@ -10,11 +10,9 @@
 export const environment = {
   firebase: {
     // URL of the Firebase database, found in the Firebase project dashboard under Realtime Database
-    // db_url: '<FIREBASE_REALTIME_DATABASE_URL>',
-    db_url: 'https://recipe-sample-project-default-rtdb.asia-southeast1.firebasedatabase.app',
+    db_url: '<FIREBASE_REALTIME_DATABASE_URL>',
     // Web API key of the Firebase project, found in in the Firebase project dashboard : Project Overview > Settings
-    // api_key: '<FIREBASE_PROJECT_WEB_API_KEY>',
-    api_key: 'AIzaSyAFZwvU68ejs8jhBqpe1p4-vgBMDo5ABz8',
+    api_key: '<FIREBASE_PROJECT_WEB_API_KEY>',
     // URLs of signup and login endpoints
     signup_url: 'https://identitytoolkit.googleapis.com/v1/accounts:signUp',
     login_url: 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword'

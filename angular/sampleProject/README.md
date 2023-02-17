@@ -18,6 +18,8 @@ It provides examples of :
 - http request to a backend (Firebase Realtime Database)
 - deployment to a static website hosting (Firebase Hosting)
 
+This project does not use Redux for Angular (NgRx), check project sampleProjectRedux for an example of how to use it.
+
 ## Pre-requisites
 
 - Clone the repo from GitHub
