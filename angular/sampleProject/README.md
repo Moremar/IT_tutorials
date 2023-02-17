@@ -1,27 +1,35 @@
-# SampleProject
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.1.5.
+# Sample project using Angular
 
-## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Pre-requisites
 
-## Code scaffolding
+- Clone the repo from github
+- Create a Firebase project with a Realtime Database to play the role of the backend
+- Fill the Firebase project API key and DB URL in src/environment.dts and src/environment.development.ts
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
-## Build
+## Run on a local web server
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```
+$>  cd sampleProject
+$>  npm install            // install dependencies locally
+$>  ng serve -o            // run the app on http://localhost:4200
+```
 
-## Running unit tests
+## Deploy to Firebase hosting and access from the web :
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```
+$>  cd sampleProject
+$>  npm install
+$>  ng build                         // generate the dist/ folder 
+$>  npm install -g firebase-tools    // install firebase CLI
+$>  firebase login                   // login to Google account
+$>  firebase init                    
+          -> choose project
+          -> select hosting
+          -> set /dist as the source folder
+          -> always redirect to index.html
+          -> do not overwrite index.html
+$>  firebase deploy                   // get the app public URL
+```
