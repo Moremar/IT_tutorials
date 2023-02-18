@@ -91,3 +91,240 @@ This does not need to be done when creating a new project, as `ng new` does it a
 To start the Angular app on a local web sever, run  `ng serve -o`    
 The app can then be open at the URL [http://localhost:4200](http://localhost:4200)
 
+
+## Angular CLI
+
+Angular CLI is the command line interface to assist with Angular app development.  
+It is used to develop, build, deploy, and test Angular apps.  
+
+```commandline
+ng                          List all available commands
+ng v                        Version of Angular / Node / OS
+ng <cmd> --help             Help for a specific ng command
+ng new projectName          Create an empty Angular project
+ng serve -o                 Build the app and start a web server
+                            -o to open a browser
+                            --port to specify a port (default 4200)
+ng g c path/componentName   Generate a new component (HTML + TS + CSS + Test)
+                            Can be ran from the project root (no need to specify src/app/)
+                            --flat to not create a dedicated folder for that component
+ng g g path/guardName       Generate a new guard (TS)
+ng g m path/moduleName      Generate a new module (TS)
+ng g d path/directiveName   Generate a new directive (TS)
+ng test                     Run the tests
+ng e2e                      Run the end-to-end tests
+ng build                    Build app for deployment into the /dist folder
+ng update                   Update the project to latest angular version
+ng add <external_lib>       Use NPM to install a lib and run a script to setup the Angular project to use it
+```
+
+
+## Angular Components
+
+### Component Structure
+
+- **TS component class**  
+  The main element of the component is its TS class definition, with a `@Component()` decorator.  
+  This class specifies all member variables and methods of the component.  
+  The methods can be called by the template in response to intercepted events.  
+  Both member variables and methods can be used in the template (data-binding, if block, for loops ..).  
+  The `@Component()` decorator specifies :
+  - `selector` : the tag name to use to include this component in a template, for example `app-header`
+  - `templateUrl` : the path to the HTML template file of this component
+  - `template` : the inline HTM template of this component (alternative to `templateUrl`)
+  - `syleUrls` : an array with the path of the CSS files
+
+
+- **HTML template**  
+  The template is the HTML representation of the component.  
+  It can reference properties and methods from the component TS class.    
+  Those references are called _data-binding_ and are between `{{ ... }}`  
+  The HTML template is usually in a dedicated file, but can also be specified inline in the TS class `@Component()` decorator. 
+
+
+- **CSS stylesheet**  
+  The CSS stylesheet contains the CSS styles to apply to HTML tags in this component.  
+  Angular simulates a shadow DOM by applying a specific property to all tags in the same component, for ex `ngcontent-ejo-2`.  
+  It adds this property in all CSS selectors of the stylesheet to target only tags in this component.
+
+Every component must be declared in exactly one module.  
+It is then available to all components in the same module, and to all components in other modules importing this module.
+
+
+### Component Lifecycle Hooks
+
+Angular provides some methods that can be implemented to execute some code at different stages of the component's life.
+
+```commandline
+ngOnInit              : after the component is initialized (after constructor call) but before rendering
+ngOnChanges           : after any input property change (and also when just created)
+ngDoCheck             : at every change detection run (very often called)
+ngAfterContentInit    : after content (ng-content) has been projected
+ngAfterContentChecked : every time the projected content has been checked
+ngAfterViewInit       : after the component (and its children) is rendered
+ngAfterViewChecked    : every time the view (and children view) has been checked
+ngOnDestroy           : just before the component is destroyed
+```
+
+For each of these hooks, there is an Angular interface to implement to explicitly use this hook.  
+Only `ngOnChanges()` hook takes a parameter with the value of all changed input properties :
+```commandline
+  ngOnInit() { console.log('Component initialized'); }
+  
+  ngOnChanges(changes: SimpleChanges) { console.log(changes); }
+```
+
+
+### Standalone components
+
+Since Angular 14, it is possible to create standalone components that are not declared in any module.  
+Directives and pipes can also be standalone.  
+The goal is to no longer use modules (like React).  
+
+ - compatible with traditional components declared in a module.
+ - must have the `standalone` property set to true in the `@Component` decorator
+ - must not be declared in any module
+ - can be imported by modules needing it
+ - can import modules and standalone components it needs with the `imports` property in the `@Component` decorator
+
+All components of an Angular app can be migrated to be standalone, including the root AppComponent.  
+If so, the bootstrap code in `main.ts` must be updated to use :
+```commandline
+    bootstrapApplication(AppComponent);
+```
+
+To setup routing in a fully standalone components Angular app, the root component should import the `RouterModule`.  
+In `main.ts`, the `bootstrapApplication()` function should take a 2nd parameter (config object) with the routing module :
+```commandline
+bootstrapApplication(
+    AppComponent,
+    { providers : [ importProvidersFrom(AppRoutingModule)] }
+);
+```
+
+Similarly to lazy-loaded modules, we can load standalone components lazily in a route.  
+This only requires to replace the `component` property with `loadComponent` :
+```json
+    "loadComponent" : import("./about/about.component").then((m) => m.AboutComponent)
+```
+
+
+## Data Binding
+
+- **String Interpolation : TS => HTML**  
+  Bind a member variable from the TS class to the HTML template, for example displaying a message in the template.  
+  It resolves a TS expression in the text of a component :
+    ```html
+    <div> {{ title }} </div>
+    ```
+
+
+- **Property Binding : TS => HTML**  
+  Bind a member variable from the TS class to a property in the HTML template, for example setting the `disabled` field of a button.  
+    ```html
+    <div [style.color]="colorField"> XXX </div>
+    ```
+
+- **Event binding : HTML => TS**  
+  Call a method from the TS class when an event is triggered in the HTML template.  
+  If specified, the `$event` parameter contains info on the triggered event (click coordinates, input text, ...)  
+    ```html
+  <button (click)="onClick()" > XXX </button>
+
+  <input (input)="onInputChange($event)" />
+    ```
+
+- **Two-way binding : TS <=> HTML**  
+  Bind the property of an HTML element to a member variable in the TS class in both directions.  
+  It is often used for `<input/>` tags to update a member variable when the input value changes in the template (user action), and to update the input value when the member variable changes (in code).  
+  It requires to import `FormsModule` in `app-module.ts` to get access to the `ngModel` directive.  
+    ```html
+  <input type="text" [(ngModel)]="myStrVar">
+    ```
+
+
+## Inter-component Communication
+
+### Parent to Child : @Input()
+
+For a parent component to give an object to one of its children, we use custom property binding :  
+```html
+<app-child-elem [server]="serverObjectInParent">
+```
+
+The `server` member variable in the TS class of the child component must be defined with the `@Input()` decorator.  
+This tells Angular that this member variable is settable from outside via a property in its HTML tag.  
+The name of the property of the HTML tag is by default the same as the TS class member variable name.  
+It can be explicitely changed by giving a name in the `@Input()` :
+```commandline
+@Input('serverObject') server : Server;
+```
+
+### Child to Parent : @Output()
+
+A child component can emit an event (with a payload) that can be intercepted by a parent component.  
+
+In the child component TS class, create an `EventEmitter` member variable with the `@Output()` decorator.  
+Calling the `emit(obj)` method of this event emitter will generate an event that the parent can intercept.  
+Similarly to the `@Input()` decorator, a custom name can be given in the `Output()` decorator to rename the event.  
+```commandline
+@Output() serverCreated = new EventEmitter<{name: string, content: string}>();
+```
+The child component TS class can emit an event in any of its methods, for example when a user clicks a button :
+```commandline
+this.serverCreated.emit({name: 'serverTest', content: 'A server was created'});
+```
+The parent component can intercept this custom event in its HTML template :
+```commandline
+<app-child-elem (serverCreated)="onServerCreated($event)">
+```
+And define in its TS class a method to handle this event :
+```commandline
+       onServerCreated(serverData: {name: string, content: string}) { ... }
+```
+
+### More Complex Communication
+
+`@Input()` and `@Output()` decorators are good for simple communication, but it becomes messy when multiple 
+components must react to an event, or when the event must traverse multiple levels in the components hierarchy.
+
+In this case, instead of defining the `EventEmitter` in the child component, we can use a service.  
+The service defines an `EventEmitter` that can be used by components to emit events.  
+Components that need to react to the triggered events can subscribe to that event emitter in the `ngOnInit()` hook.  
+This subscription needs to be unsubscribed when the component is destroyed to avoid memory leaks :
+
+```commandline
+@Component({
+    selector' 'app-parent`,
+    templateUrl: './app-parent.component.html,
+    styleUrls : ['./app-parent.component.css'] 
+})
+export class AppParent implements OnInit, OnDestroy {
+
+    mySub : Subscription;
+
+    // inject the service containing the event emitter to subscribe to
+    constructor(private serverService : ServerService) {}
+    
+    ngOnInit() {
+        mySub = serverService.serverCreated.subscribe(
+          (newServer : Server) { console.log(newServer); }
+        );
+    }
+    
+    ngOnDestroy() {
+        mySub.unsubscribe();
+    }
+}
+```
+
+
+## Angular Models
+
+Angular models are standard TS classes with no specific decorator.  
+A model file should be named `XXX.model.ts`.  
+It represents the structure of the data across the app.  
+For example, users in an Angular app can be represented by a `User` model in a `user.model.ts` file.
+
+It is technically not required to use models in Angular, but it helps TS and the IDE's Intellisense with type inference.
+
