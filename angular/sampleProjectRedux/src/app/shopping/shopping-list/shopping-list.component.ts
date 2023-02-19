@@ -1,8 +1,10 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { Subscription } from "rxjs";
 import { Ingredient } from "src/app/models/ingredient.model";
-import { ShoppingListService } from "src/app/services/shopping-list.service";
+import { Store } from '@ngrx/store';
 
+import { AppState, ShoppingListState } from "../store/shoppping-list.reducer";
+import { StartEditAction } from "../store/shopping-list.actions";
 
 @Component({
   selector: 'app-shopping-list',
@@ -12,28 +14,30 @@ import { ShoppingListService } from "src/app/services/shopping-list.service";
 export class ShoppingListComponent implements OnInit, OnDestroy {
 
   myIngredients : Ingredient[] = [];
-  myIngredientsSub! : Subscription;
+  myStoreSub! : Subscription;
 
 
-  constructor(private shoppingListService : ShoppingListService) {}
+  constructor(
+    private store : Store<AppState>
+  ) {}
 
   ngOnInit(): void {
-    this.myIngredients = this.shoppingListService.getIngredients();
-    this.myIngredientsSub = this.shoppingListService.ingredientsChanged.subscribe(
-      (ingredients : Ingredient[]) => {
-        this.myIngredients = ingredients;
+    this.myStoreSub = this.store.select('shoppingList').subscribe(
+      (shoppingListStore : ShoppingListState) => {
+        this.myIngredients = shoppingListStore.ingredients;
       }
     );
   }
 
+
   ngOnDestroy(): void {
-    this.myIngredientsSub.unsubscribe();
+    this.myStoreSub.unsubscribe();
   }
 
   onIngredientSelected(i : number) {
     // when an ingredient is selected, send an event so the shopping-list-edit component
     // knows what ingredient is selected and displays it in the form
-    this.shoppingListService.startedEditing.next(i);
+    this.store.dispatch(new StartEditAction(i))
   }
 
 }

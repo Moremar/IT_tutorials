@@ -6,6 +6,7 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { SharedModule } from './shared.module';
 import { ShoppingModule } from './shopping.module';
+import { StoreModule } from '@ngrx/store';
 
 // component imports
 import { AppComponent } from '../app.component';
@@ -15,6 +16,7 @@ import { AuthComponent } from '../auth/auth.component';
 
 // interceptor imports
 import { AuthInterceptor } from '../services/auth.interceptor';
+import { shoppingListReducer } from '../shopping/store/shoppping-list.reducer';
 
 
 @NgModule({
@@ -31,7 +33,10 @@ import { AuthInterceptor } from '../services/auth.interceptor';
     HttpClientModule,
 //    RecipeModule,   // no longer imported, as it is now lazily loaded
     ShoppingModule,
-    AppRoutingModule  // need to be imported after all feature modules including routes, since it contains the wildcard route
+    AppRoutingModule,  // need to be imported after all feature modules including routes, since it contains the wildcard route
+    StoreModule.forRoot({
+      shoppingList: shoppingListReducer
+    })
   ],
   providers: [{
     provide:  HTTP_INTERCEPTORS,    // constant token to tell Angular it is an interceptor

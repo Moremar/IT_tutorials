@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
 import { Subject } from 'rxjs';
+
 import { Ingredient } from '../models/ingredient.model';
 import { Recipe } from '../models/recipe.model';
-import { ShoppingListService } from "./shopping-list.service";
+import { AddIngredientsAction } from '../shopping/store/shopping-list.actions';
+import { AppState } from '../shopping/store/shoppping-list.reducer';
 
 
 @Injectable({
@@ -17,7 +20,9 @@ export class RecipeService {
 
 
   // We can inject a service from another service !
-  constructor(public shoppingListService : ShoppingListService) {}
+  constructor(
+    private store : Store<AppState>
+  ) {}
 
 
   getRecipe(recipeId : number) {
@@ -31,9 +36,7 @@ export class RecipeService {
   }
 
   addIngredientsToShoppingList(recipe : Recipe) {
-    for (let i = 0; i < recipe.ingredients.length; i++) {
-      this.shoppingListService.addIngredient(recipe.ingredients[i]);
-    }
+      this.store.dispatch(new AddIngredientsAction(recipe.ingredients));
   }
 
   createRecipe(recipe : Recipe) : number {
