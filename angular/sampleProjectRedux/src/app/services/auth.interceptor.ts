@@ -1,8 +1,10 @@
 import { Injectable } from "@angular/core";
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { take, exhaustMap } from 'rxjs/operators';
-import { AuthService } from "./auth.service";
+import { take, exhaustMap, map } from 'rxjs/operators';
+import { Store } from "@ngrx/store";
+import { AppState } from "../store/app.reducer";
+import { AuthState } from "../auth/store/auth.reducer";
 import { User } from "../models/user.model";
 
 /**
@@ -17,19 +19,27 @@ import { User } from "../models/user.model";
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
-  constructor(private authService : AuthService) {}
+  constructor(
+    private store : Store<AppState>
+  ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    return this.authService.loggedUser
+    return this.store.select('auth')
       .pipe(
-        // take only the 1st element of the loggedUser BehaviorSubject, so we do not need to unsubscribe
+        // take only the current state of the auth store, so we do not need to unsubscribe
         take(1),
+        // extract the user from the auth store
+        map(
+          (authStore : AuthState) => {
+            return authStore.user;
+          }
+        ),
         // replace the current Observable by another Observable
         exhaustMap(
-          (loggedUser : User | null) => {
-            if (loggedUser) {
+          (user : User | null) => {
+            if (user) {
               // when a logged user object is available, attach the auth token to the request
-              const modifiedReq = req.clone({ params: req.params.set('auth', loggedUser.token || '') });
+              const modifiedReq = req.clone({ params: req.params.set('auth', user.token || '') });
               // Pass the cloned request to the next handler.
               return next.handle(modifiedReq);
             } else {

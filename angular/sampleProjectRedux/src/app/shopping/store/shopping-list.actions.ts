@@ -8,12 +8,12 @@ import { Ingredient } from "src/app/models/ingredient.model";
  */
 
 // use a constant for each action name to help with Intellisense
-export const ADD_INGREDIENT    = 'ADD_INGREDIENT';
-export const ADD_INGREDIENTS   = 'ADD_INGREDIENTS';
-export const UPDATE_INGREDIENT = 'UPDATE_INGREDIENT';
-export const DELETE_INGREDIENT = 'DELETE_INGREDIENT';
-export const START_EDIT        = 'START_EDIT';
-export const STOP_EDIT         = 'STOP_EDIT';
+export const ADD_INGREDIENT    = '[shoppingList] ADD_INGREDIENT';
+export const ADD_INGREDIENTS   = '[shoppingList] ADD_INGREDIENTS';
+export const UPDATE_INGREDIENT = '[shoppingList] UPDATE_INGREDIENT';
+export const DELETE_INGREDIENT = '[shoppingList] DELETE_INGREDIENT';
+export const START_EDIT        = '[shoppingList] START_EDIT';
+export const STOP_EDIT         = '[shoppingList] STOP_EDIT';
 
 export class AddIngredientAction implements Action {
   readonly type: string = ADD_INGREDIENT;

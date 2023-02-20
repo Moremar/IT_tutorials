@@ -1,8 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from "rxjs";
-import { User } from '../models/user.model';
+import { map } from 'rxjs/operators'
+import { Store } from "@ngrx/store";
 import { AuthService } from '../services/auth.service';
 import { DataStorageService } from '../services/data-storage.service';
+import { AppState } from '../store/app.reducer';
+import { AuthState } from '../auth/store/auth.reducer';
+import { User } from '../models/user.model';
 
 
 @Component({
@@ -15,18 +19,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
   /* Member variables */
 
   public myIsLogged : boolean = false;
-  private myLoggedUserSub! : Subscription;
+  private myStoreSub! : Subscription;
 
 
   /* Constructor and life cycle hooks */
 
   constructor(
     private dataStorageService : DataStorageService,
-    private authService : AuthService
+    private authService : AuthService,
+    private store : Store<AppState>
   ) {}
 
   ngOnInit(): void {
-    this.myLoggedUserSub = this.authService.loggedUser.subscribe(
+    this.myIsLogged = false;
+    this.myStoreSub = this.store.select('auth')
+    .pipe(
+      map(
+        (authStore : AuthState) => {
+          return authStore.user
+        }
+      )
+    )
+    .subscribe(
       (loggedUser: User | null) => {
         this.myIsLogged = loggedUser !== null && loggedUser.token !== null;
       }
@@ -34,7 +48,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.myLoggedUserSub.unsubscribe();
+    this.myStoreSub.unsubscribe();
   }
 
 

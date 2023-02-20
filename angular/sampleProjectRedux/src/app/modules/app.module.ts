@@ -16,7 +16,9 @@ import { AuthComponent } from '../auth/auth.component';
 
 // interceptor imports
 import { AuthInterceptor } from '../services/auth.interceptor';
-import { shoppingListReducer } from '../shopping/store/shoppping-list.reducer';
+
+// Redux reducer
+import { appReducer } from '../store/app.reducer';
 
 
 @NgModule({
@@ -34,9 +36,7 @@ import { shoppingListReducer } from '../shopping/store/shoppping-list.reducer';
 //    RecipeModule,   // no longer imported, as it is now lazily loaded
     ShoppingModule,
     AppRoutingModule,  // need to be imported after all feature modules including routes, since it contains the wildcard route
-    StoreModule.forRoot({
-      shoppingList: shoppingListReducer
-    })
+    StoreModule.forRoot(appReducer)
   ],
   providers: [{
     provide:  HTTP_INTERCEPTORS,    // constant token to tell Angular it is an interceptor

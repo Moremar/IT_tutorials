@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { Ingredient } from '../models/ingredient.model';
 import { Recipe } from '../models/recipe.model';
 import { AddIngredientsAction } from '../shopping/store/shopping-list.actions';
-import { AppState } from '../shopping/store/shoppping-list.reducer';
+import { AppState } from '../store/app.reducer';
 
 
 @Injectable({

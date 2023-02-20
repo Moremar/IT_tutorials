@@ -5,7 +5,8 @@ import { Ingredient } from 'src/app/models/ingredient.model';
 import { Store } from '@ngrx/store';
 
 import { AddIngredientAction, DeleteIngredientAction, StopEditAction, UpdateIngredientAction } from '../store/shopping-list.actions';
-import { AppState, ShoppingListState } from '../store/shoppping-list.reducer';
+import { ShoppingListState } from '../store/shoppping-list.reducer';
+import { AppState } from 'src/app/store/app.reducer';
 
 
 /**

@@ -3,8 +3,9 @@ import { Subscription } from "rxjs";
 import { Ingredient } from "src/app/models/ingredient.model";
 import { Store } from '@ngrx/store';
 
-import { AppState, ShoppingListState } from "../store/shoppping-list.reducer";
+import { ShoppingListState } from "../store/shoppping-list.reducer";
 import { StartEditAction } from "../store/shopping-list.actions";
+import { AppState } from "src/app/store/app.reducer";
 
 @Component({
   selector: 'app-shopping-list',

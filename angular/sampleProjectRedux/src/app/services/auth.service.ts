@@ -1,12 +1,16 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { Store } from '@ngrx/store';
+
 import { environment } from '../../environments/environment';
 import { Credentials } from '../models/credentials.model';
 import { AuthResponse } from '../models/auth-response.model';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
 import { User } from '../models/user.model';
-import { Router } from '@angular/router';
+import { AppState } from '../store/app.reducer';
+import { LoginAction, LogoutAction } from '../auth/store/auth.actions';
 
 
 @Injectable({
@@ -19,15 +23,13 @@ export class AuthService {
   readonly API_KEY : string = environment.firebase.api_key;
   readonly LOCAL_STORAGE_USER = 'loggedUser';
 
-  // subject emitting the logged user everytime it changes
-  // behavioral subject so we can access the last emitted value even when subscribing after its emission
-  public loggedUser = new BehaviorSubject<User | null>(null);
 
   private myTimeoutTimer : any;
 
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private store: Store<AppState>
   ) {}
 
 
@@ -61,7 +63,7 @@ export class AuthService {
     const expiresIn = 1000 * Number(responseData.expiresIn);
     const expirationDate = new Date((new Date()).getTime() + expiresIn);
     const user = new User(responseData.email, responseData.localId, responseData.idToken, expirationDate);
-    this.loggedUser.next(user);
+    this.store.dispatch(new LoginAction(user));
     this.autoLogout(expiresIn);
     // stores the user to persistent storage so it is still accessible on refresh
     localStorage.setItem(this.LOCAL_STORAGE_USER, JSON.stringify(user));
@@ -93,7 +95,7 @@ export class AuthService {
 
   logout() {
     console.log('Logging out...');
-    this.loggedUser.next(null);
+    this.store.dispatch(new LogoutAction());
     localStorage.removeItem(this.LOCAL_STORAGE_USER);
     if (this.myTimeoutTimer) {
       clearTimeout(this.myTimeoutTimer);
@@ -124,7 +126,7 @@ export class AuthService {
     const userFromStorage = new User(userObj.email, userObj.userId, userObj._token, new Date(userObj._tokenExpirationDate));
     if (userFromStorage.token) {
       console.log('Auth token found, auto-login.');
-      this.loggedUser.next(userFromStorage);
+      this.store.dispatch(new LoginAction(userFromStorage));
       let duration = (new Date(userObj._tokenExpirationDate)).getTime() - (new Date()).getTime();
       this.autoLogout(duration);
     }
