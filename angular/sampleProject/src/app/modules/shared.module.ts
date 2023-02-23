@@ -2,6 +2,8 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ErrorModalComponent } from '../common/error-modal/error-modal.component';
 import { LoadingSpinnerComponent } from '../common/loading-spinner/loading-spinner.component';
+import { ComponentForTestComponent } from '../component-for-test/component-for-test.component';
+
 import { PlaceholderDirective } from '../directives/placeholder.directive';
 import { DropdownDirective } from '../directives/dropdown.directive';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +19,8 @@ import { FormsModule } from '@angular/forms';
     ErrorModalComponent,
     LoadingSpinnerComponent,
     PlaceholderDirective,
-    DropdownDirective
+    DropdownDirective,
+    ComponentForTestComponent
   ],
   imports: [
     // modules that we want all other modules to import
@@ -31,7 +34,8 @@ import { FormsModule } from '@angular/forms';
     ErrorModalComponent,
     LoadingSpinnerComponent,
     PlaceholderDirective,
-    DropdownDirective
+    DropdownDirective,
+    ComponentForTestComponent
   ]
 })
 export class SharedModule { }

@@ -328,3 +328,54 @@ For example, users in an Angular app can be represented by a `User` model in a `
 
 It is technically not required to use models in Angular, but it helps TS and the IDE's Intellisense with type inference.
 
+
+
+## Unit tests
+
+The Angular CLI comes with the **Jasmine** test framework and the **Karma** test runner.  
+At component creation, the CLI generates a default `xxx.spec` file for unit tests.  
+By default it only checks that the component can be created with no error.  
+
+The Karma test runner can be executed with the command :  `ng test`  
+The terminal shows `Executed X of X SUCCESS`, and a Jasmine HTML page opens in Chrome with the tests details.  
+The `ng test` command is watching for changes, it re-runs the tests at every change.
+
+The main class of the Angular testing module is `TestBed`  
+The `beforeEach()` method of the test suite is called before each test run.  
+In its body, we call the `configureTestingModule()` and the `compileElements()` functions
+to setup the test environment.    
+A component fixture is created with the `createComponent()` method and is accessible in each test.
+
+Each unit test is represented by an `it()` function inside the test suite.  
+There are generally 2 different types of tests :
+- tests checking the behavior of the component (member variables and methods)
+- tests checking the HTML output of the component
+
+Behavior tests may need to access some injected services, which are available in the injector :
+```commandline
+let service = fixture.debugElement.injector.get(UserService);
+```
+
+Output tests can access the HTML rendered output with `component.nativeElement`, for example :
+   ```commandline
+   const html = fixture.nativeElement;
+   expect(html.querySelector('p').textContent).toContain('AAA');
+   ```
+
+When the component is modified (for example a member variable's value is changed), Angular usually updates the HTML output
+automatically, but this is not automatic in tests.  
+To trigger the change detection, we must call the `fixture.detectChanges()` method. 
+
+If we need to test an async calculation (like a call to an external API returning a Promise) we can :
+ - create a spy of the service and mock the async function to test (to not actually call the API)
+   ```commandline
+   let service = fixture.debugElement.injector.get(UserService);
+   let spy = spyOn(service, 'methodName').and.returnValue(Promise.resolve('XXX'));
+   ```
+ - wrap the lambda function of the test into the `async()` function.  
+   After the promise call, detect the changes and inform Angular to wait for the completion of the async call :
+   ```commandline
+   fixture.detectChanges();
+   fixture.whenStable().then(() => { /* assertions */ });
+   ```
+   

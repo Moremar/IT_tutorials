@@ -63,7 +63,7 @@ export class RecipeService {
                  "Get the McDonald's–style fries of your dreams at home with this recipe for perfect thin and crispy french fries.",
                  "https://www.healthifyme.com/blog/wp-content/uploads/2022/07/shutterstock_1927479248-1.jpg",
                  [new Ingredient("Potato", 4)]),
-      new Recipe("Italian spaguetti",
+      new Recipe("Italian spaghetti",
                  "Best ever spaghetti bolognese is super easy and a true Italian classic with a meaty, chilli sauce.",
                  "https://staticfanpage.akamaized.net/wp-content/uploads/sites/22/2021/06/THUMB-LINK-2020-2-1200x675.jpg",
                  [new Ingredient("Pasta", 1), new Ingredient("Tomato", 2)])
