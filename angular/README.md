@@ -329,6 +329,160 @@ For example, users in an Angular app can be represented by a `User` model in a `
 It is technically not required to use models in Angular, but it helps TS and the IDE's Intellisense with type inference.
 
 
+## State Management with Redux
+
+### Redux pattern
+
+The application state contains all non-persistent information required to know what should be displayed (loading, tab selected, sent a file, ...). It can be handled only with services and components, by having a service that publishes 
+state changes (with a Subject) and components subscribing to it.  
+
+For bigger applications, having one centralized place to manage the application state makes the code easier to read and maintain.  
+Redux can help with this application state management.
+
+Redux is a pattern to manage state via a central immutable JS object called the "store" that is the source of truth for every service/component regarding the application state.
+
+To update the state (for example to add an item in an array displayed with a *ngFor), we cannot modify the store directly.  
+We need to dispatch an action that defines how to change the store, with an optional payload.  
+This action is processed by a "reducer" that calculates the resulting state, and overwrites the current store with the new store.  
+The new store is then received by every component needing it by a subscription.  
+Every change of the state creates a new version of the store.  
+The store is split into sections (one per part of the app) and components can subscribe to a section of the store.
+
+The Angular wrapper for Redux is called `NgRx` (Angular Redux) and implements the Redux pattern using `rxjs` (Subjects) and offering store Observables that components and services can subscribe to.
+
+
+### NgRx Installation
+
+```commandline
+$>  npm install --save @ngrx/store
+$>  npm install --save @ngrx/effects     # optional, for side effects
+```
+
+### NgRx Actions
+
+An action class must be defined for each type of change we can do on the store.  
+We can group actions in an `xxx.actions.ts` file (`xxx` is the section name, for example `auth`).
+
+Actions must implement the `Action` interface by providing a `type` readonly property.  
+Actions can have a payload, represented by one or more member variable(s) with details on the action (for example the object to create when adding an object in the state).  
+When processing the action, the reducers will have access to this payload.
+
+```commandline
+export class AddIngredientAction implements Action {
+  readonly type: string = ADD_INGREDIENT;
+  constructor(public payload: Ingredient) {}
+}
+```
+
+### NgRx Reducers
+
+Reducers are functions that are called by Redux to compute the next store after each dispatched action.  
+Redux provides as parameter to the reducer functions the current store and the dispatched action.  
+At app startup, Redux dispatches an action of type `@ngrx/store/init` to every reducer.  
+We can specify the initial state to use for a section of the store with a default value for the store parameter.  
+Reducers can only run synchronous code, they take the current store and an action as input and return the resulting store.
+
+Create a file `xxx.reducer.ts` and define a reducer function.  
+The reducer must not modify the original store, it must return a new store (usually using the spread operator) :
+
+```commandline
+export function ShoppingListReducer(state = initialState, action: AddIngredientAction) {
+  switch (action.type) {
+    case ADD_INGREDIENT: {
+      return {
+        // copy all properties of state into the new object
+        ...state,
+        // overwrite the properties we want to change
+        ingredients: [...state.ingredients, action.payload]
+      };
+    }
+    case OTHER_ACTION:
+    {
+       ... return another modified version of the store ...
+    }
+    default: {
+      return state;
+    }
+  }
+}
+```
+
+### NgRx Store
+
+The full store structure with all its sections can be defined in an `app.reducer.ts` file.  
+A top-level reducer map can be created to associate a reducer to each section of the store : 
+
+```commandline
+export interface AppState {
+  auth: AuthState,
+  shoppingList: ShoppingListState
+};
+
+export const appReducer: ActionReducerMap<AppState> = {
+  auth: authReducer,
+  shoppingList: shoppingListReducer
+};
+```
+
+In `app.module.ts`, we import the `StoreModule` and specify the top-level reducer map :
+
+```commandline
+imports: [
+  ... other imported modules ...
+  StoreModule.forRoot(appReducer)
+]
+```
+
+With this setup, NgRx creates an application store with the given reducers.  
+We can access the store by injecting in a service or component a `Store<AppState>` object.    
+
+We can access the observable for a section of the store with the `select()` method of the injected `Store` object :
+
+```commandline
+this.subscription = this.store.select('shoppingList').subscribe(
+  (shoppingListStore: ShoppingListState) => {
+    this.ingredients = shoppingListStore.ingredients;
+  }
+);
+```
+
+### Dispatch an NgRx Action
+
+An action can be dispatched by any service or component.  
+It needs to inject the `Store<AppState>` in its constructor and call its `dispatch()` method.
+The dispatched action will automatically be executed by all reducers in the reducer map.
+
+```commandline
+this.store.dispatch(new AddIngredientAction(payload));
+```
+
+### NgRx Side Effects
+
+The reducers should not contain any side effects, they should only set the state.  
+A valid possibility is to have those side effects in a service, that dispatches Redux actions when needed.  
+NgRx offers an alternative way to handle side effects (REST calls, local storage management, ...) in the `@ngrx/effect` package.
+
+### NgRx Router Store
+
+NgRx has a mechanism called the Router Store, to automatically dispatch an NgRx action every time a route is loaded.  
+This lets us change the state of the app on routing events.  
+
+The router store package is installed with : `npm install --save @ngrx/router-store`
+
+It must be added in the imports of the `app.module.ts` file :  `StoreRouterConnectingModule.forRoot()`
+
+### Redux DevTools
+
+Redux DevTools is a convenient Chrome extension to debug the Redux state of an Angular app.  
+This extension shows all dispatched actions, and the state after each of them.
+- Download the "Redux DevTools" Chrome extension
+- Install the ngrx dev tool package as a dev dependency : `npm install --save-dev @ngrx/store-devtools`
+- Import `StoreDevToolsModule` in the `app.module.ts` file :
+    ```commandline
+    StoreDevToolsModule.instrument({ logOnly: environment.production })
+    ```
+- Relaunch Chrome and `ng serve`, now we have a "Redux" section in the Chrome dev tools showing dispatched actions.
+
 
 ## Unit tests
 
