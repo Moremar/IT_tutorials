@@ -174,6 +174,14 @@ Only `ngOnChanges()` hook takes a parameter with the value of all changed input 
   ngOnChanges(changes: SimpleChanges) { console.log(changes); }
 ```
 
+### ng-content
+
+By default, any content included between the opening and closing tags of a custom Angular component is lost.  
+To allow a parent component's template to pass some HTML content to a child component, the child component must specify in its HTML where the content must be included by adding the `<ng-content>` tag in its template.
+
+If an element in the content has a local reference, we can access it from the child component TS code by creating a property with the `@ContentChild('myInput')` decorator.
+
+The component content can of course not be accessed before the content is initialized (in `ngOnInit()` for ex).
 
 ### Standalone components
 
@@ -289,7 +297,7 @@ And define in its TS class a method to handle this event :
 components must react to an event, or when the event must traverse multiple levels in the components hierarchy.
 
 In this case, instead of defining the `EventEmitter` in the child component, we can use a service.  
-The service defines an `EventEmitter` that can be used by components to emit events.  
+The service defines an `EventEmitter` or a `Subject` object that can be used by components to emit events.  
 Components that need to react to the triggered events can subscribe to that event emitter in the `ngOnInit()` hook.  
 This subscription needs to be unsubscribed when the component is destroyed to avoid memory leaks :
 
@@ -329,6 +337,92 @@ For example, users in an Angular app can be represented by a `User` model in a `
 It is technically not required to use models in Angular, but it helps TS and the IDE's Intellisense with type inference.
 
 
+## Local References
+
+We can create a local reference on any HTML tag with a `#` in an HTML template :
+
+```html
+  <input type="text" class="form-control" #myInput />
+```
+
+This tag can then be referenced from anywhere inside the HTML template (but not from the TS code!).  
+
+It can be used with string interpolation : `{{ myInput.value }}`  
+
+It can also be used as a parameter of a method call :
+
+```html
+  <button type="button" (click)="onClick(myInput)"> Click </button>
+```
+
+The `onClick()` method can then access the input HTML element :
+
+```commandline
+  onClick(input: HTMLInputElement) { console.log(input.value); }
+```
+
+We can use a local reference instead of a property binding to make the code smaller when the value we bind to (an input usually) is used only from the template.
+
+We can also reference a local reference from the TS code if we create a property with the `@ViewChild()` decorator : 
+
+```commandline
+  @ViewChild('myInput') input : ElementRef;
+```
+
+The `input` member references the `<input>` tag from the template, which is accessed with its `nativeElement` property :
+
+```commandline
+  console.log(input.nativeElement.value);
+```
+
+It is a bad design to assign the HTML input value directly from the TS code via the ViewChild element though.    
+Instead, 2-ways binding should be preferred for this scenario.
+
+
+## Angular Services
+
+An Angular service is a TS class that can be accessed from any component or service.  
+Typical use cases are logging, data management, HTTP requests to a backend...
+
+A service has no dedicated decorator, but the `@Injectable()` decorator is used to inject other services in its constructor.  
+It is required only if the service injects other services or components, but it is a good practice to always add it.
+
+Angular can inject an instance of a service in any component from its constructor.  
+There are 2 ways to declare a service so it can be injected by Angular in components and other services :
+
+- Specify the service in the `providers` property of the `@Component()` decorator or one of its ancestors (the module for ex)  
+  This informs Angular to provide the SAME instance of the service to all components under that component.  
+  If we provide the service in `app.module.ts`, all components of this module will use the same instance of the service.  
+  If a component provides a service, it will create a new instance of the service.  
+  To use the same instance across all components, it is common to declare it in the module.   
+  If the service is provided at module level, it can also be injected in services.  
+
+
+- Add `{ providedIn: 'root' }` parameter to the `@Injectable()` decorator of the service (Angular 6+)  
+  This automatically provides the service at module level (no need to add it in the module manually)   
+  This is the preferred method to ensure a single instance of the service is used across the app.
+
+Services can be used for inter-components communication using `Subject` or `BehaviorSubject` emitters.  
+This is much simpler than passing around data from component to component with `@Input()` and `@Output()` chains.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## State Management with Redux
 
 ### Redux pattern
@@ -349,7 +443,6 @@ Every change of the state creates a new version of the store.
 The store is split into sections (one per part of the app) and components can subscribe to a section of the store.
 
 The Angular wrapper for Redux is called `NgRx` (Angular Redux) and implements the Redux pattern using `rxjs` (Subjects) and offering store Observables that components and services can subscribe to.
-
 
 ### NgRx Installation
 
