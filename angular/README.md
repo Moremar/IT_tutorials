@@ -212,7 +212,7 @@ bootstrapApplication(
 
 Similarly to lazy-loaded modules, we can load standalone components lazily in a route.  
 This only requires to replace the `component` property with `loadComponent` :
-```json
+```commandline
     "loadComponent" : import("./about/about.component").then((m) => m.AboutComponent)
 ```
 
@@ -394,7 +394,7 @@ There are 2 ways to declare a service so it can be injected by Angular in compon
   This informs Angular to provide the SAME instance of the service to all components under that component.  
   If we provide the service in `app.module.ts`, all components of this module will use the same instance of the service.  
   If a component provides a service, it will create a new instance of the service.  
-  To use the same instance across all components, it is common to declare it in the module.   
+  To use the same instance across all components, it is common to declare it in the top-level module.   
   If the service is provided at module level, it can also be injected in services.  
 
 
@@ -406,21 +406,72 @@ Services can be used for inter-components communication using `Subject` or `Beha
 This is much simpler than passing around data from component to component with `@Input()` and `@Output()` chains.
 
 
+# Angular Modules
+
+Every Angular app has at least 1 module, called `AppModule` by default.  
+We can create other Angular modules to group components related to a given feature.  
+This makes the code more readable, maintainable and allows performance improvements (lazy loading).  
+Every module contains some components / directives / pipes ...  
+A component / directive / pipe is part of one and only one module.  
+Services are usually included app-wide with the `{ providedIn: 'root' }` parameter in the `@Injectable()` decorator, so they do not appear in any module definition.
+
+A frequent module is `app-routing.module.ts` in charge of the routing.  
+It can optionally be added at project creation with `ng new` if selecting the "routing" option.
+
+There are some built-in Angular modules, for example the `FormsModule` containing the `ngModel` directive.  
+All modules used in an app (custom and builtin) must be listed in the `imports` of AppModule (or of the feature module using them).  
+Import a module means importing everything this module exports.  
+Everything else the module declares but does not export is not accessible.  
+That is why the `AppRoutingModule` updates the `RouterModule` (with the `forRoot()` or `forChild()` method), and then exports it.  
+
+To create a feature module, we create a TS class with the `@NgModule()` decorator and properties :
+ 
+- `declarations` : All components that belong to this module (each component is declared in a single module)
 
 
+- `imports` : Modules containing some components used in the module (AppRoutingModule, FormsModule,...)  
+              It must always contain CommonModule (or a module exporting it, like a custom SharedModule).
 
 
+- `exports` :      all components that we want to make available to other modules importing this module.  
+                   The components only used inside this module do not need to be exported.
+
+Routes related to a feature module can be moved into a dedicated `xxx-routing.module.ts` module.  
+It must import the RouterModule, call its `forChild()` method, and export it :
+```commandline
+    RouterModule.forChild(routes)
+```
+
+We can also create one (or several) shared module. It is very similar to a feature module, but it exports all its components so other modules that import it can include these components in their templates.
+
+We see sometimes a `CoreModule` in some Angular projects.  
+It is meant to include all the services that will be available across the app.  
+This is no longer recommended now that services can be provided across the app in their `Injectable()` decorator.  
+
+### Module Lazy Loading
+
+We can use lazy loading to associate some roots with a module, and load the components in the module only when one of its routes were called.  
+
+- add in the `app-routing.module.ts` file a route without a `component` property, but with a `loadChildren` property with a lambda returning the name of the module to load lazily.
+```commandline
+path: 'recipes', loadChildren: () => import('./recipes/recipes.module').then(m => m.RecipesModule)
+```
+ 
+
+- in the routing of the lazily loaded module, the `root` route should now be `''`, since the root route is now included in app-routing and loads the child module.
 
 
+- remove the lazily loaded module from the TS and Angular imports in AppModule.  
 
+ 
+With this in place, we can see in the Network inspector of the browser debugger that the `main.js` file is smaller.
+When navigating to a route in the lazily loaded module, the browser loads another JS bundle for this module.  
 
-
-
-
-
-
-
-
+By default, lazily loaded modules are loaded only the first time one of their routes is called.  
+To improve the performance, we can set the loading strategy to preload all modules in `app-routing.module.ts` :
+```commandline
+  imports: [ RouterModule.forRoot(routes, {preloadingStrategy: PreloadAllModules}) ],
+```
 
 
 ## State Management with Redux
@@ -575,6 +626,67 @@ This extension shows all dispatched actions, and the state after each of them.
     StoreDevToolsModule.instrument({ logOnly: environment.production })
     ```
 - Relaunch Chrome and `ng serve`, now we have a "Redux" section in the Chrome dev tools showing dispatched actions.
+
+
+
+## Angular Deployment
+
+The Angular project is build for production with :  `ng build`  
+This uses by default the production configuration since Angular 12.  
+This will generate under the _dist/_ folder a few files that we can deploy to run our app.  
+These files are a shrinked version of the app code.
+
+After the artifacts (generated files) are built, we get only HTML / CSS / JS code.  
+This can be deployed to a static website host that delivers only HTML / CSS / JS files.  
+Popular options are **AWS S3** (need AWS account) and **Firebase Hosting** (independent from the Firebase Realtime Database).  
+
+If the app calls a backend, we need to ensure that they can communicate (REST API).
+
+### Deploy with Firebase Hosting
+
+Firebase hosting offers hosting service for static (HTML/JS/CSS) and dynamic (Express) websites.  
+We can link it to use a custom domain name if needed.
+
+Firebase Hosting website : https://firebase.google.com/docs/hosting
+
+```commandline
+   $>  npm install -g firebase-tools      # install Firebase CLI
+   $>  firebase login                     # login to the Google account (prompt a browser login)
+   $>  cd <project_path>                  # move to the project folder
+   $>  firebase init                      # initialize the project in Firebase
+       -> select "Hosting" with Space, then Enter
+       -> select the Firebase project created earlier (or create a new one if didnt use Firebase earlier)
+       -> for the folder, do not use "public", replace by the folder of our code (dist/recipe-app for ex)
+       -> Single-page app : "y"
+       -> automatic builds and deploys with GitHub -> N
+       -> overwrite index.html: "N"
+   $>  firebase deploy                    # deploy the dist/ folder to Firebase
+```
+
+This outputs an URL where the Angular app is available on Firebase servers.  
+The deployed files can now be seen in the Hosting tab of the Firebase console of this project.
+
+### Ahead of Time compilation
+
+When running `ng serve -o`, we are running a web server and shipping the Angular compiler in the app.  
+Everytime we query some component, the compiler will be called in the browser to convert Angular templates into JS code.  
+This is called "Just In Time" compilation, which is great for debugging.  
+In production, we want to pre-compile to JS and not ship the Angular compiler, this is "Ahead of Time" compilation.  
+It is stricter than the "Just In Time" compiler used in debug, so new compilation errors can occur.  
+If some TS code is not understood in the template, we can usually move it to a method in the TS class definition.
+
+### Environment variables
+
+Angular offers in `./src/environments/` a production and development file for environment variables.  
+The `env` object can store some key/value pairs.  
+When Angular builds the code, it uses the production file when using `ng build` and the development file when using `ng serve`.
+This replacement is performed by the `fileReplacements` property in the `angular.json` configuration file.  
+It allows to have different API keys or URLs for production and development for example.  
+To use it in components or services, just import `environment` from `src/environments/environment`
+
+Since Angular 15, `ng new` no longer generates the environment file by default.  
+The `fileReplacements` property is still available in `angular.json` though.  
+We can configure it manually, or call `ng generate environments` to get Angular set it up as it used to be.
 
 
 ## Unit tests
