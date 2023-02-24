@@ -1,11 +1,11 @@
 <a class="list-group-item link-unstyled" [routerLink]="[recipeId]" routerLinkActive="active">
   <div class="row">
     <div class="col-md-8">
-      <h4 class="list-group-item-heading">{{recipe.name}}</h4>
-      <p>{{recipe.description}}</p>
-      </div>
+      <h4 class="list-group-item-heading">{{ recipe.name }}</h4>
+      <p>{{ recipe.description }}</p>
+    </div>
     <div class="col-md-4 pl-2">
-      <img class="img-fluid" style="max-height: 80px;" [src]="recipe.imageUrl" [alt]="recipe.name" />
+      <img class="img-fluid" style="max-height: 80px" [src]="recipe.imageUrl" [alt]="recipe.name" />
     </div>
   </div>
 </a>

@@ -6,7 +6,7 @@ export class AuthResponse {
     public refreshToken: string,
     public expiresIn: string,
     public localId: string,
-    public registered? : string
+    public registered?: string
   ) {}
 
 }

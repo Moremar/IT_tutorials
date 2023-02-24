@@ -23,11 +23,11 @@ import { Ingredient } from '../models/ingredient.model';
 })
 export class DataStorageService {
 
-  readonly BACKEND_URL : string = environment.firebase.db_url  + '/recipes.json';
+  readonly BACKEND_URL: string = environment.firebase.db_url + '/recipes.json';
 
   constructor(
-    private http : HttpClient,
-    public recipeService : RecipeService
+    private http: HttpClient,
+    public recipeService: RecipeService
   ) {}
 
 
@@ -39,13 +39,13 @@ export class DataStorageService {
       .put<Recipe[]>(this.BACKEND_URL, recipes)
       .subscribe(
         (responseData : Recipe[]) => {
-          console.log("Recipes saved in the backend.");
+          console.log('Recipes saved in the backend.');
           console.log(responseData);
         }
       );
   }
 
-  loadRecipesFromBackend() : Observable<Recipe[]> {
+  loadRecipesFromBackend(): Observable<Recipe[]> {
     // we do not subscribe from this method when a user of this method (for example a component)
     // cares about the response and needs to sbscribe to update the GUI (adding a spinner for ex),
     // or when a user (for example a resolve guard in this case) needs to get the observable.
@@ -70,11 +70,11 @@ export class DataStorageService {
         ),
         // everytime we fetch the data, replace the current recipes in the recipe service
         tap(
-          (recipes : Recipe[]) => {
+          (recipes: Recipe[]) => {
             this.recipeService.loadRecipes(recipes);
           }
         )
-      );
+    );
   }
 
 }

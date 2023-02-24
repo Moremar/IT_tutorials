@@ -13,9 +13,9 @@ import { Directive, ElementRef, HostListener, Renderer2 } from '@angular/core';
 })
 export class DropdownDirective {
 
-  isOpen : boolean = false;
+  isOpen: boolean = false;
 
-  @HostListener("click") onClick() {
+  @HostListener('click') onClick() {
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       // attach a class to open the dropdown
@@ -26,6 +26,9 @@ export class DropdownDirective {
     }
   }
 
-  constructor(private elementRef : ElementRef, private renderer : Renderer2) { }
+  constructor(
+    private elementRef: ElementRef,
+    private renderer: Renderer2
+  ) {}
 
 }

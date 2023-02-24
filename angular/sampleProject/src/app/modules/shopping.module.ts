@@ -11,7 +11,7 @@ import { SharedModule } from './shared.module';
  */
 
 const routes: Routes = [
-  { path: "shoppinglist", component: ShoppingListComponent, canActivate: [AuthGuard] }
+  { path: 'shoppinglist', component: ShoppingListComponent, canActivate: [AuthGuard] }
 ];
 
 @NgModule({
@@ -26,4 +26,4 @@ const routes: Routes = [
   // nothing to export since components are used only inside the module
   exports: []
 })
-export class ShoppingModule { }
+export class ShoppingModule {}

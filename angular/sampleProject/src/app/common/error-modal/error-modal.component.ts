@@ -7,7 +7,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 })
 export class ErrorModalComponent implements OnInit {
 
-  @Input() public message! : string;
+  @Input() public message!: string;
 
   // signals to the parent component that the modal was closed
   @Output() modalClosed = new EventEmitter<void>();

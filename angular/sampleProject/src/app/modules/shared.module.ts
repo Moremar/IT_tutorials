@@ -38,4 +38,4 @@ import { FormsModule } from '@angular/forms';
     ComponentForTestComponent
   ]
 })
-export class SharedModule { }
+export class SharedModule {}

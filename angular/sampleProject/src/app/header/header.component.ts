@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from "rxjs";
+import { Subscription } from 'rxjs';
 import { User } from '../models/user.model';
 import { AuthService } from '../services/auth.service';
 import { DataStorageService } from '../services/data-storage.service';
@@ -14,15 +14,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   /* Member variables */
 
-  public myIsLogged : boolean = false;
-  private myLoggedUserSub! : Subscription;
+  public myIsLogged: boolean = false;
+  private myLoggedUserSub!: Subscription;
 
 
   /* Constructor and life cycle hooks */
 
   constructor(
-    private dataStorageService : DataStorageService,
-    private authService : AuthService
+    private dataStorageService: DataStorageService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {

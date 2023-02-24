@@ -1,9 +1,9 @@
-import { Injectable } from "@angular/core";
+import { Injectable } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { take, exhaustMap } from 'rxjs/operators';
-import { AuthService } from "./auth.service";
-import { User } from "../models/user.model";
+import { AuthService } from './auth.service';
+import { User } from '../models/user.model';
 
 /**
  * Interceptor adding the authentication token to all outgoing HTTP requests
@@ -17,7 +17,10 @@ import { User } from "../models/user.model";
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
-  constructor(private authService : AuthService) {}
+  constructor(
+    private authService: AuthService
+  ) {}
+
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return this.authService.loggedUser
@@ -26,20 +29,20 @@ export class AuthInterceptor implements HttpInterceptor {
         take(1),
         // replace the current Observable by another Observable
         exhaustMap(
-          (loggedUser : User | null) => {
-            if (loggedUser) {
-              // when a logged user object is available, attach the auth token to the request
-              const modifiedReq = req.clone({ params: req.params.set('auth', loggedUser.token || '') });
-              // Pass the cloned request to the next handler.
-              return next.handle(modifiedReq);
-            } else {
-              // no logged user available, just forward the request
-              // this is the expected behavior for signup/login requests before the user is logged in
-              return next.handle(req);
-            }
+          (loggedUser: User | null) => {
+          if (loggedUser) {
+            // when a logged user object is available, attach the auth token to the request
+            const modifiedReq = req.clone({ params: req.params.set('auth', loggedUser.token || '') });
+            // Pass the cloned request to the next handler.
+            return next.handle(modifiedReq);
+          } else {
+            // no logged user available, just forward the request
+            // this is the expected behavior for signup/login requests before the user is logged in
+            return next.handle(req);
           }
-        )
-      );
+        }
+      )
+    );
   }
 
 }

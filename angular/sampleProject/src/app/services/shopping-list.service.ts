@@ -8,9 +8,9 @@ import { Ingredient } from '../models/ingredient.model';
 })
 export class ShoppingListService {
 
-  private _ingredients : Ingredient[] = [
-    new Ingredient("Chicken", 2),
-    new Ingredient("Tomato", 10)
+  private _ingredients: Ingredient[] = [
+    new Ingredient('Chicken', 2),
+    new Ingredient('Tomato', 10)
   ];
 
   // subject triggered after the ingredients are modified
@@ -26,12 +26,12 @@ export class ShoppingListService {
     return this._ingredients.slice();
   }
 
-  getIngredient(i : number) {
+  getIngredient(i: number) {
     return this._ingredients[i];
   }
 
-  addIngredient(ingredient : Ingredient) {
-    console.log("INFO: Adding ingredient :");
+  addIngredient(ingredient: Ingredient) {
+    console.log('INFO: Adding ingredient :');
     console.log(ingredient);
     // increase the ingredient amount if it is already in the list
     let found = false;
@@ -49,16 +49,16 @@ export class ShoppingListService {
     this.ingredientsChanged.next(this._ingredients.slice());
   }
 
-  updateIngredient(i: number, ingredient : Ingredient) {
-    console.log("INFO: Updating ingredient " + i + " :");
+  updateIngredient(i: number, ingredient: Ingredient) {
+    console.log('INFO: Updating ingredient ' + i + ' :');
     console.log(ingredient);
     // replace the edited ingredient
     this._ingredients[i] = ingredient;
     this.ingredientsChanged.next(this._ingredients.slice());
   }
 
-  deleteIngredient(i : number) {
-    console.log("INFO: Deleting ingredient " + i + " :");
+  deleteIngredient(i: number) {
+    console.log('INFO: Deleting ingredient ' + i + ' :');
     console.log(this._ingredients[i]);
     this._ingredients.splice(i, 1);
     this.ingredientsChanged.next(this._ingredients.slice());

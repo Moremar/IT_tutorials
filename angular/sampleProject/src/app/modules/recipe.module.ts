@@ -35,4 +35,4 @@ import { RecipeStartComponent } from '../recipe/recipe-start/recipe-start.compon
   ],
   exports: []
 })
-export class RecipeModule { }
+export class RecipeModule {}

@@ -1,7 +1,7 @@
 <!-- recipe image -->
 <div class="row">
   <div class="col-md-12 text-center">
-    <img src="{{ myRecipe.imageUrl }}" alt="" class="img-fluid border border-dark">
+    <img src="{{ myRecipe.imageUrl }}" alt="" class="img-fluid border border-dark" />
   </div>
 </div>
 
@@ -16,7 +16,13 @@
 <div class="row">
   <div class="col-md-12">
     <div class="dropdown">
-      <button class="btn btn-primary dropdown-toggle my-2" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <button
+        type="button"
+        class="btn btn-primary dropdown-toggle my-2"
+        id="dropdownMenuButton"
+        data-toggle="dropdown"
+        aria-haspopup="true"
+        aria-expanded="false">
         Manage Recipe
       </button>
       <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
@@ -41,7 +47,7 @@
     <h5>Ingredients</h5>
     <ul class="list-group mt-2">
       <li class="list-group-item" *ngFor="let ingredient of myRecipe.ingredients">
-        {{ingredient.amount}} x {{ ingredient.name }}
+        {{ ingredient.amount }} x {{ ingredient.name }}
       </li>
     </ul>
   </div>

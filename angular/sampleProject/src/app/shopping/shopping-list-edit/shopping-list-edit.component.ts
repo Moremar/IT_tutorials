@@ -22,24 +22,26 @@ import { ShoppingListService } from 'src/app/services/shopping-list.service';
 })
 export class ShoppingListEditComponent implements OnInit, OnDestroy {
 
-  @ViewChild("myForm") myForm! : NgForm;
+  @ViewChild('myForm') myForm!: NgForm;
 
-  myEditMode : boolean = false;
-  myEditedIngredientIndex : number = -1;
-  myIngredientSelectedSub! : Subscription;
+  myEditMode: boolean = false;
+  myEditedIngredientIndex: number = -1;
+  myIngredientSelectedSub!: Subscription;
 
 
-  constructor(private shoppingListService : ShoppingListService) {}
+  constructor(
+    private shoppingListService: ShoppingListService
+  ) {}
 
   ngOnInit(): void {
     this.myIngredientSelectedSub = this.shoppingListService.startedEditing.subscribe(
-      (i : number) => {
+      (i: number) => {
         this.myEditMode = true;
         this.myEditedIngredientIndex = i;
         const ingredient = this.shoppingListService.getIngredient(i);
         this.myForm.setValue({
           ingredientName: ingredient.name,
-          ingredientAmount: ingredient.amount,
+          ingredientAmount: ingredient.amount
         });
       }
     );

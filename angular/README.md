@@ -378,4 +378,26 @@ If we need to test an async calculation (like a call to an external API returnin
    fixture.detectChanges();
    fixture.whenStable().then(() => { /* assertions */ });
    ```
-   
+
+
+## Useful external libraries and tools
+
+### Prettier
+
+`Prettier` is a code formatting library supporting multiple languages used by Angular (JS, TS, HTML, CSS, JSON...).  
+It can be installed and saved to `package.json` with `npm install prettier --save-dev`
+
+It is an opinionated code formatter, that intentionally offers very little flexibility on how to style the code.   
+Instead, it enforces a formatting style and rewrites all the code accordingly.
+
+Its intent is not to give granular flexibility on the coding style, but to help developers focus on writing code without
+arguing on the best coding style.
+Developers can simply run the Prettier formatting on their code, and it guarantees a consistent coding style across the entire project.
+
+To run the formatting on all the code of a project, run :
+```commandline
+npx prettier --write .
+```
+
+Prettier supports a few configuration options (mostly for historical reasons, and the team will not add more).  
+Those options can be set in a `prettierrc.json` configuration file.

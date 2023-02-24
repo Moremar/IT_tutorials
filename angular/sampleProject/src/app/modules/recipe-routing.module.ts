@@ -19,11 +19,11 @@ import { RecipesResolverGuard } from '../services/recipes-resolver.guard';
 
 const routes: Routes = [
 
-  { path: "", component: RecipesComponent, canActivate: [AuthGuard], children: [
-      { path: "", pathMatch: "full", component: RecipeStartComponent },
-      { path: "new", component: RecipeEditComponent },
-      { path: ":id", component: RecipeDetailsComponent, resolve: [RecipesResolverGuard] },
-      { path: ":id/edit", component: RecipeEditComponent, resolve: [RecipesResolverGuard] }
+  { path: '', component: RecipesComponent, canActivate: [AuthGuard], children: [
+      { path: '', pathMatch: 'full', component: RecipeStartComponent },
+      { path: 'new', component: RecipeEditComponent },
+      { path: ':id', component: RecipeDetailsComponent, resolve: [RecipesResolverGuard] },
+      { path: ':id/edit', component: RecipeEditComponent, resolve: [RecipesResolverGuard] }
   ]}
 ];
 
@@ -31,4 +31,4 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],  // use Router.forChild() in feature module routing
   exports: [RouterModule]
 })
-export class RecipeRoutingModule { }
+export class RecipeRoutingModule {}

@@ -13,19 +13,19 @@ import { RecipeService } from 'src/app/services/recipe.service';
 export class RecipeDetailsComponent implements OnInit, OnDestroy {
 
   myRecipe!: Recipe;
-  myRecipeId : number = -1;
-  myRouteSub! : Subscription;
+  myRecipeId: number = -1;
+  myRouteSub!: Subscription;
 
 
   constructor(
-    private recipeService : RecipeService,
-    private route : ActivatedRoute,
-    private router : Router
-  ){}
+    private recipeService: RecipeService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.myRouteSub = this.route.params.subscribe(
-      (params : Params) => {
+      (params: Params) => {
         this.myRecipeId = Number(params['id']);
         this.myRecipe = this.recipeService.getRecipe(this.myRecipeId);
       }
@@ -44,12 +44,12 @@ export class RecipeDetailsComponent implements OnInit, OnDestroy {
   }
 
   onEditRecipe() {
-    this.router.navigate(['edit'], {relativeTo: this.route});
+    this.router.navigate(['edit'], { relativeTo: this.route });
   }
 
   onDeleteRecipe() {
     this.recipeService.deleteRecipe(this.myRecipeId);
-    this.router.navigate([".."], {relativeTo: this.route});
+    this.router.navigate(['..'], { relativeTo: this.route });
   }
 
 }

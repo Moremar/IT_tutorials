@@ -18,15 +18,15 @@ import { RecipeService } from './recipe.service';
 export class RecipesResolverGuard implements Resolve<Recipe[]> {
 
   constructor(
-    private dataStorageService : DataStorageService,
-    private recipeService : RecipeService
+    private dataStorageService: DataStorageService,
+    private recipeService: RecipeService
   ) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Recipe[] | Observable<Recipe[]> | Promise<Recipe[]> {
     // return the Observable on recipes if recipes are not loaded yet
     const recipes = this.recipeService.getRecipes();
     if (recipes.length === 0) {
-    return this.dataStorageService.loadRecipesFromBackend();
+      return this.dataStorageService.loadRecipesFromBackend();
     }
     // if recipes are already loaded, return them (result not used, the resolver only ensures there are recipes)
     return recipes;

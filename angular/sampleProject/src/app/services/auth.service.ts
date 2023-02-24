@@ -14,16 +14,16 @@ import { Router } from '@angular/router';
 })
 export class AuthService {
 
-  readonly SIGNUP_URL : string = environment.firebase.signup_url;
-  readonly LOGIN_URL : string = environment.firebase.login_url;
-  readonly API_KEY : string = environment.firebase.api_key;
+  readonly SIGNUP_URL: string = environment.firebase.signup_url;
+  readonly LOGIN_URL: string = environment.firebase.login_url;
+  readonly API_KEY: string = environment.firebase.api_key;
   readonly LOCAL_STORAGE_USER = 'loggedUser';
 
   // subject emitting the logged user everytime it changes
   // behavioral subject so we can access the last emitted value even when subscribing after its emission
   public loggedUser = new BehaviorSubject<User | null>(null);
 
-  private myTimeoutTimer : any;
+  private myTimeoutTimer: any;
 
   constructor(
     private http: HttpClient,
@@ -31,10 +31,12 @@ export class AuthService {
   ) {}
 
 
-  signup(credentials: Credentials) : Observable<AuthResponse> {
+  signup(credentials: Credentials): Observable<AuthResponse> {
     // return an Observable so the AuthComponent can update the template on loading/success/error
     return this.http
-      .post<AuthResponse>(this.SIGNUP_URL, credentials, {params: new HttpParams().set('key', this.API_KEY)})
+      .post<AuthResponse>(this.SIGNUP_URL, credentials, {
+        params: new HttpParams().set('key', this.API_KEY)
+      })
       .pipe(
         // HTTP errors can have multiple structure depending on the error (Firebase, network, ...)
         // This catchError operator transforms all errors into a single error message.
@@ -44,10 +46,12 @@ export class AuthService {
       );
   }
 
-  login(credentials: Credentials) : Observable<AuthResponse> {
+  login(credentials: Credentials): Observable<AuthResponse> {
     // return an Observable so the AuthComponent can update the template on loading/success/error
     return this.http
-      .post<AuthResponse>(this.LOGIN_URL, credentials, {params: new HttpParams().set('key', this.API_KEY)})
+      .post<AuthResponse>(this.LOGIN_URL, credentials, {
+        params: new HttpParams().set('key', this.API_KEY)
+      })
       .pipe(
         // HTTP errors can have multiple structure depending on the error (Firebase, network, ...)
         // This catchError operator transforms all errors into a single error message.
@@ -57,10 +61,15 @@ export class AuthService {
       );
   }
 
-  captureLoggedUser(responseData : AuthResponse) {
+  captureLoggedUser(responseData: AuthResponse) {
     const expiresIn = 1000 * Number(responseData.expiresIn);
-    const expirationDate = new Date((new Date()).getTime() + expiresIn);
-    const user = new User(responseData.email, responseData.localId, responseData.idToken, expirationDate);
+    const expirationDate = new Date(new Date().getTime() + expiresIn);
+    const user = new User(
+      responseData.email,
+      responseData.localId,
+      responseData.idToken,
+      expirationDate
+    );
     this.loggedUser.next(user);
     this.autoLogout(expiresIn);
     // stores the user to persistent storage so it is still accessible on refresh
@@ -69,22 +78,22 @@ export class AuthService {
 
   // Common handling for signup and login to transform the HTTP error response into an error message
   handleAuthError(errorResponse: HttpErrorResponse) {
-    let errorMessage = "An unknown error occured.";
+    let errorMessage = 'An unknown error occured.';
     if (errorResponse.error && errorResponse.error.error && errorResponse.error.error.message) {
       switch (errorResponse.error.error.message) {
         case 'EMAIL_EXISTS':
-          errorMessage = "This email is already in use.";
+          errorMessage = 'This email is already in use.';
           break;
         case 'EMAIL_NOT_FOUND':
         case 'INVALID_PASSWORD':
           // same error for incorrect email or password to not give too much hint on the issue.
-          errorMessage = "Invalid email or password.";
+          errorMessage = 'Invalid email or password.';
           break;
         case 'USER_DISABLED':
-          errorMessage = "This user is no longer active.";
+          errorMessage = 'This user is no longer active.';
           break;
         default:
-          errorMessage = "A Firebase REST API error occured :" + errorResponse.error.error.message;
+          errorMessage = 'A Firebase REST API error occured :' + errorResponse.error.error.message;
           break;
       }
     }
@@ -101,11 +110,11 @@ export class AuthService {
     this.router.navigate(['/auth']);
   }
 
-  autoLogout(duration : number) {
+  autoLogout(duration: number) {
     this.myTimeoutTimer = setTimeout(
       () => {
         console.log("Auth token expired.");
-        this.logout();
+      this.logout();
       },
       duration
     );
@@ -117,11 +126,16 @@ export class AuthService {
       // no user authentication info in the persistent storage
       return;
     }
-    const userFromStorage = new User(userObj.email, userObj.userId, userObj._token, new Date(userObj._tokenExpirationDate));
+    const userFromStorage = new User(
+      userObj.email,
+      userObj.userId,
+      userObj._token,
+      new Date(userObj._tokenExpirationDate)
+    );
     if (userFromStorage.token) {
       console.log('Auth token found, auto-login.');
       this.loggedUser.next(userFromStorage);
-      let duration = (new Date(userObj._tokenExpirationDate)).getTime() - (new Date()).getTime();
+      let duration = new Date(userObj._tokenExpirationDate).getTime() - new Date().getTime();
       this.autoLogout(duration);
     }
   }

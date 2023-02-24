@@ -14,20 +14,20 @@ import { NotFoundComponent } from '../not-found/not-found.component';
 
 
 const routes: Routes = [
-  { path: "", redirectTo: "recipe", pathMatch: "full" },
+  { path: '', redirectTo: 'recipe', pathMatch: 'full' },
   // routes which components are defined in this module
-  { path: "auth", component: AuthComponent },
+  { path: 'auth', component: AuthComponent },
   // lazily loaded modules : instead of defining a component, we specify the TS module file to use and the service class name.
   // the import for this module is not at the top of this file so it does not get loaded at startup
-  { path: "recipe", loadChildren: () => import('./recipe.module').then(m => m.RecipeModule) },
-  { path: "**", component: NotFoundComponent }
+  { path: 'recipe', loadChildren: () => import('./recipe.module').then(m => m.RecipeModule) },
+  { path: '**', component: NotFoundComponent }
 ];
 
 @NgModule({
   // use Router.forRoot() in the main module routing
   // by default, the JS files for each lazy modules are loaded when needed, but we can specify
   // to pre-load them to improve performance
-  imports: [RouterModule.forRoot(routes, {preloadingStrategy: PreloadAllModules})],
+  imports: [RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })],
   exports: [RouterModule]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

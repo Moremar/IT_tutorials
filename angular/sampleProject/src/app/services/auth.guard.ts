@@ -17,12 +17,12 @@ import { AuthService } from './auth.service';
 export class AuthGuard implements CanActivate {
 
   constructor(
-    private authService : AuthService,
-    private router : Router
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   canActivate(
-        route: ActivatedRouteSnapshot,
+    route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot): boolean | UrlTree | Observable<boolean | UrlTree> | Promise<boolean | UrlTree> {
     return this.authService.loggedUser
       .pipe(
@@ -30,7 +30,7 @@ export class AuthGuard implements CanActivate {
         take(1),
         // return true only if the user is authenticated
         map(
-          (loggedUser : User | null) => {
+          (loggedUser: User | null) => {
             // user is logged in, the route can be activated
             if (loggedUser && loggedUser.token !== null) {
               return true;
@@ -40,7 +40,7 @@ export class AuthGuard implements CanActivate {
             return this.router.createUrlTree(['/auth']);
           }
         )
-      );
+    );
   }
 
 }

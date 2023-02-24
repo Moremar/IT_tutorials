@@ -18,18 +18,18 @@ export class AuthComponent implements OnInit {
 
   /* Member variables */
 
-  myIsLoading : boolean = false;
-  myErrorMessage : string | null = null;
+  myIsLoading: boolean = false;
+  myErrorMessage: string | null = null;
 
   // get a reference on the template where we want to insert the modal
-  @ViewChild(PlaceholderDirective) modalHost! : PlaceholderDirective;
+  @ViewChild(PlaceholderDirective) modalHost!: PlaceholderDirective;
 
 
   /* Constructor and life cycle hooks */
 
   constructor(
-    private authService : AuthService,
-    private router : Router
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {}
@@ -37,20 +37,19 @@ export class AuthComponent implements OnInit {
 
   /* Methods */
 
-  onSignup(form : NgForm) {
-    console.log("Signing up...");
+  onSignup(form: NgForm) {
+    console.log('Signing up...');
     const credentials = new Credentials(form.value.userEmail, form.value.userPassword);
     return this.authenticate(this.authService.signup(credentials));
   }
 
-  onLogin(form : NgForm) {
-    console.log("Logging in...");
+  onLogin(form: NgForm) {
+    console.log('Logging in...');
     const credentials = new Credentials(form.value.userEmail, form.value.userPassword);
     return this.authenticate(this.authService.login(credentials));
-
   }
 
-  authenticate(authObservable : Observable<AuthResponse>) {
+  authenticate(authObservable: Observable<AuthResponse>) {
     // common handling for signup and login
     this.myIsLoading = true;
     authObservable.subscribe(
@@ -58,7 +57,7 @@ export class AuthComponent implements OnInit {
         this.myIsLoading = false;
         this.router.navigate(['/recipe']);
       },
-      (errorMessage : string) => {
+      (errorMessage: string) => {
         this.myErrorMessage = errorMessage;
         this.myIsLoading = false;
         this.showErrorModal();

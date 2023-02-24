@@ -10,23 +10,23 @@ import { RecipeService } from '../services/recipe.service';
 })
 export class ComponentForTestComponent implements OnInit, OnDestroy {
 
-  myRecipes : Recipe[] = [];
-  private myRecipeSub! : Subscription;
+  myRecipes: Recipe[] = [];
+  private myRecipeSub!: Subscription;
 
   constructor(
-    private recipeService : RecipeService
+    private recipeService: RecipeService
   ) {}
 
   ngOnInit(): void {
     this.myRecipeSub = this.recipeService.recipesChanged.subscribe(
-      (recipes : Recipe[]) => {
+      (recipes: Recipe[]) => {
         this.myRecipes = recipes;
       }
     );
   }
 
   ngOnDestroy(): void {
-      this.myRecipeSub.unsubscribe();
+    this.myRecipeSub.unsubscribe();
   }
 
 }

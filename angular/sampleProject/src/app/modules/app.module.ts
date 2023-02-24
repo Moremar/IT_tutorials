@@ -29,15 +29,17 @@ import { AuthInterceptor } from '../services/auth.interceptor';
     SharedModule,
     ReactiveFormsModule,
     HttpClientModule,
-//    RecipeModule,   // no longer imported, as it is now lazily loaded
+    // RecipeModule,   // no longer imported, as it is now lazily loaded
     ShoppingModule,
-    AppRoutingModule  // need to be imported after all feature modules including routes, since it contains the wildcard route
+    AppRoutingModule   // need to be imported after all feature modules including routes, since it contains the wildcard route
   ],
-  providers: [{
-    provide:  HTTP_INTERCEPTORS,    // constant token to tell Angular it is an interceptor
-    useClass: AuthInterceptor,
-    multi:    true                  // to not overwrite other interceptors if any
-  }],
+  providers: [
+    {
+      provide: HTTP_INTERCEPTORS,  // constant token to tell Angular it is an interceptor
+      useClass: AuthInterceptor,
+      multi: true                  // to not overwrite other interceptors if any
+    }
+  ],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {}
