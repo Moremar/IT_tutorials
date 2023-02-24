@@ -474,6 +474,218 @@ To improve the performance, we can set the loading strategy to preload all modul
 ```
 
 
+## Angular Directives
+
+### Built-in Directives
+
+Directives are properties that can be assigned to an HTML tag to modify its behavior.  
+Angular ships with some built-in attribute and structural directives.
+
+Structural directives are directives that modify the DOM, they are prefixed with the `*` symbol.  
+They are just a trick to write more readable code, but they are not real directives.  
+They get transformed by Angular into valid HTML code using the corresponding attribute directive (without the `*` prefix).
+
+- Conditional inclusion :  ***ngIf**  
+  Take a boolean value, display the tag if the TS results to true.
+  ```commandline
+    <p *ngIf="shouldDisplay"> XXX </p>
+  ```
+  The syntax is a bit strange when it specifies an else block :
+  ```commandline
+    <p *ngIf="shouldDislay; else #other"> XXX </p>
+    <ng-template #other> <p> YYY </p> </ng-template>
+  ```
+  Behind the scene, Angular transforms the template with the structural directive into :
+  ```commandline
+  <ng-template [ngIf]="shouldDisplay">
+    <p> XXX </p>
+  </ng-template>
+  ```
+
+
+- Selection of a tag among several : **ngSwitch** / ***ngSwitchCase** / ***ngSwitchDefault**  
+  Only the directives for the options of the switch have a `*` prefix.
+```commandline
+    <div [ngSwitch]="value">
+      <p *ngSwitchCase="1"> I am 1 ! </p>
+      <p *ngSwitchCase="2"> I am 2 ! </p>
+      <p *ngSwitchCase="3"> I am 3 ! </p>
+      <p *ngSwitchDefault> I am not 1, 2 or 3 ! </p>
+    </div>
+```
+
+
+- Repeat a block multiple times :  ***ngFor**  
+  Repeat a block for all elements of an input array.  
+  ```commandline
+  <p *ngFor="let server of serverNames"> {{server}} </p>
+  ```
+  We can get the current loop index with the `index` variable that Angular provides :
+  ```commandline
+  <p *ngFor="let server of serverNames; let i = index"> Loop {{i}} : {{server}} </p>
+  ```
+
+
+- Dynamic style: **ngStyle**  
+  Defines some CSS styles for the tag, it takes a map of property/value pairs.  
+  It has no `*` prefix, as it does not modify the DOM structure.
+  ```commandline
+  <p [ngStyle]="{backgroundColor: getColor()}"> XXX </p>
+  ```
+
+
+- Dynamic classes: **ngClass**  
+  Defines some CSS classes for the tag, it takes a map of string/boolean, to decide if each class is attached to the tag.  
+  It has no `*` prefix, as it does not modify the DOM structure.
+  ```commandline
+  <p [ngClass]="{online: isOnline()}"> XXX </p>
+  ```
+
+
+### Custom Attribute Directives
+
+We can create custom directives in Angular, as a TS class with the `@Directive()` decorator.  
+The directive needs to be added in the `declarations` of the module for Angular to know it.  
+The reference of the element that uses this directive can be injected from the decorator :
+
+```commandline
+@Directive({
+  selector: '[appBasicHighlight]'
+})
+export class BasicHighlightDirective implements OnInit {
+
+  // inject the ElementRef and shortcut to make it a property
+  constructor(private elementRef: ElementRef) {}
+
+  ngOnInit() {
+    this.elementRef.nativeElement.style.backgroundColor = 'blue';
+  }
+}
+```
+
+This directive can then be used in our HTML like this :
+
+```commandline
+   <p appBasicHighlight> I am blue ! </p>
+```
+
+It is not recommended to directly amend the style of an HTML element from the TS code though.  
+A better approach is to use a renderer, also injectable by Angular in the constructor :
+
+```commandline
+   constructor(
+     private elementRef: ElementRef,
+     private renderer: Renderer2
+   ) {}
+   
+   ngOnInit() {
+     this.renderer.setStyle(this.elementRef.nativeElement, 'background-color', 'blue');
+   }
+```
+
+### Dynamic Custom Attribute Directives
+
+The directive can react to an event happening in the host component by defining a method with `@HostListener()` decorator.  
+For ex for the directive to set a blue background on hover, we can define in the directive TS file :
+
+```commandline
+  @HostListener('mouseenter') onMouseOnter(eventData: Event) {
+     this.renderer.setStyle(this.elementRef.nativeElement, 'background-color', 'blue');
+  }
+
+  @HostListener('mouseleave') onMouseLeave(eventData: Event) {
+     this.renderer.setStyle(this.elementRef.nativeElement, 'background-color', 'transparent');
+  }
+```
+
+If we just need to bind to a property of the host component, a simpler way is to use `@HostBinding()` instead of using the renderer.  
+It binds a property of the host element to a field of our directive :
+
+```commandline
+  @HostBinding('style.backgroundColor') bgColor: string = 'transparent';
+
+  @HostListener('mouseenter') onMouseOnter(eventData: Event) {
+     bgColor = 'blue';
+  }
+
+  @HostListener('mouseleave') onMouseLeave(eventData: Event) {
+     bgColor = 'transparent';
+  }
+```
+
+A directive can receive some parameters with the `@Input()` decorator, just like a component:
+
+```commandline
+  @Input() highlightColor : string = 'blue';
+```
+
+To pass the parameter to the directive, we bind it just like we do for a component.  
+Angular figures out if the specified property is for the component or for one of its directives :
+
+```commandline
+<p appBasicHighlight [highlightColor]="'red'"> I am red ! </p>
+```
+
+We can give the `@Input()` property the same name as the directive, so we can bind using the directive itself (like it is done for the built-in `ngClass` and `ngStyle` for example) :
+
+```commandline
+  @Input('appBasicHighlight') highlightColor : string = 'blue';
+```
+
+So we can bind it in the HTML template :
+
+```commandline
+<p [appBasicHighlight]="'red'"> I am red ! </p>
+```
+
+This obviously can be used only with a single `@Input()` property, others need the normal binding if there are more than one.
+
+
+### Custom structural directives
+
+Structural directives (prefixed with `*`) are no native directive in Angular, just syntactic sugar.  
+Tags with `*ngIf` get wrapped by Angular into a `<ng-template>` element with a `[ngIf]` property (without the `*`).  
+The `<ng-template>` itself is not added to the DOM, but its content is added if the condition evaluates to true.
+
+To implement custom structural directives, it is similar to attribute directives, but we now need to tell Angular what to display, via two elements we can inject :
+ - **TemplateRef**      : a reference to the template containing the content to display or not
+ - **ViewContainerRef** : a reference to the container where the template is included
+
+We can use a setter for the `@Input()` to execute a method when it is set.  
+This method will decide whether or not to include the element in the view.  
+For example, a directive "unless" that displays an element only if a condition is false :
+
+```commandline
+@Directive({
+  selector: '[appUnless]'
+})
+export class UnlessDirective {
+
+  // here we use a setter instead of a prop, so the method is called everytime "unless" is defined
+  @Input() set appUnless(condition: boolean) {
+    if (!condition) {
+        this.vcRef.createEmbeddedView(this.templateRef);
+    } else {
+      // do not display the template, clear the view container
+        this.vcRef.clear();
+    }
+  }
+
+  // inject the template ref and the view container ref as properties
+  constructor(
+    private templateRef: TemplateRef,
+    private vcRef : ViewContainerRef
+  ) {}
+}
+```
+
+It can then be used like :
+
+```commandline
+  <div *appUnless="shouldBeHidden"> XXX </div>
+```
+
+
 ## State Management with Redux
 
 ### Redux pattern
