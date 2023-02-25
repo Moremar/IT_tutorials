@@ -406,7 +406,7 @@ Services can be used for inter-components communication using `Subject` or `Beha
 This is much simpler than passing around data from component to component with `@Input()` and `@Output()` chains.
 
 
-# Angular Modules
+## Angular Modules
 
 Every Angular app has at least 1 module, called `AppModule` by default.  
 We can create other Angular modules to group components related to a given feature.  
@@ -684,6 +684,400 @@ It can then be used like :
 ```commandline
   <div *appUnless="shouldBeHidden"> XXX </div>
 ```
+
+
+## Angular Pipes
+
+Pipes can be used to transform some data in the output HTML template.  
+They are used with string interpolation to transform the value resolved in TS :
+
+```commandline
+{{ 'Hello' | uppercase }}     //  HELLO
+```
+
+Angular ships with some built-in pipes :
+
+```commandline
+uppercase
+date               // format a date like 'Aug 12, 2017' by default
+json
+slice              // substring
+async              // wait for Promise resolution and update when it resolves
+```
+
+Some pipes can take parameters, provided after a `:` symbol :
+
+```commandline
+{{ myDate | date: 'fullDate' }}     // format a date like 'Monday, August 12, 2017'
+```
+
+Pipes can be chained :
+
+```commandline
+{{ myDate | date: 'fullDate' | uppercase }}
+```
+
+A custom pipe can be create in a `xxx.pipe.ts` file by implementing the `PipeTransform` interface.  
+It should have the `@Pipe()` decorator with the `name` property.  
+The pipe should then be added to the `declarations` array of a module, just like any component.
+
+```commandline
+  @Pipe({ name: 'firstLetters' })
+  export class FirstLettersPipe implements PipeTransform {
+    transform(value: any, size: number) {
+      return value.substr(0, size);
+    }
+  }
+```
+
+Pipes can return any type of data, and can also be used in `*ngFor` loops in the HTML code to filter the array we loop on.  
+If `validUsers` is a pipe taking users in parameter and returning an array of valid ones, we can use :
+
+```commandline
+<div *ngFor="let user of users | validUsers"> ... </div>
+```
+
+By default, the pipe is not recalculated when the array changes (it would be high performance).  
+This means that if new valid users are created, they would not be listed in the above example.  
+We can force Angular to recalculate the pipe on every change in the page by adding `pure: false` in the `@Pipe()` decorator.  
+It is not the default because that may slow down the app.
+
+The `async` pipe can also be used with Promise or Observable objects.  
+By default, if we output a promise object, it will only show `[Object object]`  
+In the case the promise resolves to a string after X seconds, we may want to only display the value after resolution.  
+In that case we can use `{{ myPromise | async }}`, which will not display anything as long as the promise is pending, and will display the resolved string when the promise is resolved.
+
+
+## Angular Forms
+
+In usual web applications, forms send a request to the server, that will reply with an HTML page.  
+Angular applications are single-page applications, so we need to handle the form ourselves.  
+If we want to reach out to a server, this will be done via the Angular HTTP service.  
+Angular offers great tools to check the form validity and handle the inputs.  
+It requires to import `FormsModule` in the `imports` property of the `app.module.ts` file.
+
+There are two approaches to handle forms in Angular :
+
+ - **template-based**  
+The simplest approach, we define the form structure in the HTML template.  
+Angular automatically creates a TS object representing the form and lets us manipulate it.  
+It is sufficient for most scenarios.
+
+
+ - **reactive**  
+We define manually TS form object and all its controls, create the HTML form in the template and specify the bindings.  
+It is more complex than the template-based approach, but allows more fine-tuning (dynamic controls, custom validators...)
+
+### Template-based approach
+
+In the HTML form, we need to let Angular know which controls must be included in the TS representation.  
+For that, we add the `ngModel` property (with no param) and and the `name` property to all our controls :
+
+```commandline
+<input type="text" id="username" class="form-control" ngModel name="username" />
+```
+
+By default, when a button with `type="submit"` inside a form is clicked, a submit event is triggered.  
+Angular uses this behavior so instead of adding a `(click)` listener to our button, we add a `(ngSubmit)` listener to the `<form>` tag.
+
+We can access the TS form object by setting a local reference to the form and assigning it to `"ngForm"`, then give it to the TS method called on submit :
+
+```commandline
+<form (ngSubmit)="onSubmit(myForm)" #myForm="ngForm"> [...] </form>
+```
+
+
+From the TS component definition, we can access this NgForm object parameter.  
+Its `value` attribute contains the value of each control in the form :
+
+```commandline
+  onSubmit(myForm: NgForm) {
+    console.log(myForm.value);
+  }
+```
+
+An alternative design is to not pass any parameter to `onSubmit()`, but in the component get the form with `@ChildView()`.  
+It is useful if we want to access the content of the form from outside the form submit function :
+
+```commandline
+  @ChildView('myForm') myForm: NgForm;
+```
+
+
+#### Form Validation
+
+We can add some built-in directives in our controls to define some validation :
+
+```commandline
+   required
+   email
+   maxlength="25"
+   pattern="[a-zA-Z ]*"       // text only
+   pattern="^[1-9][0-9]*$"    // positive number
+```
+
+The result of the validation will be in the `valid` property of the NgForm TS object.  
+Angular also adds some CSS classes to the controls depending on their status :
+
+```commandline
+  ng-valid
+  ng-invalid
+  ng-dirty         // modified
+  ng-touched       // clicked but not necessarily modified
+  ng-untouched     // not even clicked
+```
+
+This lets us style invalid inputs, for example :
+
+```commandline
+  input.ng-invalid.ng-touched { border: solid 1px red; }
+```
+
+We can also add an error message displayed only if the input is invalid.  
+This requires to give a local reference to the input of type ngModel :
+
+```commandline
+  <input type="text" class="form-control" name="email" ngModel email #myEmail="ngModel" />
+  <p class="help-block" *ngIf="myEmail.touched && !myEmail.valid"> Enter valid email </p>
+```
+
+The submit button can be disabled if the form is not valid :
+
+```commandline
+  <input type="submit" class="btn btn-primary" [disabled]="!myForm.valid" />
+```
+
+#### Default value
+
+We can add a default value to a control (input or select) with one-way binding on the `[ngModel]` directive :  
+
+```commandline
+<select class="form-control" id="question" name="question" [ngModel]="'age'">
+  <option value="age">How old are you ?</option>
+  <option value="name">What is your name ?</option>
+</select>
+```
+
+If we need to access the value from TS before the submit button is clicked, we can use 2-way bindings on the `[(ngModel)]` directive.  
+This can be used for example to verify if a username is not already taken.
+
+
+#### Form Groups
+
+We can group several controls together inside a form group in Angular with the `ngModelGroup` directive.  
+Angular will take it into account when creating the NgForm object, each group will be a level in the `value` property of the form, as well as in the `controls` property, with its own valid/touched/dirty... properties.  
+
+We can also set a reference to the form group of type `ngModelGroup` to access it from somewhere in the HTML template.
+
+```commandline
+<form (ngSubmit)="onSubmit()" #myForm="ngForm">
+  <div id="userInfo" ngModelGroup="userData" #userData="ngModelGroup">
+    <div class="form-group">
+      <label for="username"> User Name </label>
+      <input class="form-control" type="text" id="username" name="username" ngModel required />
+    </div>
+    <div class="form-group">
+      <label for="password"> Password </label>
+      <input class="form-control" type="text" id="password" name="password" ngModel required />
+    </div>
+  </div>
+  <p *ngIf="userData.touched && userData.invalid">The User data are not valid ! </p>
+</form>
+```
+
+In the above example, `ngModelGroup="userData"` tells Angular to include that form group in its ngForm object representation.  
+`#userData="ngModelGroup"` defines a local reference on that form group of type `ngModelGroup` (instead of HTML element if nothing specified) that can be accessed in the template, for example in a `*ngIf` condition.
+
+
+#### Select dropdown
+
+```commandline
+<div class=form-group">
+  <label for="status">Project Status</label>
+  <select id="status" ngModel name="projectStatus">
+    <option value="stable">Stable</option>
+    <option value="critical">Critical</option>
+    <option value="finished">Finished</option>
+  </select>
+</div>
+```
+
+#### Radio-button
+
+For radio buttons, each option must be an input wrapped in a `<label>` tag.  
+All options are in a `<div>` tag with class `"radio"` :
+
+```commandline
+<div id="myRadioContainer">
+  <div class="radio">
+   <label> <input type="radio" name="gender" value="H" ngModel /> Male </label>
+   <label> <input type="radio" name="gender" value="F" ngModel /> Female </label>
+  </div>
+</div>
+```
+
+#### Update control value from TS
+
+We can update control values from the TS code with 2-way data binding `[(ngModel)]` directive.  
+Angular also offers form-specific functions to update either all the form values or specific ones.  
+For this, we need to have a local reference `#myForm` on the form and retrieve it with an `@ChildView()` property.  
+Then we can call :
+
+```commandline
+  this.myForm.setValue({ userData: { username: 'Bob', password: '1234'}, email: 'aaa@aaa.com' });
+  this.myForm.form.patchValue({ userData: { username: 'Bob' } });
+```
+
+We can also reset the form to the initial values and state (all CSS classes) with :
+
+```commandline
+  this.myForm.reset();
+```
+
+### Reactive approach
+
+With the reactive approach, we still define our form in the HTML, but we no longer use the NgForm representation that Angular creates automatically.  
+We need to import the `ReactiveFormsModule` in the `app.module.ts` (instead of `FormsModule` for template-based forms).  
+Then we define a property `myForm` of type `FormGroup` (the NgForm class is actually a wrapper above it).  
+We can populate it in the `ngOnInit()`, by defining the controls of the form.  
+In this FormGroup, there is no difference between input / select / radio controls.  
+We can have a tree structure by adding other FormGroup elements inside the root FormGroup.
+
+```commandline
+  ngOnInit() {
+    this.myForm = new FormGroup({
+      'userData': new FormGroup({
+        'username': new FormControl('default name'),
+        'password': new FormControl(null),
+      }),
+      'gender': new FormControl('H'),
+    });
+  }
+```
+
+In the HTML, we need to let Angular know that we want to link our `<form>` tag with our custom TS FormGroup :
+
+```commandline
+<form [formGroup]="myForm">
+```
+
+Then all controls need to have the `"formControlName"` directive to link to the control name in the TS form object :
+
+```commandline
+<input type="text" id="username" class="form-control" formControlName="username">
+```
+
+Similarly, the form groups inside the root must be represented by a div with `"formGroupName"` directive :
+
+```commandline
+<div formGroupName="userData">
+```
+
+On submit, it is very similar to the template-based version.  
+The form has a `(ngSubmit)` listener calling an onSubmit() function.  
+Now the `onSubmit()` function can access the forms values from the myForm object it created.
+
+Validators on controls should not be in the HTML anymore, but in the TS form definition.  
+The `FormControl()` constructor takes a default value and the validator(s) to apply.
+
+```commandline
+  new FormControl('default val', [Validators.required, Validator.email])
+```
+
+To display a message when a component is invalid, it is the same logic as for template-based, but we use the `get` method of the FormGroup to access a given controller :
+
+```commandline
+  <input type="text" id="username" class="form-control" formControlName="username">
+  <span *ngIf="myForm.get('userData.username').touched && !myForm.get('userData.username').valid">Enter a valid name !</span>
+```
+
+#### Dynamic FormArray Controls
+
+We can also use some arrays of controllers, by declaring a FormArray inside the FormGroup.  
+Then it needs to be linked in the HTML with `"formArrayName"` property :
+
+```commandline
+<div formArrayName="guests">
+  <h1> Guests </h1>
+  <button type="button" class="btn btn-primary" (click)="onAddGuest()"> Add Guest </button>
+  <div class="form-group" *ngFor="let guest of myForm.get('guests').controls; let i = index">
+    <input type="text" class="form-control" [formControlName]="i" />
+  </div>
+</div>
+```
+
+We can add dynamically an empty element in the `guests` form array from the TS code.  
+That requires a cast to `<FormArray>` to let TS know that we are using an array and can push to it :
+
+```commandline
+  newControl = new FormControl(null, Validators.required);
+  (<FormArray>this.myForm.get('guests')).push(newControl);
+```
+
+#### Custom validators
+
+The reactive approach lets us easily define custom validators.  
+We just need to implement a validator function and pass it to the `FormControl()` constructor of a control.  
+This validator function must return `null` if no issue, or an object of the form `{ 'myValidationName' : true }` on error.
+
+```commandline
+  blacklistedGuests = ['Bob', 'Alice'];
+
+  notBlacklisted(control: FormControl) : { [s: string]: boolean } {
+    if (this.blacklistedGuests.indexOf(control.value) !== -1) {
+      return { 'blacklistedName': true };
+    }
+    return null;
+  }
+```
+
+_NOTE_ :  We need to bind `this` so TS knows what to use as the `this` when it calls the validator from Angular !
+
+```commandline
+  newControl = new FormControl(null, [Validators.required, this.notBlacklisted.bind(this)]);
+```
+
+#### Using error codes
+
+The error code is saved in the TS form object inside the component that causes the error.  
+This can be used to display a custom validation message depending on the error :
+
+```commandline
+    <input type="text" class="form-control" [formControlName]="i" />
+    <span *ngIf="myForm.get('userData.username').touched && !myForm.get('userData.username').valid">
+      <span *ngIf="myForm.get('userData.username').errors['required']"> Should not be empty ! </span>
+      <span *ngIf="myForm.get('userData.username').errors['blacklistedName']">  Blacklisted Name ! </span>
+    </span>
+```
+
+#### Asynchronous Validation
+
+An asynchronous validator can be created when the validation takes time, for example to reach out to a backend via HTTP.  
+It is similar to a synchronous validator, but it returns a Promise or an Observable :
+
+```commandline
+  nameForbidden(control: FormControl): Promise<any> | Observable<any> {
+    const promise = new Promise<any>( (resolve, reject) => {
+      setTimeout(() => {     // just to simulate a time-consuming function
+        if (control.value == John'') {
+          resolve({ 'forbiddenName': true });
+        } else {
+          resolve(null);
+        }
+      }, 1500);
+    });
+    return promise;
+  }
+```
+
+In the declaration of the control, it should be added in the 3rd argument (as for synchronous validators, bind `this` if used) :
+
+```commandline
+  newControl = new FormControl(null, [Validators.required], [this.nameForbidden]);
+```
+
+We can subscribe to `myform.valueChanges` or `myForm.statusChanges` ovservables to react to those changes.  
+This can also be done on individual form controls.
 
 
 ## State Management with Redux
