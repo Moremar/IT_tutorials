@@ -123,7 +123,6 @@ ng deploy <package>         Deploy the code to a destination target
                             This needs to specify what to deploy to, and the deployment steps will be in the package
                             Some valid targets are Firebase Hosting, Github pages, AWS, Azure ...
 ng deploy @angular/fire     Deploy the Angular project to Firebase
-                           
 ```
 
 

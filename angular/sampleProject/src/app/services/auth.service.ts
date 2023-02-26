@@ -121,7 +121,8 @@ export class AuthService {
   }
 
   autoLogin() {
-    const userObj = JSON.parse(localStorage.getItem(this.LOCAL_STORAGE_USER) || '');
+    const storedUserStr = localStorage.getItem(this.LOCAL_STORAGE_USER);
+    const userObj = storedUserStr ? JSON.parse(storedUserStr) : '';
     if (!userObj) {
       // no user authentication info in the persistent storage
       return;
