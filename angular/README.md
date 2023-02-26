@@ -2100,8 +2100,132 @@ If we need to test an async calculation (like a call to an external API returnin
    fixture.whenStable().then(() => { /* assertions */ });
    ```
 
+## JS Observables
+
+Angular uses Observables from `rxjs` library, for example `activatedRoute.params` in the router module.  
+Observables are used a lot in JS outside of Angular too, to handle responses HTTP requests for instance.  
+An Observable can complete (like HTTP requests) or never complete (like intervals).  
+We can subscribe to an Observable and give it a method to call on event generation, error and completion :
+
+```commandline
+this.route.params.subscribe(
+  (params: Params) => { console.log(params); },
+  (error)          => { console.log(error); },
+  ()               => { console.log("Completed"); },
+);
+```
+
+If we create and subscribe to our own Observables, we need to unsubscribe from them in the `OnDestroy()` hook.  
+Otherwise, they would keep reacting to the observable changes even after component destruction, causing memory leaks.  
+We do not need to unsubscribe from Angular-specific observables (like `activatedRoute.params`), because Angular automatically unsubscribes from them (but it is fine to unsubscribe anyway).
+
+### Observable Operators
+
+We can use Observable Operators to modify the data received by an Observable before we use it.  
+This is done by calling `pipe()` on the Observable, applying some operators and subscribing to their result.  
+The most popular Observable operators are :
+
+- `map()` that lets us give a function to apply to the data :
+```commandline
+this.route.params
+    .pipe(map( (data) => { return 'ID_' + data; } ))
+    .subscribe( (data) => { console.log(data); } )
+);
+```
+
+- `tap()` that lets us run a function without altering the data.  
+  It returns nothing, and can be used for analytics or logging.
+
+
+- `filter()` that lets us select only the data we want to receive :
+```commandline
+this.route.params
+    .pipe(filter( (data) => { return (+data < 5); } ))
+    .subscribe( (data) => { console.log(data); } )
+);
+```
+
+- `take(n)` lets `rxjs` know that we want only n values from that Observable.  
+  Once we received the desired number of values, it automatically unsubscribes.
+
+
+- `catchError()` lets us process any error sent by the Observable.  
+  It should call `throwError(error)` at the end if it wants to forward the error, so the error reached the `subscribe()`.  
+  It can be useful to catch the errors from a backend and throw another error with a specific format so all our custom errors have the same structure for example.
+
+
+- `exhaustMap()` when we are inside an Observable and we need to return another Observable.  
+  It will wait for the original observable to complete, get its result and replace the original observable by the Observable returned inside the exhaustMap operator.
+
+### Subjects
+
+`Subject` objects are a special type of Observables that we can trigger manually with the `next(val)` method.
+
+In the service  :  `eventSubject = new Subject<boolean>();`  
+In the caller   :  `this.myService.eventSubject.next(true);`  
+In the listener :  `this.myService.eventSubject.subscribe((event: boolean) => { ...} );`
+
+Like every Observable, the listener must unsubscribe in his `onDestroy()` hook.  
+We should use a `Subject` instead of `EventEmitter` for inter-components communication via a service, but it can not replace the EventEmitter in the `@Output()` Angular decorator.
+
+We can also use `BehaviorSubject` objects, that are similar to Subjects but we can access the last emitted value even if we subscribe after it was emitted.
+```commandline
+    eventSubject = new BehaviorSubject<boolean>(null);
+```
+
 
 ## Useful external libraries and tools
+
+
+### bootstrap
+
+[Bootstrap](https://getbootstrap.com/) is a collection of CSS styles and classes ready-to-use for HTML pages.  
+It can be installed and added to the `package.json` configuration file with :
+
+```commandline
+npm install --save bootstrap
+npm install --save jquery
+```
+
+The styles and scripts also need to be updated in the `angular.json` file to include the bootstrap files :
+
+```commandline
+    "styles": [
+      "node_modules/bootstrap/dist/css/bootstrap.min.css",
+      "src/styles.css"
+    ],
+    "scripts": [
+      "./node_modules/jquery/dist/jquery.js",
+      "./node_modules/bootstrap/dist/js/bootstrap.bundle.js"
+    ],
+```
+
+Bootstrap offers a lot of useful classes, and many examples of components on their website.  
+
+```commandline
+container        space above and below, fixed width (depending on screen size), 15px padding
+row              fill 100% of the container
+col              let Bootstrap decide the size, all cols will have the same width
+col-sm-3         use 3 columns out of the 12 available, sm is for small screens support
+                 when getting too small, the columns will stack on each other
+
+form-control     set size and width of a text input
+btn              empty button with size and radius
+btn-primary      blue color button (use in addition to "btn")
+text-XXX         set text color, XXX can be primary/success/info/warning/danger/secondary/white/dark/light
+bg-XXX           set background color, XXX can be the same as above
+```
+
+Bootstrap also add app-wide styles to customize some native html tags :
+
+```commandline
+<h1> to <h6>      specific font + size
+<small>           smaller text
+<mark>            yellow bg and padding
+<code>            fixed width font in pink
+<kbd>             for commands, white text on black bg with radius
+```
+
 
 ### prettier
 
