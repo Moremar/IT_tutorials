@@ -117,7 +117,13 @@ ng e2e                      Run the end-to-end tests
 ng build                    Build app for deployment into the /dist folder
 ng update                   Update the project to latest angular version
 ng add <external_lib>       Use NPM to install a lib and run a script to setup the Angular project to use it
-ng add @angular/material    Example of "ng add", to install Angular Material components 
+ng add @angular/material    Example of "ng add", to install Angular Material components
+ng add @angular/fire        Example of "ng add" to install the Firebase CLI
+ng deploy <package>         Deploy the code to a destination target
+                            This needs to specify what to deploy to, and the deployment steps will be in the package
+                            Some valid targets are Firebase Hosting, Github pages, AWS, Azure ...
+ng deploy @angular/fire     Deploy the Angular project to Firebase
+                           
 ```
 
 
