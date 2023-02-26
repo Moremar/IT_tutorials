@@ -1080,6 +1080,560 @@ We can subscribe to `myform.valueChanges` or `myForm.statusChanges` ovservables 
 This can also be done on individual form controls.
 
 
+## Angular Router
+
+### Routes definition
+
+An Angular app is a single-page component, but Angular offers a routing mechanism to make it look like the user navigates across different pages, by changing the URL and displaying some specific components depending on the selected route.
+
+We can add routes and their associated components in `app.module.ts` :
+
+```commandline
+  routes: Routes = [
+    { path: '', component: HomeComponent },           // localhost:4200
+    { path: 'users', component: UsersComponent },     // localhost:4200/users
+    { path: 'cards', component: CardsComponent }      // localhost:4200/cards
+  ];
+```
+
+We need to import the router module and give it the routes defined above :
+
+```commandline
+  imports: [
+     ...
+     RouterModule.forRoot(routes)
+  ]
+```
+
+Then in the HTML component where we want routing (most likely in the `app.component.html` top-level component), we add an Angular directive to display the component of the selected route.
+This will indicate to Angular where in the DOM to load the component configured for that route.
+
+```commandline
+  <router-outlet><router-outlet>
+```
+
+### Router links
+
+Most apps have some links to navigate from one page to another, for example buttons in the header bar.  
+Using `href="/users"` is not correct, as it reloads the entire app and thus lsoes the app state.  
+Instead we use the `routerLink` directive, that can take either a string or an array of segments :
+
+```commandline
+  <a routerLink="/users"> XXX </a>
+  <a [routerLink]="['/users', '123']"> XXX </a>    // route to localhost:42000/users/123
+```
+
+A route starts with `/` for an absolute route and without it for a relative route.
+
+To style our links when they are active, Angular offers the `routerLinkActive` directive that can receive a class to attach to the element when it is active.
+This directive can be attached to a `<a>` or a `<li>` tag.
+
+By default, the class given with the `routerLinkActive` directive is attached if the path is included in the current path.  
+This is an issue for the root path `/` (usually used for the app home) that is included in all routes.  
+We can pass options to the `routerLinkActive` directive to force an exact match :
+
+```commandline
+  <ul class="nav nav-tab">
+    <li routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"> <a routerLink="/users"> Home </li>
+    <li routerLinkActive="active"> <a routerLink="/users"> Users </li>
+    <li routerLinkActive="active"> <a routerLink="/cards"> Cards </li>
+  </ul>
+```
+
+To navigate to a route programmatically, we can inject the `Router` element in the constructor and call :
+
+```commandline
+  this.router.navigate(['/users', '123']);
+```
+
+This `navigate()` method has no knowledge of the component it is called from, so it navigates to an absolute route.  
+To navigate to a relative route, we must specify to Angular the route to use as a reference.  
+Inject the current route of type `ActivatedRoute` in the constructor, and pass it to the `navigate()` method :
+
+```commandline
+  this.router.navigate(['users', '123'], {relativeTo: this.activatedRoute});
+```
+
+### URL parameters / query parameters / fragments
+
+We can define dynamic segments in a route in app.module.ts by prefixing the segment with the `:` symbol :
+
+```commandline
+    { path: 'users/:id', component: UserComponent },  // localhost:4200/users/123
+```
+
+Query params (like `?readOnly=Y` for example) can also be added to the Angular routes.  
+From the HTML code, we can use the `queryParams` property of the `routerLink` directive :
+
+```commandline
+  <a routerLink="/users/123" [queryParams]="{readOnly: 'Y'}"> XXX </a>
+```
+
+Fragments (like `#conclusion` for example) can also be added with the `fragment` property (just a string so does not need [..]):
+
+```commandline
+  <a routerLink="/users/123" fragment="conclusion"> XXX </a>
+```
+
+URL parameters, query parameters and fragments can be retrieved from TS in the `ngOnInit()` method of the component.  
+We must inject the active route of type `ActivatedRoute` and access them from its snapshot :
+
+```commandline
+  this.activatedRoute.snapshot.params['id'];
+  this.activatedRoute.snapshot.queryParams['readOnly'];
+  this.activatedRoute.snapshot.fragment;
+```
+
+They can be added programmatically through the options param of the `navigate()` method :
+
+```commandline
+  this.router.navigate(['/users', '123'], { queryParams: { readOnly: 'Y' }, fragment: 'conclusion'});
+```
+
+To react when the URL parameters, query parameters or fragment change, we can subscribe to its observable.  
+The `ActivatedRoute` object has Observable properties with the same name as inside the "snapshot" property :
+
+```commandline
+  this.activatedRoute.params.subscribe(
+    (params: Params) => { this.userId = params['id']; }
+  );
+```
+
+Theoretically we should unsubscribe in the `ngOnDestroy()` hook, but we do not have to do it because Angular already cleans the subscription for us when the component is destroyed (only for Angular observables).
+
+Note that when we navigate to a different route of our app, we lose the current query parameters by default.  
+To preserve the current query parameters or merge with some new ones, we can set the `queryParamsHandling` option :
+
+```commandline
+  this.router.navigate('edit', {relativeTo: this.activatedRoute, queryParamsHandling: 'preserve'});
+```
+
+### Nested Routes
+
+We can define sub-routes in a route if we want a hierarchy of pages in an Angular app.  
+If we write this in app.module.ts :
+
+```commandline
+    { path: 'users', component: UsersComponent },     // localhost:4200/users
+    { path: 'users/:id', component: UserComponent },  // localhost:4200/users/123
+```
+
+Then `users/:id` route is not a child of the `users` route, it is an independant route.  
+When resolcing the component to load for URL `users/123`, the Angular router will load `UsersComponent`, not `UserComponent`.  
+If we use an exact match, then `UserComponent` is loadded but not `UsersComponent`.  
+In case of a child route, we want to load `UsersComponent`, and somewhere inside its HTML template we want to load `UserComponent`.  
+
+When we have multiple levels of `<router-outlet>` tags to load components, we can use children routes :
+
+```commandline
+    { path: 'users', component: UsersComponent, children: [
+        { path: ':id', component: UserComponent }
+    ] },
+
+```
+In this case we need to have another `<router-outlet>` inside the HTML template of `UsersComponent` to specify where to include the loaded child component.
+
+### Wildcards and Redirection
+
+We can redirect a route to another one with :
+
+```commandline
+    { path: '/home', redirectTo: '/' }
+```
+
+A default route can be specified in case no previous route matched.  
+It needs to be the last route defined, since routes are evaluated in order :
+
+```commandline
+    { path: '**', component: NotFoundComponent }
+```
+
+### External Routing module
+
+It is a good practice to use a separate module for the routing of our app.  
+We can create an `app-routing.module.ts` file (created by default by CLI is we specify routing) :
+ - create a `AppRoutingModule` with the `NgModule()` decorator
+ - add the routes definition (of type `Routes`) before the `@NgModule` decorator
+ - in the `imports` of AppRoutingModule, add `RouterModule.forRoot(routes)`
+ - in the `exports` of AppRoutingModule export the `RouterModule`
+ - in the import of AppModule add this `AppRoutingModule` to make it aware of the routes
+
+
+### Passing data to the loaded component
+
+When defining the route, we can provide the `data` property (map of key/value pairs).  
+Just like queryParams, it can then be accessed in the component via the injected `ActivatedRoute` instance :
+
+```commandline
+  this.activatedRoute.snapshot.data['myData']
+```
+
+
+## Angular Guards
+
+### Activation guard
+
+We can create a guard to prevent a route to be loaded under some conditions.  
+A guard is a service that implements the `CanActivate` interface, that returns either a `boolean`, a `Promise<boolean>` (that will return later) or an `Observable<boolean>` (that must be subscribed to).  
+It can also return a `UrlTree` in case we want to redirect the user to another URL (to auth for example).  
+Since it is a service, the guard needs should have `'providedIn': 'root'` in its `@Injectable()` decorator.
+
+For example, if we have an authentication service with an `isLoggedIn()` method returning a `Promise<boolean>`, we can define an authentication guard like :
+
+```commandline
+export class AuthenticationGuard implements CanActivate {
+
+  constructor(
+    private authService: AuthenticationService,
+    private router: Router
+  ) {}
+
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) :
+      boolean | UrlTree | Observable<boolean | UrlTree> | Promise<boolean | UrlTree> {
+    this.authService.isLoggedIn().then(
+      (loggedIn : boolean) => {
+        if (loggedIn) {
+          return true;
+        } else {
+          return this.router.createUrlTree(['/login']);
+        }
+      }
+    );
+  }
+}
+```
+
+The guard needs to be added to the `canActivate` property of the route we want to protect.  
+It will automatically apply on all its children.  
+We can have several guards for each route.
+
+```commandline
+  { path: '/users', component: UsersComponent, canActivate: [AuthenticationGuard] }
+```
+
+To allow access to the parent route but add a guard only to the children routes, we can use `canActivateChild` instead of `canActivate`.
+
+### Deactivation guard
+
+It can be useful to create a guard to check if we can safely leave a route.  
+A typical example is to check for unsaved changes and display a confirmation popup.  
+This can be used by implementing the `CanDeactivate` interface.  
+The pattern is to create a `SafeToLeave` interface that has a single method `safeToLeave()` implemented by the component.  
+Then the guard calls this `safeToLeave()` method from the component when it tries to leave the route :
+
+```commandline
+  export interface SafeToLeave {
+    safeToLeave : () => boolean | Promise<boolean> | Observable<boolean>;
+  }
+
+  export class CanDeactivateGuard implements CanDeactivate<SafeToLeave> {
+    canDeactivate( component : SafeToLeave,
+                   currentRoute: ActivatedRouteSnapshot,
+                   currentState: RouterStateSnapshot,
+                   nextState?: RouterStateSnapshot): boolean | Promise<boolean> | Observable<boolean> {
+     return component.safeToLeave();
+   }
+  }
+```
+
+### Resolver guard
+
+We can use a resolver guard to fetch data from a backend before we actually display the routed component.  
+We must create a resolve guard service implementing the `Resolve` interface.
+
+```commandline
+  export class ServerResolveGuard implements Resolve<Server> {
+    constructor(private serversService: ServersService) {}
+
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) : Server | Promise<Server> | Observable<Server> {
+      return serversService.getServer(+route.params['id']);
+    }
+  }
+```
+
+In the routing module we add to the route the `resolver` property taking a map of (resolver name, resolver guard) :
+
+```commandline
+ { path: '/servers/:id', component: ServerComponent, resolve: {server: ServerResolveGuard} }
+```
+
+From the ServerComponent, the resolved server can be accessed in the `data` property of the active route :
+
+```commandline
+  this.activatedRoute.snapshot.data['server']      // if we just need it at initialization
+  this.activatedRoute.data.subscribe(
+    (data: Data) => { this.server = data['server']; }
+  );
+```
+
+
+
+## Communication with a Backend
+
+To communicate with a backend, Angular can send some HTTP requests via its HTTP module.  
+HTTP requests are made of :
+ - a verb  : GET / POST / PUT / DELETE / PATCH ...
+ - a URL   : /recipes/12/
+ - headers : content-type, ...
+ - a body  : the data to send (for POST / PUT / PATCH)
+
+
+Here we use a Firebase project so we do not need to write our own backend.
+Firebase gives us some endpoints to create/alter/delete objects.
+See at the end for more info about Firebase.
+
+
+### Firebase Backend
+
+In a real Angular app, the backend can be in any server-side language (C++, Java, Node, Python...).  
+To simulate a simple backend, we can use Firebase, a Google backend-as-a-service solution.  
+It offers most backend functionalities (authentication, database, storage, REST API).  
+To create a simple backend for an Angular app, we can use a REST API to define HTTP endpoints and the authentication solution generating auth tokens.  
+A Firebase project is a container for several apps sharing a backend (iOS / Android / web).  
+It is actually creating a Google Cloud Platform (GCP) project behind the scene.
+
+#### Firebase Realtime Database
+
+We can use Firebase Realtime database, a database that stores and gets objects directly via HTTP calls.  
+When sending a POST, it is interpreted by Firebase to add an element in a folder of this database.
+
+- open [Firebase home page](https://console.firebase.google.com) (require a Google account)
+- Click "Create a Project" and give it a name.
+- Once the project is created, it appears in the dashboard.
+- Navigate to Build > Realtime Database > Create Database  
+  Click "Start in test mode" to allow anyone to do anything in the DB (later we will use authentication)
+- 
+- We then see a URL like    
+
+The `Data` tab of the database section shows a URL like `https://<PROJECT_NAME>.<REGION>.firebasedatabase.app/`   
+It is the URL of the REST API to interact with the Firebase realtime database of the project.  
+We can execute HTTP requests on it, by adding a relative path at the end.  
+Firebase requires that we add the ".json" at the end to tell it the type.  
+On a POST request, a new element in the items folder is created with a unique ID (name) :
+```commandline
+POST https://<PROJECT_NAME>.<REGION>.firebasedatabase.app/items.json
+```
+
+The `Rules` tab lets us define the READ and WRITE permissions on the database.
+We can set the READ permission to `false` to receive an error on any GET request (to test error handling).  
+In test mode, the permission is true for everyone during 30 days.
+
+#### Firebase Authentication
+
+Firebase also offers an authentication mechanism to create users and provide auth tokens.  
+The simplest setup is to allow users to do anything they want if they are authenticated.  
+We do not have ownership of resources here (we should add the owner in every resource to support it).  
+We can set the Database rules to be :
+```commandline
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null"
+  }
+}
+```
+
+This is obviously not suitable for a real production env, but good enough to test the Angular app authentication.  
+This will now send a 401 error to anyone hitting the endpoint without being authenticated.
+
+In the `Authentication` section, click on the `Sign-in method` tab and enable "Email/Password".  
+Once this is set up, we can see the users under the "Users" tab (originally empty).  
+More info on the authentication endpoint URL by searching "Firebase Auth API" in Google.  
+It is a dedicated API, completely unrelated with the real-time database.
+
+Signup URL : `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=[API_KEY]`
+
+The `API_KEY` placeholder is the web API key of the Firebase project, found in : Project Overview > Project Setup > Web API key
+
+
+### Angular HTTP Module
+
+In Angular, we need to add the `HttpClientModule` in the `app.module.ts` imports.  
+Once imported, we can inject the `HttpClient` from the constructor of any component or service.  
+This client offers a method per HTTP verb, for ex `http.post()` to generate a POST request.
+
+These methods return Observable objects, and Angular actually sends the HTTP request only if it is subscribed to at least once.  
+They are generic, so we can specify the type of objects we retrieve, to improve TS autocompletion and validation.  
+Observable operators (map, filter...) can be used to pre-format the response to the type we want before we subscribe.  
+
+```commandline
+// POST
+this.http.post(backendApiUrl, requestBody)
+    .subscribe(responseData => {
+      console.log(responseData);
+    });
+
+// GET to same endpoint with an observable operator to transform the response
+this.http.get<Post>(backendApiUrl)
+    .pipe(
+      map(
+        (responseData : any) => {   // transform JSON response into an array or Post objects
+          const itemArray = [];
+          for (key in responseData) {
+            if (responseData.hasOwnProperty(key)) {
+              itemArray.push({ ...responseData[key], id: key });
+            }
+          }
+          return itemArray;
+        }
+      )
+    )
+    .subscribe(posts => {
+      console.log(posts)
+    });
+```
+
+We can see those requests being sent from the Chrome Developer tools, in the Network tab.  
+There is an OPTIONS request checking if the POST method is allowed, followed by the POST request.  
+If using Firebase, we can see that a table was created for the sent data in the Firebase Realtime Database.  
+To handle errors in the HTTP request, we can provide a 2nd callback method to the `subscribe()` method :
+
+```commandline
+  this.get(url).subscribe(
+    posts => { console.log(posts); },
+    error => { console.log(error.message); }
+  );
+```
+
+To pass custom headers, we have an optional config object in all http methods :
+
+```commandline
+  this.get(url, { headers: new HttpHeaders({ my-header: 'XXX' }) })
+      .subscribe( responseData => { ... } );
+```
+
+To pass query parameters, we can either :
+  - add it to the url : `https://myrecipes-4a862.firebaseio.com/items.json?print=pretty`
+  - add it in the `params` field of the config object :
+```commandline
+  this.get(url, { params: new HttpParams().set('print', 'pretty') })
+```
+
+By default, Angular gives us the response body in our subscribe method.  
+We can change this behavior to get the full response (with headers, response code) with the `observe` field of the config object.  
+The different formats of response we can query are :
+
+- `body` : body of the HTTP response (default)
+- `response` : full HTTP response with body, headers, status code and URL.
+- `events` : catches all messages going out an in, they are events with a `type` property (HttpEventType enum)  
+             Type 0 is "Sent", type 4 is "Response" (HttpResponse received by `body` or `response`)  
+             This is the most fine-grain level of observation.
+
+```commandline
+  this.get(url, { observe: 'response' })
+      .subscribe( (response: HttpResponse) => { ... } );
+
+  this.get(url, { observe: 'events' })
+      .subscribe( event => {
+         if (event.type == HttpEventType.Sent) {
+           console.log('HTTP request was sent !');
+         } else if (event.type == HttpEventType.Response) {
+           console.log('HTTP response received : ');
+           console.log(event.body);
+         }
+       });
+```
+
+By default, Angular converts the response body in JS object.  
+We can change it by setting in the config object the field `reponseType` to `text` (`json` by default).  
+Angular would then keep the received response as a string.
+
+
+### HTTP Interceptors
+
+So far we have set headers / body at HTTP request level in the post/get/delete methods of the http client.  
+We may want to attach a header to all our requests (for ex an auth token).  
+It would be annoying to add the logic in every HTTP request we create.  
+Angular offers interceptors that intercept all requests before they are sent and can modify them before sending.
+
+An interceptor is a service implementing the `HttpInterceptor` interface :
+
+```commandline
+  export class AuthInterceptorService implements HttpInterceptor {
+    intercept(req: HttpRequest<any>, next: HttpHandler) {
+      // clone our HTTP request (req is immutable)
+      const myReq = req.clone({
+          headers: req.headers.append('Auth', XXXX'}),     // if we want to add headers
+          url: '<another URL>'                             // if we want to change the URL
+      })
+      // call the handler to let our modified request be sent
+      return next.handle(myReq);
+    }
+  }
+```
+
+The interceptor needs to be added in the app.module.ts providers in a special way :
+
+```commandline
+  providers: [{
+    provide:  HTTP_INTERCEPTORS,         // constant token to tell Angular it is an interceptor
+    useClass: AuthInterceptorService,
+    multi:    true                       // to not overwrite other interceptors if any
+  }], ...
+```
+
+Angular will execute the interceptor on every HTTP request leaving the app.  
+To restrict to only specific requests (GET for example), we need to add the logic inside the intercept method.
+
+We can also intercept all HTTP responses coming in the app.
+We use the same interceptor as above, but we add a pipe() to the returned observable.
+This pipe always receive an "event" response type (the most granular) :
+
+```commandline
+    intercept(req: HttpRequest<any>, next: HttpHandler) {
+      myReq = req.clone({ ... });
+      next.handle(myReq).pipe(
+        tap(
+          (event : HttpEvent<any>) => {
+            if (event.type === HttpEventType.Response) {
+              console.log('The request response is :');
+              console.log(event.body);
+            }
+          }
+        )
+      );
+    }
+```
+
+
+### Authentication
+
+Many apps use sessions for authentication.  
+Session are an object that is created in the backend once the user enters his credentials.  
+The backend then "knows" the client as long as the session is open.
+
+Angular cannot use this mechanism, since frontend and backend are totally de-correlated.  
+They only communicate via HTTP calls.
+
+In Angular, once the client sends the credentials, the backend will generate a token from them, encode it with a secret key only the backend knows, and sends it to the Angular frontend.  
+Every time the client sends a request that needs authentication, it will attach this token.  
+The backend will then validate that it is correct, and execute the request.
+
+The backend needs to have an HTTP endpoint to create a user, and to get a token for an existing user.  
+We can use Firebase that provides this service out-of-the-box without writing a custom backend.
+
+The Angular app must let the user create an account, login with an existing account or logout.  
+It should then communicate with an auth service that handles the signup / login / logout.
+
+To store the auth token so that it is read when the page reloads, we need persistent storage.  
+Usual solutions are either cookies or local storage (an API controlled by the browser to store key/val pairs on the file system).
+
+To store with local storage we need to convert the object to store into a string :
+
+```commandline
+localStorage.setItem('itemName', JSON.stringify(myObject));
+```
+
+It can be read at startup and removed on logout with :
+
+```commandline
+localStorage.getItem('itemName');
+localStorage.removeItem('itemName');
+```
+
+We can see the content of local storage in the Chrome Developer tool : Application > Storage > Local Storage
+
+
 ## State Management with Redux
 
 ### Redux pattern
