@@ -25,8 +25,8 @@ export class RecipeEditComponent implements OnInit {
 
   myForm!: FormGroup;
   myRecipe: Recipe | null = null;
-  myRecipeId: number = -1;
-  myEditMode: boolean = false;
+  myRecipeId = -1;
+  myEditMode = false;
 
   // getter function to get the controls of the ingredients array
   // this logic does not work if inserted directly in the template
@@ -58,9 +58,9 @@ export class RecipeEditComponent implements OnInit {
     const recipeName        = this.myEditMode ? this.myRecipe!.name : '';
     const recipeImageUrl    = this.myEditMode ? this.myRecipe!.imageUrl : '';
     const recipeDescription = this.myEditMode ? this.myRecipe!.description : '';
-    let recipeIngredientsArr = new FormArray<FormGroup>([]);
+    const recipeIngredientsArr = new FormArray<FormGroup>([]);
     if (this.myEditMode) {
-      for (let ingredient of this.myRecipe!.ingredients) {
+      for (const ingredient of this.myRecipe!.ingredients) {
         recipeIngredientsArr.push(
           new FormGroup({
             ingredientName: new FormControl(ingredient.name, Validators.required),
@@ -80,8 +80,8 @@ export class RecipeEditComponent implements OnInit {
 
   onSubmit() {
     // create the Recipe object
-    let ingredients = [];
-    for (let ingredient of this.myForm.value.recipeIngredients) {
+    const ingredients = [];
+    for (const ingredient of this.myForm.value.recipeIngredients) {
       ingredients.push(new Ingredient(ingredient.ingredientName, ingredient.ingredientAmount));
     }
     const recipe = new Recipe(

@@ -19,8 +19,6 @@ export class ShoppingListService {
   // subject triggered when an ingredient is clicked to be edited
   startedEditing = new Subject<number>();
 
-  constructor() {}
-
 
   getIngredients() {
     return this._ingredients.slice();

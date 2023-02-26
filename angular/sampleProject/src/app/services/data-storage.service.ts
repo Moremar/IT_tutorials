@@ -59,8 +59,8 @@ export class DataStorageService {
           (responseData) => {
             return responseData.map(
               (recipe) => {
-                let ingredients : Ingredient[] = [];
-                for (let ingredient of recipe.ingredients) {
+                const ingredients : Ingredient[] = [];
+                for (const ingredient of recipe.ingredients) {
                   ingredients.push(new Ingredient(ingredient.name, Number(ingredient.amount)));
                 }
                 return new Recipe(recipe.name, recipe.description, recipe.imageUrl, ingredients);

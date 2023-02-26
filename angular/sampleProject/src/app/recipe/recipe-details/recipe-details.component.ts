@@ -13,7 +13,7 @@ import { RecipeService } from 'src/app/services/recipe.service';
 export class RecipeDetailsComponent implements OnInit, OnDestroy {
 
   myRecipe!: Recipe;
-  myRecipeId: number = -1;
+  myRecipeId = -1;
   myRouteSub!: Subscription;
 
 

@@ -12,8 +12,6 @@ export class RecipeItemComponent implements OnInit {
   @Input() recipe!: Recipe;
   @Input() recipeId!: number;
 
-  constructor() {}
-
   ngOnInit(): void {
     if (this.recipe === undefined) {
       throw new Error("The mandatory 'recipe' @Input is not defined");

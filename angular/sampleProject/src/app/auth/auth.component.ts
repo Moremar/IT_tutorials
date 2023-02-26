@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -14,11 +14,11 @@ import { AuthService } from '../services/auth.service';
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css']
 })
-export class AuthComponent implements OnInit {
+export class AuthComponent {
 
   /* Member variables */
 
-  myIsLoading: boolean = false;
+  myIsLoading = false;
   myErrorMessage: string | null = null;
 
   // get a reference on the template where we want to insert the modal
@@ -31,9 +31,6 @@ export class AuthComponent implements OnInit {
     private authService: AuthService,
     private router: Router
   ) {}
-
-  ngOnInit(): void {}
-
 
   /* Methods */
 
@@ -80,7 +77,7 @@ export class AuthComponent implements OnInit {
     const modalRef = viewContainerRef.createComponent(ErrorModalComponent);
     // handle its Input (error message) and Output (close event)
     modalRef.instance.message = this.myErrorMessage || '';
-    let subscription = modalRef.instance.modalClosed.subscribe(
+    const subscription = modalRef.instance.modalClosed.subscribe(
       () => {
         subscription.unsubscribe();
         // clearing the placeholder container closes the modal

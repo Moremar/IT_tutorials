@@ -34,7 +34,7 @@ describe('ComponentForTestComponent', () => {
       new Recipe('Recipe Name 1', 'description 1', 'url 1', []),
       new Recipe('Recipe Name 2', 'description 2', 'url 2', [])
     ];
-    let recipeService = fixture.debugElement.injector.get(RecipeService);
+    const recipeService = fixture.debugElement.injector.get(RecipeService);
     recipeService.recipesChanged.next(recipes);
     fixture.detectChanges();
     // the component should now have 2 recipes

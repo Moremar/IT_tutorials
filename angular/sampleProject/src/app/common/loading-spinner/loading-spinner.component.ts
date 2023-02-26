@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 /**
  * Component displaying an animated loading spinner
@@ -10,10 +10,5 @@ import { Component, OnInit } from '@angular/core';
   templateUrl: './loading-spinner.component.html',
   styleUrls: ['./loading-spinner.component.css']
 })
-export class LoadingSpinnerComponent implements OnInit {
-
-  constructor() {}
-
-  ngOnInit(): void {}
-
+export class LoadingSpinnerComponent {
 }

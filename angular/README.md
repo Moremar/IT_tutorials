@@ -98,12 +98,12 @@ Angular CLI is the command line interface to assist with Angular app development
 It is used to develop, build, deploy, and test Angular apps.  
 
 ```commandline
-ng                          List all available commands
+ng help                     List all available commands
 ng v                        Version of Angular / Node / OS
 ng <cmd> --help             Help for a specific ng command
 ng new projectName          Create an empty Angular project
-ng serve -o                 Build the app and start a web server
-                            -o to open a browser
+ng serve                    Build the app and start a web server
+                            -o to open the app in a browser
                             --port to specify a port (default 4200)
 ng g c path/componentName   Generate a new component (HTML + TS + CSS + Test)
                             Can be ran from the project root (no need to specify src/app/)
@@ -111,11 +111,13 @@ ng g c path/componentName   Generate a new component (HTML + TS + CSS + Test)
 ng g g path/guardName       Generate a new guard (TS)
 ng g m path/moduleName      Generate a new module (TS)
 ng g d path/directiveName   Generate a new directive (TS)
+ng lint                     Run the linter
 ng test                     Run the tests
 ng e2e                      Run the end-to-end tests
 ng build                    Build app for deployment into the /dist folder
 ng update                   Update the project to latest angular version
 ng add <external_lib>       Use NPM to install a lib and run a script to setup the Angular project to use it
+ng add @angular/material    Example of "ng add", to install Angular Material components 
 ```
 
 
@@ -1634,6 +1636,74 @@ localStorage.removeItem('itemName');
 We can see the content of local storage in the Chrome Developer tool : Application > Storage > Local Storage
 
 
+
+
+## Angular Dynamic Components
+
+We can load some components dynamically in our app, to create some modals or popups for example.  
+One way to do it is to use `*ngIf` on a component with a backdrop, and to set the condition in code to show/hide the component.  
+It is the easiest solution and it should be used when possible.
+
+A more complex approach is to create the component programmatically.  
+It must then be attached to the DOM and removed from the DOM from code manually.
+
+This requires a method in the TS code to instantiate the dynamic component.  
+We cannot just use `new MyComponent()` because Angular needs more than just instantiation.
+
+We need to know where to create the component, which is given by a view container ref.  
+It is obtained by creating a directive that injects publicly the `ViewContainerRef`.  
+
+```commandline
+@Directive({
+  selector: '[appPlaceholder]'
+})
+export class PlaceholderDirective {
+  constructor(public viewContainerRef: ViewContainerRef) {}
+}
+```
+
+In the HTML template of the parent component, we create a `<ng-template>` tag where the dynamic component will be added.    
+It is better than a `<div>` because it does not actually create an element in the DOM, but can be referenced.  
+The `<ng-template>` tag must have the custom directive, so it can be located from the TS code :
+
+```commandline
+  <ng-template appPlaceholder></ng-template>
+```
+
+Then we can access the view container ref from the code via a member variable with the `@ViewChild` decorator :
+
+```commandline
+  @ViewChild(PlaceholderDirective, {static: false}) errorModalTemplate: PlaceholderDirective;
+```
+
+And use it to create a component dynamically :
+
+```commandline
+    const viewContainerRef = this.errorModalTemplate.viewContainerRef;
+    viewContainerRef.clear();
+    const modalRef = viewContainerRef.createComponent(AlertComponent);
+```
+
+For this to work, we need to let Angular know that this component will be created dynamically.  
+This is automatic in Angular 9+, but older versions need to register it in the `entryComponents` property of the module :
+
+```commandline
+  entryComponents: [AlertComponent]
+```
+
+Then we can set the `@Input` and `@Output` bindings by using the `instance` of the new component ref.
+
+```commandline
+    modalRef.instance.message = message;                              // input
+    this.modalCloseSub = modalRef.instance.close.subscribe(           // output close eventSubmitter
+      () => {
+        this.modalCloseSub.unsubscribe();
+        viewContainerRef.clear();
+      }
+    );
+```
+
+
 ## State Management with Redux
 
 ### Redux pattern
@@ -1901,7 +1971,7 @@ If we need to test an async calculation (like a call to an external API returnin
 
 ## Useful external libraries and tools
 
-### Prettier
+### prettier
 
 `Prettier` is a code formatting library supporting multiple languages used by Angular (JS, TS, HTML, CSS, JSON...).  
 It can be installed and saved to `package.json` with `npm install prettier --save-dev`
@@ -1920,3 +1990,9 @@ npx prettier --write .
 
 Prettier supports a few configuration options (mostly for historical reasons, and the team will not add more).  
 Those options can be set in a `prettierrc.json` configuration file.
+
+### loading.io
+
+[loading.io](https://loading.io/css/) is a nice website offering some loading spinners (HTML and CSS).  
+We can create a component with this copy/pasted code to have a ready to use spinner component.
+

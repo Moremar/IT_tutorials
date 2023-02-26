@@ -14,7 +14,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   /* Member variables */
 
-  public myIsLogged: boolean = false;
+  public myIsLogged = false;
   private myLoggedUserSub!: Subscription;
 
 

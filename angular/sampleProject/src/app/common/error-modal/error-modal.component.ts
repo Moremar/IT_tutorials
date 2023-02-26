@@ -12,8 +12,6 @@ export class ErrorModalComponent implements OnInit {
   // signals to the parent component that the modal was closed
   @Output() modalClosed = new EventEmitter<void>();
 
-  constructor() {}
-
   ngOnInit(): void {
     if (this.message == undefined) {
       throw new Error("The mandatory 'message' @Input is not defined");

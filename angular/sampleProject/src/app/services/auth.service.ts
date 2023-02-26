@@ -135,7 +135,7 @@ export class AuthService {
     if (userFromStorage.token) {
       console.log('Auth token found, auto-login.');
       this.loggedUser.next(userFromStorage);
-      let duration = new Date(userObj._tokenExpirationDate).getTime() - new Date().getTime();
+      const duration = new Date(userObj._tokenExpirationDate).getTime() - new Date().getTime();
       this.autoLogout(duration);
     }
   }

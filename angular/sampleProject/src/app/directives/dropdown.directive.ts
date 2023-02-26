@@ -13,7 +13,7 @@ import { Directive, ElementRef, HostListener, Renderer2 } from '@angular/core';
 })
 export class DropdownDirective {
 
-  isOpen: boolean = false;
+  isOpen = false;
 
   @HostListener('click') onClick() {
     this.isOpen = !this.isOpen;
