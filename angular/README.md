@@ -1709,6 +1709,133 @@ Then we can set the `@Input` and `@Output` bindings by using the `instance` of t
 ```
 
 
+## Angular Animations
+
+Angular can handle animations between states by importing the `BrowserAnimationsModule` module.
+
+The `@Component()` decorator can take an `animations` property, that lets us define :
+- a trigger (property of a div in the component giving the current state)
+- the possible states of the that trigger and their style
+- the transitions from one state to another
+
+In the HTML template of the component, we should have a `<div>` with the `@divState` trigger (using a @ prefix) linked to a state property of the component :
+
+```commandline
+<div [@divState]="state">
+```
+
+In the TS code of the component we must have the `state` property set to a possible state.  
+Let's assume the possible states are `normal` and `highlighted`.  
+The animations can be defined as follows in the @Component() decorator :
+
+```commandline
+@Component(
+  selector: '...',
+  template-url: '...',
+  animations: [
+    trigger('divState',[               <-- trigger name
+    
+      state('normal', style({          <-- NORMAL state definition
+        backgroundColor: 'red',
+        transform: 'translateX(0)'
+      })),
+      
+      state('highlighted', style({     <-- HIGHLIGHTED state definition
+        backgroundColor: 'blue',
+        transform: 'translateX(100)'
+      })),
+      
+      transition('normal => highlighted', animate(300)),    <-- quick transition
+      transition('highlighted => normal', animate(500)),    <-- slow transition
+    ])
+  ]
+)
+```
+
+If we now create a button that flips the `state` property of the component from `normal` to `highlighted`,  we should see the transition handled by Angular.
+
+The above transitions are direct transitions from one state to another.  
+We can also define some intermediary phases of the transition.  
+These phases are not a real state (since it is not a final state the component can be in) but just a temporary styling during the transition.  
+We can use an array as the 2nd param of the transition with one item per phase :
+
+```commandline
+      transition('highlighted => normal', [
+          style({                           <-- instant change
+            backgroundColor: 'orange'
+          }),
+          animate(300, style({              <-- curve the corners in 300ms
+            borderRadius: '50px'
+          })),
+          animate(800)                      <-- then transition to the highlighted state in 800ms
+      ]),
+```
+
+We can also have an animation when a component is added or removed to/from the DOM.  
+For this, we use the Angular builtin `void` state that means that the component is not in the DOM.    
+For example if we want the component to slowly appear and slide to its position when added :
+
+```commandline
+    transition('void => *', [
+      style({                   <-- set a style as soon as it appears
+        opacity: 0,
+        transform: 'translateX(-100px)'
+      }),
+      animate(800)              <-- now from this style slowly get visible and slide to its final position
+    ])
+```
+
+Angular also offers callback we can execute when the animation starts or completes.  
+These callbacks are events called `@divState.start` and `@divState.done` :
+
+```commandline
+<div [@divState]="state" (@divState.start)="onAnimationStart($event)"> ... </div>
+```
+
+
+## Angular Service Worker
+
+A webpage normally runs with a single thread executing the JS code.  
+In Angular, we can configure a service worker running on another thread, decoupled from the HTML pages.  
+This service worker can continue running in the background and listen to outgoing and incoming HTTP requests.  
+on mobile phone to push notifications for example.  
+It can be used to cache responses and serve them when offline, or push notifications on a mobile.  
+It acts as a proxy between the Angular app and the backend.
+
+Service Workers support can be installed with the CLI with :  `ng add @angular/pwa`  
+This creates a few config files, updates the dependencies of our project and imports the `ServiceWorkerModule`
+
+When we build the app for production with `ng build`, a file is created in the `/dist` folder to specify the behavior of the service worker.  
+To test the service worker, we cannot use `ng serve` as it would create a fake service worker in memory.  
+Instead, we need to run a real HTTP server locally, we can use a simple node HTTP server hosting the content of a folder.
+This lets us access our app with a browser at `http://localhost:8081`
+
+```commandline
+npm install -g http-server
+cd <project>/dist/<project-name>
+http-server -p 8081
+```
+
+We should now see the service worker in the Chrome Developer Tools : Application > Service Workers
+
+If we stop the internet connection (tick "Offline" in the Service Worker section) and refresh the page, it loads the static content (instead of No Connection page).  
+Dynamic elements (fetched from a server) are not displayed, since there is no logic yet to cache them.
+
+The `ngsw-config.json` file specifies what the service worker caches.  
+By default, it loads `index.html` and all CS and JS files at startup.  
+We can add a `urls` section in the `resources` property, and specify the URLs to cache.  
+For example to cache a Google font that we use in the app :
+
+```commandline
+   "urls": [ "https://fonts.googleapis.com/css?family=Tangerine" ]
+```
+
+If we need to cache some data from an API (dynamic data changing regularly), we need to add a `dataGroups` section after the `assetGroups` section.  
+It has a similar structure to `assetGroups`, it is an array of objects with a `name` and a `urls` property.  
+It can configure the caching in a `cacheConfig` object, with for example `maxSize`, `maxAge` and `timeout` properties.
+
+
+
 ## State Management with Redux
 
 ### Redux pattern
