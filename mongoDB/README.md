@@ -97,7 +97,7 @@ db.shutdownServer()               Shutdown the running MongoDB server
 Collections are automatically created when used (for example when creating a document), but the `createCollection()` method lets us specify some options, for example giving it a validator to control the documents's structure.
 
 
-#### Create documents
+### Create documents
 
 MongoDB documents must have a unique `_id` field.  
 We can set it to a custom number or a string, as long as it is unique.   
@@ -126,7 +126,7 @@ To rollback everything on failure, we can use MongoDB transactions.
 MongoDB guarantees atomicity at document level : a document cannot be partially inserted.  
 However there is no atomicity across documents by default, as montionned above with `insertMany()`.
 
-#### Get documents
+### Get documents
 
 Documents from a collection are retrieved with the `find()` method.  
 It takes an optional filter parameter, and an optional options parameter. 
@@ -139,21 +139,32 @@ db.animal.findOne({name:'Tom'})        Get the first document in a collection ma
 db.animal.find({"stats.str": 3})       Filter on a nested field (require the double quotes)
 ````
 
-We can use more complex filters by using MongoDB built-in operators.
+#### Query Operators
 
-- comparison operators : `$lt`, `$lte`, `$gt`, `$gte`, `$ne`
-- logical operators : `$and`, `$or`
-- other operators : `$in`, `$exists`
+We can use more complex filters by using MongoDB built-in query operators.
+
+- comparison operators : `$eq`, `$ne`, `$lt`, `$lte`, `$gt`, `$gte`, `$in`, `$nin`
+- logical operators : `$and`, `$or`, `$nor`, `$not`
+- arithmetic operators: `$add`, `$subtract`, ...
+- other operators : `$exists`, `$type`, `$jsonSchema`, `$regex`, `$expr`
 
 ```commandline
-db.animal.find({age: {$lt: 13}})                    Find all documents with age < 13
-db.animal.find({name:'Tom', age:12})                Find with multiple conditions (AND operator)
-db.animal.find({$and:[{name:"Tom"}, {age:13}]})     AND operator (alternative syntax)
-db.animal.find({$or:[{name:"Tom"}, {age:13}]})      OR operator
-db.animal.find({name:{$in:["Tom", "Coco"]}})        IN operator
-db.animal.find({name: /^Zu/})                       Find all documents with name starting with "Zu" (regex)
-db.animal.find({weight:{$exists:1}})                Field existence
+db.animal.find({age: {$lt: 13}})                      Find all documents with age < 13
+db.animal.find({name:'Tom', age:12})                  Find with multiple conditions (AND operator)
+db.animal.find({$and:[{name:"Tom"}, {age:13}]})       AND operator (alternative syntax)
+db.animal.find({$or:[{name:"Tom"}, {age:13}]})        OR operator
+db.animal.find({name:{$in:["Tom", "Coco"]}})          IN operator
+db.animal.find({age: {$exists: true}})                EXISTS operator (can also use 0 or 1)
+db.animal.find({age: {$type: "int"}})                 TYPE operator
+db.animal.find({name: /^Zu/})                         Find all documents with name starting with "Zu" (regex)
+db.animal.find({name: {$regex: "^Zu"}})               REGEX (alternative syntax)
+db.animal.find({$expr: {$gt:["$weight", "$age"]}})    Compare 2 fields (note the $ prefix) 
+db.animal.find({ $expr:
+   {$gt: ["$age", {$subtract: ["$weight", 10]}]}})    Arithmetic operator in an EXPR
 ```
+
+Note that the default "equality" filter can be used to check if a value is contained in an array.  
+The `{names: "Tim"}` will return true if `"Tim"` is a value in the `names` field. 
 
 The `find()` method does not return an array of documents, but a `Cursor` on the matching documents.  
 If there are many documents in the result, only the first part will be included in the result, and we can type the `it` shell command to get the next part.  
@@ -167,6 +178,8 @@ db.animal.find().forEach(
 )
 ```
 
+#### Projection
+
 The 2nd argument of the `find()` method lets us specify a projection, i.e. the list of fields to retrieve.  
 Only requested fields are sent by the MongoDB server, to avoid unnecessary data sent over the network.  
 The `_id` field is included in every projection by default, but it can be explicitly excluded.
@@ -176,33 +189,67 @@ db.animal.find({}, {name: 1, type: 1})            Get the name, type and ID of e
 db.animal.find({}, {name: 1, type: 1, _id: 0})    Get the name and type of every document in the collection
 ```
 
+We can use the `$slice` operator in the projection to limit the number of elements in an array :
+```commandline
+db.animal.find({}, {name: 1, type: 1, food: {$slice: 2}})   // only show the first 2 elements in food
+```
 
-#### Update documents
+#### Examples
+
+```commandline
+// all animals eating mice with a food array of size different to 1
+db.animal.find({$and: [{food: "mice"}, {food: {$not: {$size: 1}}}]})
+```
+
+### Update documents
 
 The `updateOne()` and `updateMany()` methods let us modify one or several columns of the documents.  
 Those methods take a filter parameter, an update parameter and an optional options parameter.  
-The update parameter must contain the `$set` operator and the key/value objects to set.  
+The update parameter must contain an update operator, for example `$set` to set a field.  
+
+The update operators are `$set`, `$min`, `$max`, `$inc`, `$mul`, `$rename`, `$unset` 
 
 The `replaceOne()` method let us overwrite an entire document.  
 It takes a filter parameter, the new document to use and an optional options parameter.  
 
 ```commandline
-db.animal.updateOne({'name':'Tim'},{$set:{age:4}})     Set age=4 for the first document with name Tim
-db.animal.updateMany({'name':'Tim'},{$set:{age:4}})    Set age=4 for all documents with name Tim
+db.animal.updateOne({'name':'Tim'},{$set:{age:4}})            Set a field in one document
+db.animal.updateOne({'name':'Tim'},{$set:{age:4, str:12}})    Set multiple fields in one document
+db.animal.updateMany({'name':'Tim'},{$set:{age:4}})           Set a field in multiple documents
 
-db.animal.replaceOne({name:'Tom'},{name:'Tim'})        Replace a document with a new one
+db.animal.replaceOne({name:'Tom'},{name:'Tim'})               Replace a document
 
-db.animal.update({'name':'Tim'},{$set:{age:4}})        Deprecated - use updateOne() or updateMany() instead
+db.animal.update({'name':'Tim'},{$set:{age:4}})               Deprecated - use updateOne() or updateMany() instead
 ```
 
-#### Delete documents
+We can use other update operators :
 
 ```commandline
-db.animal.deleteOne({type: "Monkey"})   Delete at most one document matching a filter 
-db.animal.deleteMany({type: "Monkey"})  Delete all documents matching a filter
-db.animal.deleteMany({})                Delete all documents in the collection
+db.animal.updateOne({'name':'Tim'}, {$inc:{age:2}})           Increment a field by 2 in one document
+db.animal.updateOne({'name':'Tim'}, {$mul:{age:2}})           Multiply a field by 2 in one documents
+db.animal.updateOne({'name':'Tim'}, {$min:{age:20}})          Set the age in one document to min(age, 20)
+db.animal.updateOne({'name':'Tim'}, {$unset:{age:""}})        Unset a field (the value is ignored)
+```
 
-db.animal.remove()                      Deprecated - use deleteOne() or deleteMany() instead
+To insert the document in case there is no match, we can pass the `upsert` flag as a 3rd parameter.  
+Mongo DB will create a document with both the filter and the set fields.
+```commandline
+db.animal.updateOne({'name':'Claw'}, {$set: {age: 12, type: "Tiger", food:["chicken"]}}, {upsert: true})
+```
+
+
+### Delete documents
+
+The `deleteOne()` and `deleteMany()` methods both accept a filter parameter.  
+That filter can use the same query operators as for the `find()` method.
+
+```commandline
+db.animal.deleteOne({type: "Monkey"})     Delete at most one document matching a filter 
+db.animal.deleteMany({type: "Monkey"})    Delete all documents matching a filter
+db.animal.deleteMany({age: {$lt: 10}})    Delete all documents matching a filter with an operator
+db.animal.deleteMany({})                  Delete all documents in the collection
+
+db.animal.remove()                        Deprecated - use deleteOne() or deleteMany() instead
 ```
 
 
@@ -330,7 +377,7 @@ Most actions that can be performed in the MongoDB shell can also be performed in
 - insert documents in a collection (manual or file import)
 - edit or delete existing documents
 
-![Game Of Life Image 1](./images/compass.png)
+![Compass Image](./images/compass.png)
 
 
 ## MongoDB Command-line Database Tools
@@ -352,3 +399,120 @@ $>  mongoimport.exe ./food.json -d zoo -c food --jsonArray --drop
 ```
 - `--jsonArray` : insert multiple values as an array
 - `--drop` : drop the current content of the collection if any
+
+
+## Querying Arrays
+
+#### Array of basic types
+
+For array fields of basic types (non-document), we can check the exact match of a value, the inclusion of a field or the size :
+```commandline
+db.animal.find({ food: ["seeds", "fruits"] })           Array equality
+db.animal.find({ food: "seeds" })                       Item inclusion (same syntax as simple field)
+db.animal.find({ food: {$all:["seeds", "nuts"]} })      Multiple items inclusion
+db.animal.find({ food: {$size:3} })                     Array size
+```
+
+#### Array of documents
+
+For array fields of documents, we can check or update the values inside the array.
+
+```commandline
+db.shops.insertMany([
+{name: "Shop1", movies:[{title: "Movie1", year: 1998}, {title: "Movie2", year: 2003}]},
+{name: "Shop2", movies:[{title: "Movie1", year: 1998}, {title: "Movie3", year: 2004}]},
+{name: "Shop3", movies:[{title: "Movie3", year: 2004}]}
+])
+```
+
+We can reference the fields of the array items as it they were fields of the array itself.  
+For example if a `movies` field is an array of documents with a `title` and a `year`, we can get all shops having a film with a title of `Movie3` :
+```commandline
+db.shops.find({"movies.title": "Movie3"})
+```
+
+We can use the `$size` operator to match an exact size (cannot combine it with `$gt`) :
+```commandline
+db.shops.find({"movies": {$size: 2}})
+```
+
+To select documents with an array field containing a given list of values (no matter the order) we use `$all` :
+```commandline
+db.animal.find({food: {$all: ["eggs", "mice"]}})
+```
+
+To apply some filtering on objects inside an array, we can use the `$elemMatch` operator :
+```commandline
+db.shops.find({"movies": {$elemMatch: {title: "Movie3", year: 2004}}})
+```
+
+When we want to update an element inside an array field, we can use `$elemMatch` in the filter, and the `$` syntax in the update parameter to reference the first matched item in the array :
+```commandline
+db.shops.update( {"movies": {$elemMatch: {title: "Movie3", year: 2004}}},
+                 {$set: {"movies.$.recent": true}} )
+```
+
+We can update all elements inside an array with the `$[]` syntax in the update parameter, to references all elements inside the array :
+```commandline
+db.shops.updateMany( {name: "Shop1"},
+                     {$set: {"movies.$[].inStock": false}} )
+```
+
+We can also update only some specific items inside an array, by using the `$[el]` syntax.  
+`el` is a variable name that we can apply conditions on in the options parameter in the `arrayFilters` field :
+```commandline
+db.shops.updateMany( {},
+                     {$set: {"movies.$[el].recent": true}},
+                     {arrayFilters: [ {"el.year": {$gt: 2000}} ]} )
+```
+
+Elements can be added in an array field with the `$push` operator.  
+To add only if the element is not already in the array, we can use the `$addToSet` operator instead.  
+To add multiple elements at once, we combine it with the `$each` operator :
+```commandline
+db.shops.updateOne( {name:"Shop1"},
+                    {$push: {"movies": {title: "Movie4", year: 2010}}} )
+db.shops.updateOne( {name:"Shop1"},
+                    {$push: {"movies": {$each: [ {title: "Movie5", year: 2011},
+                                                 {title: "Movie6", year: 2012} ]}}} )
+```
+
+To remove all elements matching a filter from an array field, use the `$pull` operator.
+To remove the first or last element of the array, we can use `$pop` instead with value 1 or -1.
+
+```commandline
+db.shops.updateOne( {name: "Shop1"},
+                    {$pull: {movies: {year: {$gt: 2000}}}} )
+
+db.shops.updateOne( {name: "Shop1"},
+                    {$pop: {movies: -1}} )     // pop the last element
+```
+
+
+## MongoDB Cursors
+
+The `find()` method returns a cursor that lets us ask for the next batch of results.  
+The MongoDB shell automatically displays requests the first batch to display the first 20 documents.  
+It provides the `it` command to request the next batch.  
+When using a MongoDB driver, we need to handle that cursor manually to ask for result batches.
+
+The MongoDB shell accepts JS-like syntax, so we can store a cursor in a variable.  
+Some cursor methods allow us to cout, sort, iterate on documents, limit the output and skip some documents (useful for pagination) ...
+
+```commandline
+const cursor = db.animal.find()    // cursor on all documents of the collection
+cursor.next()                      // first document of the cursor
+cursor.next()                      // second document of the cursor
+
+cursor.count()                     // total number of documents in the cursor 
+
+cursor.forEach(                    // iterate through all documents in the cursor
+  doc => { printJson(doc) }
+)
+
+db.animal.find().sort({"age": 1})    // sort the results of a cursor
+                                     // must be applied before getting any batch
+
+cursor.limit(10)                     // get only the first 10 documents
+cursor.skip(10)                      // start getting documents after an offset
+```
