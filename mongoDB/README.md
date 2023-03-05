@@ -516,3 +516,261 @@ db.animal.find().sort({"age": 1})    // sort the results of a cursor
 cursor.limit(10)                     // get only the first 10 documents
 cursor.skip(10)                      // start getting documents after an offset
 ```
+
+
+## MongoDB Indexes
+
+
+Indexes speed up the search for specific documents (used by find, update and delete operations).  
+When a collection has no custom index, MongoDB scans the entire collection every time it looks for documents.  
+An index is a structure that can be created to enrich a collection, it is an ordered list of one or more field(s) of the collection.  
+Every item in the index has a pointer to the referenced document in the original collection.  
+When searching for a document with a specific value for this indexed field, MongoDB can then do an index scan, and only check the documents with this value for this field without scanning other documents.
+
+Indexes also speed up the `sort()` operation, if the indexed fields match the sort criteria.
+
+Indexes speed up the find operations, but they take space on disk, and they slow down insert, update and delete operations, as the indexes must also be updated during each of these operations.  
+For queries that match the entire collection, using an index is slower than a full scan, as it adds the overhead of going through the index.
+
+
+#### MongoDB Search Strategy
+
+We can get some info on how MongoDB searches documents in a collection with the `explain()` method.  
+It shows the `winningPlan` with a stage set to `COLLSCAN`, which means it does not use an index.  
+With no existing index other that the default `_id_` one, `COLLSCAN` is the only option MongoDB can use.
+
+For example, in the `persons` collections imported from `data/persons.json` file :
+
+```commandline
+db.persons.explain().find({"dob.age": {$gt: 60}})
+db.persons.explain("executionStats").find({"dob.age": {$gt: 60}})    // more stats on excution time
+```
+
+#### Simple Index
+
+A simple index is built on a single-value field of the documents in a collection.  
+We can create an index on the `dob.age` field and see that it was created and is used :
+
+```commandline
+db.persons.createIndex({"dob.age": 1})               // create index
+db.persons.getIndexes()                              // list existing indexes
+
+// much quicker than without index, and now uses IXSCAN stage (index scan)
+db.persons.explain("executionStats").find({"dob.age": {$gt: 60}})
+
+db.dropIndex({"dob.age": 1})                        // drop index by definition
+db.dropIndex("dob.age_1")                           // drop index by name
+```
+
+
+#### Compound Index
+
+We can create a compound index that indexes a collection on multiple fields.   
+The order of the field is important, as a compound index can be used as an index of the first indexed field alone, but not on the 2nd indexed field alone.
+
+```commandline
+// compound index on age and gender
+//    - speed up queries on (age, gender)
+//    - speed up queries on age
+//    - DOES NOT SPEED UP queries on gender
+db.persons.createIndex({"dob.age": 1, genre: 1})
+```
+
+
+#### Unique Index
+
+We can create a unique index by configuring the index with a 2nd parameter.  
+In that case, unicity is checked at every insert and the insertion throws an error when it would create a duplicate.
+```commandline
+db.person.createIndex({phone: 1}, {unique: true})
+```
+
+
+#### Partial Index
+
+We can create a partial index that only indexes the part of the collection specified by a given filter.  
+This saves space in memory if we know only a given part of the collection is often accessed.
+```commandline
+db.persons.createIndex({"dob.age": 1}, {partialFilterExpression: {"dob.age": {$gt: 50}}})
+```
+
+
+#### Index with TTL (Time To Live)
+
+We can create an index with TTL by indexing a collection on a Date field, and setting an expiration time.  
+When we insert a document in the collection, it will be added to the collection, and then removed automatically after the expiration. 
+
+```commandline
+db.sessions.createIndex({createdAt: 1}, {expireAfterSeconds: 10})    // create index with TTL
+db.sessions.insertOne({name: "bbb", createdAt: new Date()})          // insert a document
+db.sessions.find()                                                   // the document exists
+db.sessions.find()                                                   // 10s later, the document is removed 
+```
+
+
+#### Multi-key Index
+
+We can create a multi-key index by indexing a collection on an array field.  
+For each document of the collection, MongoDB creates one entry in the index per value in the array.  
+It means that the same document is referenced by multiple entries in the index (every entry that is in the array).  
+This can be useful sometimes, but it creates a bigger index than single-field indexes, since each document is referenced multiple times.
+
+
+#### Text Index
+
+MongoDB also supports the creation of a text index on a text field.  
+It splits the field value of each document into meaningful words (no space, punctuation, meaningless words...).  
+It then creates a multi-key index on this array of meaningful words in lower-case.
+
+```commandline
+db.products.insertMany([
+    { name: "Computer",   description: "high-tech computer with new-gen keyboard" },
+    { name: "T-shirt",    description: "black T-shirt with a picture" },
+    { name: "Smartphone", description: "latest high-tech phone" } ])
+
+db.products.createIndex({ description: 1 })            // normal index (exact match)
+db.products.createIndex({ description: "text" })       // text index
+```
+
+There can be only 1 text index for a given collection.  
+To retrieve the documents matching a given text token, we do not need to specify the indexed field, instead we use the `$text` operator : 
+
+```commandline
+db.products.find({$text: {$search: "high-tech"}})         // 2 matches
+db.products.find({$text: {$search: "high"}})              // 2 matches
+db.products.find({$text: {$search: "HIGH"}})              // 2 matches (case-insensitive)
+db.products.find({$text: {$search: "with"}})              // 0 match (meaningless word)
+db.products.find({$text: {$search: "black phone"}})       // 2 matches ("black" in a doc, "phone" in another)
+db.products.find({$text: {$search: "high-tech -phone"}})  // 1 match (exclude "phone") 
+```
+
+We can  add a match score to each result document of a text query by using the `$meta` operator on the built-in `textScore`.  
+We can sort by that `score` field to order results by relevance :
+```commandline
+db.products.find({$text: {$search: "high-tech phone"}}, {score: {$meta: "textScore"}})
+           .sort({score: 1})
+```
+
+We can specify multiple fields for the text index.  
+Those fields will all be split to meaningful tokens and used for the text index of the collection.
+
+```commandline
+db.products.createIndex({name: "text", description: "text"})
+```
+
+We can specify the index language at creation, it will help MongoDB know the list of meaningless words.  
+The fields used in a text index can also have different weights, used by MongoDB to calculate the match score.
+
+```commandline
+db.products.createIndex({description: "text"}, {default_language: "french"})
+db.products.createIndex({name: "text", description: "text"}, {weight: {name: 2, description: 1}})
+```
+
+#### Index Creation
+
+Indexes can be created either at the foreground or in the background.  
+When created at the foreground, the collection is locked during that time.  
+When created in the background, the collection is not locked, but the index creation takes longer.  
+This is a safer approach for operation-heavy production MongoDB databases.
+
+```commandline
+db.products.createIndex({description: "text"}, {background: true})
+```
+
+## Geospatial Queries
+
+#### Latitude and Longitude
+
+A position on Earth is fully determined by its latitude and its longitude.
+
+The **latitude** determines the north/south distance of a point from the equator plane.  
+It varies from -90° (south pole) to 90° (north pole).  
+The horizontal imaginary lines at a same latitude are called latitude lines.
+
+Reference latitude lines are :
+- Equator (latitude = 0°) : line perpendicular to the Earth's rotation axis, splitting it into 2 hemispheres 
+- Tropic of Cancer (latitude = 23°26') : north-most line where the Sun can be directly overhead (during June solstice)
+- Tropic of Capricorn (latitude = -23°26') : south-most line where the Sun can be directly overhead (during December solstice)
+- Arctic Circle (latitude = 66°34') : south-most line where the sun does not rise all-day during the December solstice
+- Antarctic Circle (latitude = -66°34') : north-most line where the sun does not rise all-day during the June solstice
+
+The **longitude** determines the west/east distance of a point from the prime meridian (Greenwich).  
+It varies from 0° (prime meridian) to 180° (ante-meridian), either west or east.  
+The vertical imaginary lines at a same longitude are called longitude lines, or meridians.  
+The Greenwich meridian is the used as the reference timezone (GMT : Greenwich Mean Time).
+
+#### GeoJSON format
+
+MongoDB supports the GeoJSON object format, to represent geographic structures and locations.  
+GeoJSON objects include `Point`, `MultiPoint`, `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`...
+
+GeoJSON objects allow to store geographical objects in MongoDB (like restaurants, streets, places to visit...).  
+When selecting a place in Google Maps, the URL (or right-click) shows the latitude and longitude.
+
+A GeoJSON object in MongoDB is a document with a `type` field and a `coordinates` array field.  
+The coordinates of a point must be the longitude, then the latitude (opposite order from Google Maps).
+
+```commandline
+db.places.insertMany([{ name: "The Great Pyramid of Giza",
+                        location: {type: "Point", coordinates: [31.13116, 29.9782653]} },
+                      { name: "Eiffel Tower",
+                        location: {type: "Point", coordinates: [2.2916715, 48.8577166]} },
+                      { name: "Arc de Triomphe",
+                        location: {type: "Point", coordinates: [2.2973108, 48.8638763]} },
+                      { name: "Louvre Museum",
+                        location: {type: "Point", coordinates: [2.3167021, 48.8557928]} },
+                      { name: "Montparnasse Tower",
+                        location: {type: "Point", coordinates: [2.3186794, 48.8550403]} } ])
+```
+
+#### GeoJSON Operators
+
+MongoDB offers some operators to query GeoJSON data like the `$near` operator.  
+It uses the `$geometry` to specify the origin point or polygon we are comparing to.  
+The max/min distance can be set with the `$maxDistance` and `$minDistance` operators (to decide what "near" means in meters).  
+
+To use the `$near` operator, we need to create a 2D-sphere index on the location field.  
+
+```commandline
+// create a 2D-sphere index
+db.places.createIndex({location: "2dsphere"})
+
+// return all places sorted from the closest to the furthest from a point (Trocadero Square)
+db.places.find({location: {$near: {$geometry: {type: "Point", coordinates: [2.2942828, 48.860679]} }}})
+
+// find the places within a given range from a point (Trocadero Square)
+db.places.find({location: {$near: {$geometry: {type: "Point", coordinates: [2.2942828, 48.860679]}, $maxDistance: 1000 }}})
+```
+
+We can use the `$geoWithin` operator to find the documents with coordinates with a given polygon.  
+It usually takes a `$geometry` value containing a GeoJSON object, but it can also use the `$centerSphere` operator to find documents in a given radius.  
+The `$centerSphere` operator takes the sphere center and radius, expressed in radians (distance / Earth radius).  
+
+```commandline
+// find all places inside Paris
+const p1 = [2.256204, 48.844023]   // bottom-left
+const p2 = [2.363241, 48.820309]   // bottom-right
+const p3 = [2.406938, 48.880799]   // top-right
+const p4 = [2.326965, 48.902211]   // top-left
+db.places.find({location: {$geoWithin: {$geometry: {type: "Polygon", coordinates: [[p1, p2, p3, p4, p1]]}}}})
+
+// find all places within a 1.8km radius from a point (Trocadero Square)
+db.places.find({location: {$geoWithin: {$centerSphere: [[2.2942828, 48.860679], 1.8/6378.1 ]}}})
+```
+
+We can also use the `$geoIntersects` operator to perform the opposite operation : all documents have a polygon field, and we want to find all documents which polygon contains a given point.
+
+```commandline
+// create a "cities" collection with Paris and Tokyo
+const t1 = [139.621526, 35.624110]
+const t2 = [139.789462, 35.537991]
+const t3 = [139.847174, 35.721939]
+const t4 = [139.692932, 35.723849] 
+db.cities.insertMany([ {name: "Paris", area: {type: "Polygon", coordinates: [[p1, p2, p3, p4, p1]]}},
+                       {name: "Tokyo", area: {type: "Polygon", coordinates: [[t1, t2, t3, t4, t1]]}} ])
+db.cities.createIndex({location: "2dsphere"})
+
+// find in which city a given point is (Trocadero Square)
+db.cities.find({area: {$geoIntersects: {$geometry: {type: "Point", coordinates: [2.2942828, 48.860679]} }}})
+```
+
