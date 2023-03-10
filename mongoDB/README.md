@@ -41,6 +41,11 @@ The default MongoDB installation folder is `C:\Program Files\MongoDB\Server\6.0`
 This folder contains a `bin` folder containing `mongod`, a `data` folder where the DB will be created and a `log` folder to store MongoDB application logs.
 
 To start the MongoDB server, double-click on the `mongod.exe` binary.  
+It can also be started from the command line :
+```commandline
+.\bin\mongod.exe --dbpath data\ --logpath log\mongod.log
+```
+NOTE : this starts the MongoDB server without authentication, so anyone can perform any action in the database.
 
 To start a shell client on the running MongoDB server, download the Mongo Shell from their website (zip folder).  
 Extract the `mongosh.exe` binary to the above `bin` folder and double-click on it.
@@ -89,7 +94,8 @@ use zoo                           Use a DB (create it if not existing)
 show collections                  Display all collections in the current DB
 db.dropDatabase()                 Drop the current DB
 db.animal.drop()                  Drop a collection in the current DB
-db.stats()                        Display stats about the DB (# of collections and docus, size...)
+db.stats()                        Display stats about the DB (# of collections and docs, size...)
+db.animal.stats()                 Display stats about a collection (# of docs, size, average object size, indexes...)
 db.createCollection('animal')     Create a collection in current DB
 db.shutdownServer()               Shutdown the running MongoDB server
 ```
@@ -263,7 +269,11 @@ For example, all animals in a collection should have a `name` and a `type`, and 
 
 - String
 - Boolean
-- Numbers : NumberInt (int32), NumberLong (int64), NumberDecimal
+- Numbers : 
+  - NumberInt (32-bits integer)
+  - NumberLong (64-bits integer)
+  - Double (64-bits decimal, default number type in MongoDB shell that is based on JS)
+  - NumberDecimal (128-bits decimal, used for high precision calculation)
 - ObjectID (Mongo ID, guaranteed to be ordered)
 - ISODate (date)
 - Timestamp : unique number, used to generate the ObjectID, can be called with `new Timestamp()`
@@ -278,6 +288,13 @@ We can get the type of a field with the `typeof` operator :
 ```commandline
 typeof db.animal.findOne().name                Get the type of the name property of the document
 ```
+
+MongoDB shell is based on Javascript, so by default all numbers are stored as 64-bits double numbers.  
+We can force another numeric type by using its constructor, for example `NumberInt("12")` for an integer field.
+The constructor takes the value as a string, to prevent JS to convert it to a double first.
+
+NOTE : MongoDB does not throw any exception in case of number overflow, it just saves an incorrect number !
+
 
 #### Relations between MongoDB documents
 
@@ -1035,4 +1052,101 @@ db.friends.aggregate([
   {$project: {name: 1, score: "$examScores.score"}},      // keep only the score 
   {$group: {_id: "$name", score: {$max: "$score"}}},      // group by person to get the max
   {$sort: {score: -1}}                                    // sort in descending order
-])```
+])
+```
+
+## MongoDB Security
+
+### Authentication and Authorization
+
+MongoDB uses a role-based access control.  
+Roles define a set of privileges, which are specific actions on specific resources.  
+Users are assigned some roles, and are granted all privileges defined by these roles.
+
+We may want for example 3 types of roles :
+- Administrator role, allowed to manage users and the databases schemas
+- Developer role, allowed to insert/edit/delete/fetch business tables in a given database
+- Data Scientist role, allowed to fetch data from business tables
+
+MongoDB ships with built-in roles :
+- Database User roles : `read` and `readWrite`
+- Database Admin roles : `dbAdmin`, `userAdmin` and `dbOwner`
+- All Database Roles : `readAnyDatabase`, `readWriteAnyDatabase`, `userAdminAnyDatabase`, `dbAdminAnyDatabase`
+- Cluster Amin roles
+- Backup and Restore roles : `backup` and `restore`
+- Superuser roles : `root`, `userAdmin` (in `admin` DB)
+
+It is also possible to create custom roles, for example for give granular permission at collection level.
+
+#### MongoDB Authentication setup
+
+We can enable authentication in MongoDB with the `--auth` parameter in the `mongod` MongoDB server command. This indicates to MongoDB that users must be authenticated before they can perform any action.
+
+With the `mongosh` client, we can connect to the MongoDB server without credentials in the command line.  
+However, unauthenticated users connecting to the MongoDB server cannot perform any action. 
+
+The only exception to that rule is when we connect the first time to a MongoDB server that has no user.  
+In that case, we are allowed to access the built-in `admin` database, and create an administrator  user with user-level permissions : 
+```commandline
+use admin
+db.createUser({user: "myusername", pwd: "mypassword", roles: ["userAdminAnyDatabase"]})
+db.auth({user: "myusername", pwd: "mypassword"})
+```
+
+To authenticate as this user, we can either call the `db.auth()` command in the database where this user was created, or specify its credentials and its authentication database in the parameters of the MongoDB client command line :
+```commandline
+.\mongosh.exe -u myusername -p mypassword -authenticationDatabase admin
+```
+
+#### User management
+
+This administrator user created above only has the `userAdminAnyDatabase` role.  
+This means that he cannot execute any CRUD operations on databases, but he can create users and grant them permissions.
+
+Users are created in a given database, and their permissions are restricted to that database.  
+The administrator can access a database and create users in it :
+```commandline
+use shop
+db.createUser({user: "dev1", pwd: "dev1pwd", roles: ["readWrite"]})
+```
+
+Now if we authenticate as this new user, we can perform any CRUD operation on any collection of this database.
+```commandline
+db.auth({user: "dev1", pwd: "dev1pwd"})
+db.products.insertOne({name: "Guitar", price: 149.99})
+```
+
+A user is created in a single database, but can have permissions on multiple databases.  
+To grant permissions on another database to a user, the administrator can run the `updateUser()` method.
+```commandline
+// authenticate as the administrator
+use admin
+db.auth({user: "myusername", pwd: "mypassword"})
+
+// update the dev1 user in his database and give him access to the "blog" database
+use shop
+db.updateUser("dev1", {roles: ["readWrite", {role: "readWrite", db: "blog"}]})
+```
+
+We can see the currently authenticated user and its permissions with :
+```commandline
+db.runCommand({connectionStatus: 1})
+```
+
+To see the details of a user in a database, we can also use the `getUser()` method :
+```commandline
+use shop
+db.getUser("dev1")
+```
+
+### MongoDB Encryption
+
+Data sent from a MongoDB client (shell or driver) can use TLS/SSL encryption protocol for data in transit.  
+This requires to setup a public/private key pair and generate a certificate of authority.  
+It can be done with OpenSSL for a test database.  
+The `mongod` server and the MongoDB client must specify the SSL configuration in their command line parameters.
+
+MongoDB also supports encryption at rest.  
+With the Enterprise solution, we can encrypt all the storage files.  
+Individual fields inside collections can also be encrypted or hashed.
+
