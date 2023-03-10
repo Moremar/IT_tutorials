@@ -774,3 +774,265 @@ db.cities.createIndex({location: "2dsphere"})
 db.cities.find({area: {$geoIntersects: {$geometry: {type: "Point", coordinates: [2.2942828, 48.860679]} }}})
 ```
 
+## MongoDB Aggregation Framework
+
+The Aggregation Framework exposes the `aggregate()` method, an alternative to `find()` for more complex queries.  
+It allows to build a query as a pipeline of stages to retrieve data in the desired format.  
+It includes filtering, sorting, grouping, projections, join with other collections, ...  
+
+The first stage in the aggregation pipeline receives as input the documents from a MongoDB collection.  
+Each following stage receives as input the output of the previous stage, and returns an iterator on the result  
+The MongoDB documentation provides the exhaustive list of available stages.
+
+The `aggregate()` method takes as a parameter an array of successive stages.  
+The first stage executes on the collection, and can take advantage of indexes (to filter or sort).
+
+#### $match stage
+
+`$match` is the filtering stage, it accepts the same type of filter object than the `find()` method.  
+
+```commandline
+db.persons.aggregate([
+  {$match: {gender: "female" }}
+])
+```
+
+#### $group stage 
+
+`$group` allows to group input documents by one or more fields.  
+The value by which we group is defined in the `_id` field, it can be a field or an object.  
+Some accumulators are used to get aggregated indicators on grouped documents, like `$max`, `$min`, `$avg`, `$count` ...
+```commandline
+db.persons.aggregate([
+  {$match: {gender: "female" }},
+  {$group: { _id: { state: "$location.state"}, avgAge: {$avg: "$dob.age"}, totalPersons: { $count: {} } }}
+])
+```
+
+#### $bucket and $bucketAuto stages
+
+We can organize the data into buckets on a given numeric field with the `$bucket` stage.  
+It is similar to the `$group` stage, but it groups documents on a range of values instead of an exact value.  
+The output can be specified with the same grouping operators as the `$group` stage.  
+The `$bucketAuto` stage can be used instead to tell MongoDB how many buckets we want and let it figure out the boundaries.
+```commandline
+// buckets with manually defined boundaries
+db.persons.aggregate([
+  {$bucket: {
+    groupBy: "$dob.age",
+    boundaries: [0, 20, 40, 60, 80, 100, 120],
+    output: {
+      count: {$count: {}},
+      average: {$avg: "$dob.age"}
+    }
+  }}
+])
+
+// bucket with automatic boundaries
+db.persons.aggregate([
+  {$bucketAuto: {
+    groupBy: "$dob.age",
+    buckets: 5,
+    output: {
+      count: {$count: {}},
+      average: {$avg: "$dob.age"}
+    }
+  }}
+])
+```
+
+#### $sort stage
+
+`$sort` lets us sort the input documents by a criteria.  
+It does not need to apply on the original collection, it can be used after a `$group` stage for example.
+Like in the `find()` method, the sort can be applied to one or more field in ASC or DESC order.
+
+```commandline
+db.persons.aggregate([
+  {$match: {gender: "female" }},
+  {$group: { _id: { state: "$location.state"}, totalPersons: { $count: {} } }},
+  {$sort: {totalPersons: -1}}
+])
+```
+
+#### $project stage
+
+The `$project` stage is similar to the projection in the `find()` method.  
+It lets us reformat the data, by selecting fields to include or exclude.  
+It also lets us create new fields and specify how to build them from the document received in input.
+
+```commandline
+// reformat the documents to show a full name with the last name and first letter of the first name in upper case
+db.persons.aggregate([{
+  $project: {
+    _id: 0,
+    gender: 1,
+    fullName: {
+      $concat: [
+        {$toUpper: "$name.last"},
+        " ",
+        {$toUpper: { $substrCP: ["$name.first", 0, 1] }},
+        {$substrCP: ["$name.first", 1, {$subtract: [ {$strLenCP: "$name.first"}, 1 ]}] }
+      ]
+    }
+  }
+}])
+```
+
+
+To convert a value to a given type we can use the conversion operator `$toInt`, `$toDouble`, `$toString`, `$toDate` ...   
+The `$convert` operator is more generic, and allows to specify a value when the field is missing or the conversion fails.
+
+We can also create a GeoJSON in the `$project` step, by creating an object with valid `type` and `coordinates` fields.
+```commandline
+// create a GeoJSON location field inside the projection
+db.persons.aggregate([{
+  $project: {
+    email: 1,
+    name: 1,
+    age: "$dob.age",
+    location: {
+      type: "Point",
+      coordinates: [
+        {$toDouble: "$location.coordinates.longitude"},
+        {$toDouble: "$location.coordinates.latitude"}
+      ]
+    }
+  }
+}])
+```
+
+The year of a date can also be extracted with the `$isoWeekDate` operator.
+
+#### $skip and $limit stages
+
+We can skip some documents or limit to N documents with the `$skip` and `$limit` pipeline stages.  
+Combining a `$sort` stage with a `$skip` and a `$limit` stage can be used to implement pagination.
+```commandline
+// get the 4th page of 10 documents sorted by name
+db.persons.aggregate([
+  { $project: { name: {$concat: ["$name.first", " ", "$name.last"]}, gender: 1}},
+  { $sort: {name: 1} },
+  { $skip: 30 },
+  { $limit: 10 }
+])
+```
+
+#### $out stage
+
+We can save the result of the pipeline to a collection with the `$out` stage :
+```commandline
+// save the output to a "names" collection
+db.persons.aggregate([
+  { $project: { name: {$concat: ["$name.first", " ", "$name.last"]} }},
+  { $out: "names" }
+])
+```
+
+#### $geoNear stage
+
+The `$geoNear` pipeline stage can be used to return documents near to a given GeoJSON object.  
+It is the equivalent of the `$near` GeoJSON query operator, but used as a pipeline stage.   
+It applies only on a GeoJSON field of the input documents.  
+`$geoNear` MUST be the first stage in the pipeline, because it needs to use an existing geo-index on the collection.  
+It requires a `near` object to specify the source, a `maxDistance` field to specify the radius, and a `distanceField` field to specify the name of the field in the output that will contain the calculated distance.
+
+```commandline
+// save the person positions in a new collection using a GeoJSON point
+db.persons.aggregate([
+  { $project: { name: {$concat: ["$name.first", " ", "$name.last"]},
+                pos: {type: "Point", coordinates: [{$toDouble: "$location.coordinates.longitude"},
+                                                   {$toDouble: "$location.coordinates.latitude"}]}} },
+  { $out: "positions" }
+])
+
+// create a geo index on the new collection
+db.positions.createIndex({pos: "2dsphere"})
+
+// find positions in a 500km radius from a given point
+db.positions.aggregate([
+  { $geoNear: {
+    near: { type: "Point", coordinates: [43, 16 ]},
+    maxDistance: 500000,
+    distanceField: "distance"
+  } }
+])
+```
+
+
+### Aggregation with arrays
+
+The examples use the data in the `friends.json` file :
+```commandline
+.\mongoimport.exe -d demo -c friends .\data\array-data.json --jsonArray
+```
+
+In a `$group` stage, we can create an array containing a field value for all documents in the group with the `$push` operator.  
+If we want no duplicate value in the resulting array, we can replace `$push` by the `$addToSet` operator.
+
+```commandline
+// create an array of names of persons in each group (potential duplicates)
+db.friends.aggregate([
+  {$group: { _id: "$age", names: {$push: "$name"} }}
+])
+
+// create an array of names of persons in each group (no duplicates)
+db.friends.aggregate([
+  {$group: { _id: "$age", names: {$addToSet: "$name"} }}
+])
+```
+
+The `$unwind` stage can be used to split an array field (1 to N stage).  
+For each value in this array field, it adds to the pipeline a new document with the unwind field equal to that value (no longer an array), and every other field identical to the input document.  
+All output documents resulting from the same input document have the same `_id` value.
+
+```commandline
+// split the hobbies to create one document per (friend, hobby) pair
+db.friends.aggregate([{ $unwind: "$hobbies" }])
+```
+
+We can keep only the first N elements of an array with the `$slice` operator.  
+To get the last N elements, we can use a negative value as 2nd parameter.  
+To get a slice of N items starting from position K, we can give an additional parameter before the number of elements to keep.
+```commandline
+// keep the first 2 scores
+db.friends.aggregate([
+  {$project: {name: 1, scores: {$slice: ["$examScores", 2]}}}
+])
+
+// keep 2 element starting from index 1 (skip the first)
+db.friends.aggregate([
+  {$project: {name: 1, scores: {$slice: ["$examScores", 1, 2]}}}
+])
+```
+
+To get the length of an array, we can use the `$size` operator :
+```commandline
+db.friends.aggregate([
+  {$project: {name: 1, scoresCount: {$size: "$examScores"}}}
+])
+```
+
+We can apply a filter to elements in an array with the `$filter` operator.  
+It specifies the input array, a local name for the variable, and a condition that can use the variable.  
+The local variable is referenced with a `$$` prefix (a single `$` would reference a field value from the pipeline document)
+```commandline
+db.friends.aggregate([
+  {$project: {
+    name: 1,
+    goodScores: {
+      $filter: {input: "$examScores", as: "item", cond: {$gt: ["$$item.score", 60]}}
+    }
+  }}
+])
+```
+
+Example of combination of multiple stages :
+```commandline
+// get each friend ranked by their best score 
+db.friends.aggregate([
+  {$unwind: "$examScores"},                               // split all the scores
+  {$project: {name: 1, score: "$examScores.score"}},      // keep only the score 
+  {$group: {_id: "$name", score: {$max: "$score"}}},      // group by person to get the max
+  {$sort: {score: -1}}                                    // sort in descending order
+])```
