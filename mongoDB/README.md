@@ -1064,6 +1064,36 @@ db.friends.aggregate([
 ])
 ```
 
+## Transactions
+
+MongoDB supports transactions, so a group of operations either all succeed or are all rolled back.  
+A session needs to be created, then a transaction is started in this session.  
+Operations can be performed from the collections extracted from the session.  
+The transaction can then be either committed or aborted.
+
+```commandline
+// create a player and characters referencing this player
+use game
+db.players.insertOne({_id: "1234", name: "Tom"})
+db.characters.insertMany([{race: "elf", lvl: 12, playerId: "1234"},
+                          {race: "orc", lvl: 7, playerId: "1234"}])
+
+// create a session to group queries in a transaction
+const session = db.getMongo().startSession()
+const playersCollection = session.getDatabase("game").players
+const charactersCollection = session.getDatabase("game").characters
+session.startTransaction()
+
+// perform queries in a single transaction
+playersCollection.deleteOne({_id: "1234"})
+charactersCollection.deleteMany({playerId: "1234"})
+
+// commit or abort the transaction
+session.commitTransaction()
+session.abortTransaction()
+```
+
+
 ## MongoDB Security
 
 ### Authentication and Authorization
