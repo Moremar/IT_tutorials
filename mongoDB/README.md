@@ -100,7 +100,16 @@ db.createCollection('animal')     Create a collection in current DB
 db.shutdownServer()               Shutdown the running MongoDB server
 ```
 
-Collections are automatically created when used (for example when creating a document), but the `createCollection()` method lets us specify some options, for example giving it a validator to control the documents's structure.
+Collections are automatically created when used (for example when creating a document).  
+The `createCollection()` method is used to specify some options, for example giving it a validator to control the schema.
+
+We can create capped collections, that are fix-size collections with an optional max number of documents.  
+They are sorted by insertion time, and delete older documents to make space for new inserted documents.  
+They can be used for caching or logging when only recent data are useful to keep.
+```commandline
+db.createCollection("mycache", {capped: true, size: 10000, max: 3})
+```
+
 
 
 ### Create documents
@@ -1150,3 +1159,52 @@ MongoDB also supports encryption at rest.
 With the Enterprise solution, we can encrypt all the storage files.  
 Individual fields inside collections can also be encrypted or hashed.
 
+
+## MongoDB deployment
+
+#### Replica set
+
+By default, we only run a single MongoDB node that receives all requests.  
+We can use multiple nodes instead, that form a replica set.   
+One node is the primary node in charge of all the WRITE operations, that it propagates asynchronously to all secondary nodes.  
+Each node in the replica set contains a full copy of the primary node.  
+The READ operations can be processed by the primary node or by any secondary node.  
+If the primary node is down, a new primary node is elected among the secondary nodes.  
+This improves both performance and availability, allowing one node to go down without much impact on the MongoDB database.
+
+#### Sharding
+
+MongoDB allows sharding, which is the split of the MongoDB database across multiple machines.  
+It is different from a replica set, where all nodes are replicas of a same primary node.  
+With sharding, the data is not duplicated, it is distributed over multiple shards.  
+Each incoming query needs to be ran on the shard(s) containing the requested data.
+
+MongoDB uses the `mongos` router to receiving incoming queries and dispatch them to the target shards.
+
+When using sharding, all documents have a shard key, that decides in what shard it will be added.  
+The shard key should be chosen to be evenly distributed across shards.  
+Each incoming query can specify a shard key, in that case only the target shard will receive the query.  
+If no shard key is specified, all shards will receive the query.
+
+#### Cloud Deployment with MongoDB Atlas
+
+The manual deployment and management of MongoDB to a production server is a tedious task.  
+We need to manage shards, replica sets, encryption at rest and in transit, backups, software updates...  
+MongoDB offers a SaaS solution to manage MongoDB databases on the cloud, called MongoDB Atlas.
+
+MongoDB Atlas offers several tiers (Serverless, Dedicated and Shared) with different pricing.  
+It is using AWS, Google Cloud Platform or Microsoft Azure in the background.  
+It has a free tiers for Shared MongoDB server with up to 512 Mb of storage.
+
+From the MongoDB Atlas website, register and create a free tiers account.  
+It lets us create a configurable cluster of nodes that will be deployed by MongoDB Atlas in the cloud.  
+By default, the deployed cluster has a replica set of 3 nodes.  
+We have access to a dashboard where we can monitor our databases in real time, create collections and documents, setup the security of the database...
+
+We can specify the whitelist of IP addresses that are allowed to query the MongoDB server.  
+That should be limited to our local development adress and our client application IP address.
+
+With the paid version of Atlas, we can create backups of the database to prevent data loss.
+
+On the cluster page, we have a button to connect to the MongoDB server with the MongoDB Shell, with a driver, with Compass or from VS Code.  
+For example if we choose "Connect from the MongoDB Shell", it provides the command line to start a client connecting to that cluster in the cloud. 
