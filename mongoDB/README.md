@@ -1238,3 +1238,21 @@ With the paid version of Atlas, we can create backups of the database to prevent
 
 On the cluster page, we have a button to connect to the MongoDB server with the MongoDB Shell, with a driver, with Compass or from VS Code.  
 For example if we choose "Connect from the MongoDB Shell", it provides the command line to start a client connecting to that cluster in the cloud. 
+
+
+### MongoDB Stitch
+
+MongoDB Stitch is a serverless platform for building applications.  
+It is now part of the more recent MongoDB Realm platform.  
+It provides a backend solution for mobile apps, web apps or desktop apps (similar to Firebase).  
+It can replace a Node.js REST API for example, and be called directly from a frontend (React, Angular...).
+
+MongoDB Stitch is integrated with MongoDB Atlas for its database solution.  
+It also offers an Authentication solution for users of our app.  
+Stitch lets the frontend users directly access the DB, and it allows granular configuration of what users can do.
+
+Stitch supports functions (similar to AWS Lambda functions) that can be executed in the cloud in response to some events (triggers).
+
+Stitch has no storage solution, but it can integrate with AWS S3 for storage.
+
+These services are available from the MongoDB Atlas console, under the `App Services` tab.
