@@ -4,3 +4,35 @@ How to use
 1) Run "npm install" in the extracted project folder
 2) Run "npm start" to start the React development server
 3) Keep 2) running and additionally run "npm run start:server" in a new terminal/ command prompt window (also in the project folder) to start the Node.js server
+
+
+MongoDB setup
+———————
+
+Before starting the app, ensure that we have a MongoDB server running on localhost on default port 27017.
+The MongoDB server should have :
+ - an "appdev" user with the "readWriteAnyDatabase" permission defined in the "admin" database
+ - a "shop" database
+ - a "products" collection in the "shop" database
+ - some products in that collection
+ - a "users" collection in the "shop" database
+ - a unique index on email on the "users" collection
+
+
+Commands to run i nthe MongoDB Shell to prepare the MongoDB server :
+
+use admin
+db.createUser({user: "appdev", pwd: "appdev", roles: ["readWriteAnyDatabase"]})
+
+use shop
+db.products.insertMany([
+    { name: 'Stylish Backpack', description: 'A stylish backpack for the modern women or men. It easily fits all your stuff.', price: 79.99, image: 'http://localhost:3100/images/product-backpack.jpg' },
+    { name: 'Lovely Earrings', description: "How could a man resist these lovely earrings? Right - he couldn't.", price: 129.59, image: 'http://localhost:3100/images/product-earrings.jpg' },
+    { name: 'Working MacBook', description: 'Yes, you got that right - this MacBook has the old, working keyboard. Time to get it!', price: 1799, image: 'http://localhost:3100/images/product-macbook.jpg' },
+    { name: 'Red Purse', description: 'A red purse. What is special about? It is red!', price: 159.89, image: 'http://localhost:3100/images/product-purse.jpg' },
+    { name: 'A T-Shirt', description: 'Never be naked again! This T-Shirt can soon be yours. If you find that buy button.', price: 39.99, image: 'http://localhost:3100/images/product-shirt.jpg' },
+    { name: 'Cheap Watch', description: 'It actually is not cheap. But a watch!', price: 299.99, image: 'http://localhost:3100/images/product-watch.jpg' }
+]);
+
+db.createCollection("users")
+db.users.createIndex({email: 1}, {unique: true})

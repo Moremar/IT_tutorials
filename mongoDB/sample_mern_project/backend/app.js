@@ -1,6 +1,7 @@
 const path       = require('path');
 const express    = require('express');
 const bodyParser = require('body-parser');
+const db         = require('./db')
 
 const productRoutes = require('./routes/products');
 const authRoutes    = require('./routes/auth');
@@ -24,4 +25,13 @@ app.use((req, res, next) => {
 app.use('/products', productRoutes);
 app.use('/', authRoutes);
 
-app.listen(3100);
+db.initClient(
+  (err, client) => {
+    if (err) {
+      console.log(err);
+    } else {
+      // starts the server only if the DB was initialized correctly
+      app.listen(3100);
+    }
+  }
+);

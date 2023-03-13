@@ -6,16 +6,7 @@ import Products from '../../components/Products/Products';
 class ProductsPage extends Component {
   state = { isLoading: true, products: [] };
   componentDidMount() {
-    axios
-      .get('http://localhost:3100/products')
-      .then(productsResponse => {
-        this.setState({ isLoading: false, products: productsResponse.data });
-      })
-      .catch(err => {
-        this.setState({ isLoading: false, products: [] });
-        this.props.onError('Loading products failed. Please try again later');
-        console.log(err);
-      });
+    this.fetchData();
   }
 
   productDeleteHandler = productId => {
@@ -23,6 +14,7 @@ class ProductsPage extends Component {
       .delete('http://localhost:3100/products/' + productId)
       .then(result => {
         console.log(result);
+        this.fetchData();
       })
       .catch(err => {
         this.props.onError(
@@ -31,6 +23,19 @@ class ProductsPage extends Component {
         console.log(err);
       });
   };
+
+  fetchData = () => {
+    axios
+    .get('http://localhost:3100/products?page=1')   // hardcoded page here, would be dynamic in real app
+    .then(productsResponse => {
+      this.setState({ isLoading: false, products: productsResponse.data });
+    })
+    .catch(err => {
+      this.setState({ isLoading: false, products: [] });
+      this.props.onError('Loading products failed. Please try again later');
+      console.log(err);
+    });
+  }
 
   render() {
     let content = <p>Loading products...</p>;
