@@ -269,8 +269,7 @@ Then we use the `express.static` built-in Express middleware to specify the publ
 app.use(express.static(path.join(__dirname, 'public')));
 ```
 
-
-### HTML response
+### Static HTML repsonse
 
 Instead of sending a hardcoding HTML string, we can create some HTML files in a `./views/` folder and reference then as the response :
 
@@ -279,3 +278,87 @@ router.get('/add', (req, res, next) => {
     res.sendFile(path.join(__dirname, '..', 'views', 'add-product.html'));
 });
 ```
+
+### HTML Templates
+
+To deliver dynamic HTML content, Node.js supports returning HTML templates, similar to HTML files but containing some templates resolved dynamically by Node.js.  
+
+Several templating engines are supported, all offering similar functionalities (dynamic content, if and for structures...) but with different syntax and philosophy, including :
+- **EJS :** HTML syntax with JS templates : `<p><% name %></p>`
+- **Pug :** minimal HTML tags and custom template language : `p #{name}` 
+- **Handlebars :** HTML syntax with custom template language : `<p>{{ name }}</p>`
+
+These templates are installed from NPM :
+```commandline
+npm install --save ejs
+npm install --save pug
+npm install --save express-handlebars
+```
+
+The templating engine configuration is done in Express by calling :
+```javascript
+app.set('view engine', 'pug');
+app.set('views', 'views');       // forlder containing the templates
+```
+
+Some templating engines (for example Handlebars) are not known by default by Node.js, and need to be registered first :
+```javascript
+const hbs = require('express-handlebars');
+
+app.engine('hbs', hbs());        // register the template engine
+app.set('view engine', 'pug');   // use it
+app.set('views', 'views');       // specify the templates location
+```
+
+Once the template engine is specified, Node.js can render some templates in response to some requests, by using the `app.render()` method. It takes as parameters the template to render, and the objects to use in the template for dynamic content.
+```javascript
+res.render('shop', { pageTitle: 'My Shop', products: allProducts });
+```
+
+#### Pug template engine
+
+Pug is already integrated in Node.js by default, so it does not need to be imported from code.  
+It uses a specific syntax different from HTML (see example project).  
+
+Pug has built-in `if` and `each` keywords to create for loops and if conditions :
+```
+    if products.length > 0
+        each product in products
+           p product.name
+    else
+        p No products to display.
+```
+Pugs templates can use a layout, which is a common base file used by multiple templates to avoid duplication (for example to include the `head` section and the navbar).
+
+#### EJS templating engine
+
+EJS uses HTML syntax, with some markers to dynamically change the structure of the DOM or add some custom values.  
+
+To insert the value of an object in the template, we use the `<%= value %>` marker :
+```html
+<p><%= product.description %></p>
+```
+
+We can include some JS logic in our template inside the `<% JS code %>` marker.  
+This can be used to conditionnally include an HTML block :
+```html
+<% if (products.length > 0) { %>
+    <p>There are products !</p>
+<% } else { %>
+    <p>There are no products.</p>
+<% } %>
+```
+
+It can also be used to dynamically repeat an HTML block for each element of an input array :
+```html
+<% products.forEach(function(product) { %>
+    <p> <%= product.title %> costs <%= product.price %> euros. </p>
+<% }) %>
+```
+
+EJS does not support layouts, but it can define some common blocks (kind of reusable "components") that can be included in other templates with the `<%- include(path) %>` marker that renders non-escaped HTML code.  
+The content of these blocks is not necessarily valid HTML, it can open some tags that it does not close, and another include block can close them.
+```
+<%- include('includes/navbar.ejs') %>
+```
+

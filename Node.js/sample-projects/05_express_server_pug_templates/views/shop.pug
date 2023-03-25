@@ -1,0 +1,15 @@
+extends common-layout.pug 
+
+block content
+    h1 My products
+    .grid
+        if products.length > 0
+            each product in products
+                .card 
+                    div.header 
+                        span.title #{product.title} 
+                    img(src=product.imageUrl, alt="Product image")
+                    div.footer 
+                        span.price #{product.price} 
+        else
+            p No products to display.

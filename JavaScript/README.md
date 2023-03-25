@@ -111,7 +111,7 @@ let message = f(person);
 
 ## Template Literals
 
-We can create template string literals by using backticks instead of quotes.  
+We can create template string literals by using back-ticks instead of quotes.  
 This lets us evaluate expressions and insert it into the string.
 ```commandline
 let name = 'Tom';
