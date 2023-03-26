@@ -362,3 +362,17 @@ The content of these blocks is not necessarily valid HTML, it can open some tags
 <%- include('includes/navbar.ejs') %>
 ```
 
+## MVC pattern
+
+The Model-View-Controller pattern separates the responsabilities in the app.
+
+- the **Views** are what gets displayed to the user.  
+  In a Node.js project, the views are the HTML files and templates.
+
+- the **Models** are in charge of access and management of the data.  
+  In a Node.js project, it can be a class by business object used in the app (User, Product, Card...).  
+  Only the models interact with the underlying storage solution (database, file system, ...).
+
+- the **Controllers** handle the incoming requests.  
+  They call relevant operations from the models, and generate required dynamic information to pass to the views.  
+  In a Node.js project, they are the callbacks attached to each route.
