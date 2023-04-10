@@ -3,14 +3,14 @@ const express = require('express');
 // use the Express router
 const router = express.Router();
 
-// register a middleware that returns a form for request GET /admin/add
-// when submitting, it generates a POST request to url "/admin/message"
-router.get('/add', (req, res, next) => {
+// register a middleware that returns a form for request GET /admin/add-product
+// when submitting, it generates a POST /admin/add-product
+router.get('/add-product', (req, res, next) => {
     const htmlResponse = 
         '<html>'
-        + '  <head><title>Enter Message</title></head>'
+        + '  <head><title>Add Product</title></head>'
         + '  <body>'
-        + '    <form action="/admin/message" method="POST">'
+        + '    <form action="/admin/add-product" method="POST">'
         + '      <input type="text" name="mess"/>'
         + '      <button type="submit">Send</button>'
         + '    </form>'
@@ -20,8 +20,8 @@ router.get('/add', (req, res, next) => {
 });
 
 // register a middleware to receive the POST request when the form is submitted
-router.post('/message', (req, res, next) => {
-    res.send({message: req.body.mess});
+router.post('/add-product', (req, res, next) => {
+    res.send({title: req.body.mess});
 });
 
 module.exports = router;

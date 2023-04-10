@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
  *                   npm start     (that runs "node server.js")
  *
  * Basic Node.js web server using the Express framework.
- * Like the 01_basic_http_server example, it returns an HTML form for url "/admin/add"
+ * Like the 01_basic_http_server example, it returns an HTML form for GET /admin/add-product
  * It receives the POST request on submission and returns the entered value.
  * 
  * This web server uses Express middlewares to parse the request body and handle routes.
@@ -25,14 +25,14 @@ app.use((req, res, next) => {
     next();
 });
 
-// register a middleware that returns a form for request GET /admin/add
-// when submitting, it generates a POST request to url "/admin/message"
-app.get('/admin/add', (req, res, next) => {
+// register a middleware that returns a form for GET /admin/add-product
+// when submitting, it generates a POST /admin/add-product
+app.get('/admin/add-product', (req, res, next) => {
     const htmlResponse = 
         '<html>'
-        + '  <head><title>Enter Message</title></head>'
+        + '  <head><title>Add product</title></head>'
         + '  <body>'
-        + '    <form action="/admin/message" method="POST">'
+        + '    <form action="/admin/add-product" method="POST">'
         + '      <input type="text" name="mess"/>'
         + '      <button type="submit">Send</button>'
         + '    </form>'
@@ -42,14 +42,15 @@ app.get('/admin/add', (req, res, next) => {
 });
 
 // register a middleware to receive the POST request when the form is submitted
-app.post('/admin/message', (req, res, next) => {
+app.post('/admin/add-product', (req, res, next) => {
     // access the request body parsed by the body-parser middleware in the "body" field
-    res.send({message: req.body.mess});
+    res.send({title: req.body.mess});
 });
 
 // register a middleware for request GET /
 app.get('/', (req, res, next) => {
-    res.send(`<h1>Welcome to the site !</h1>`);
+    res.send('<h1>Welcome to the site !</h1>'
+           + '<a href="/admin/add-product">Add Product</a>');
 });
 
 // create the web server using the express config and listen on port 3000

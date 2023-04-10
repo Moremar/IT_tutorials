@@ -7,10 +7,10 @@ const fs   = require('fs');
  * 
  * This server uses pure Node.js only, without the Express framework
  * It starts a server that listens to 2 routes :
- *   GET /admin/add      : return an HTML page with a form containing a message field
- *                         on submit, it calls POST /message
- *   POST /admin/message : extract the submitted message and save it to a file
- *                         return a 302 success code
+ *   GET /admin/add-product  : return an HTML page with a form containing a title field
+ *                             on submit, it calls POST /admin/add-product
+ *   POST /admin/add-product : extract the submitted title and save it to a file
+ *                             return a 302 success code
  */
 
 
@@ -24,12 +24,12 @@ const routesHandler = (req, res) => {
     console.log(method + " " + url);
 
     // Return an HTML form with a message input for the root URL
-    if (url === "/admin/add") {
+    if ((url === '/' || url == '/admin/add-product') && method == 'GET') {
         const htmlResponse = 
             '<html>'
-            + '  <head><title>Enter Message</title></head>'
+            + '  <head><title>Add Product</title></head>'
             + '  <body>'
-            + '    <form action="/admin/message" method="POST">'
+            + '    <form action="/admin/add-product" method="POST">'
             + '      <input type="text" name="mess"/>'
             + '      <button type="submit">Send</button>'
             + '    </form>'
@@ -42,7 +42,7 @@ const routesHandler = (req, res) => {
     }
 
     // extract the message when receiving the submission from the HTML form
-    if (url === '/admin/message' && method == 'POST') {
+    if (url === '/admin/add-product' && method == 'POST') {
         // listen to the reception of data in the request stream to build the body
         // this is a bit tedious and is no longer required when using Express with the
         // "body-parser" middleware
@@ -60,7 +60,7 @@ const routesHandler = (req, res) => {
             fs.writeFile("message.txt", message, (err) => {
                 // prepare the HTTP response
                 res.statusCode = 302;
-                const htmlResponse = "<p><b>Message saved : </b>" + message + "</p>";
+                const htmlResponse = "<p><b>Product saved : </b>" + message + "</p>";
                 res.write(htmlResponse);
                 return res.end();
             });

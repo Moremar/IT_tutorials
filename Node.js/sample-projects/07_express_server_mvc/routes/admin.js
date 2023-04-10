@@ -5,14 +5,33 @@ const productsController = require('../controllers/products');
 const router = express.Router();
 
 // With the MVC pattern, the routes file no longer contains the logic.
-// Instead it references the controller function in charge of handling that request
+// Instead they reference the controller function in charge of handling that request
 
+// register a controller middleware for each available route
 
-// register a middleware that returns a form for request GET /admin/add
-// when submitting, it generates a POST request to url "/admin/message"
-router.get('/add', productsController.getAddProduct);
+// GET /admin/products
+// display products with admin options (edit/delete)
+router.get('/products', productsController.getAdminProducts);
 
-// register a middleware to receive the POST request when the form is submitted
-router.post('/message', productsController.postAddProduct);
+// GET /admin/add-product
+// display the form to add a new product
+// when submitting, it generates a POST /admin/add-product
+router.get('/add-product', productsController.getAddProduct);
+
+// POST /admin/add-product
+// handle the POST request on form submission
+router.post('/add-product', productsController.postAddProduct);
+
+// GET /admin/edit-product/<id>
+// returns the HTML page with the edit form
+// when submitting, it generates a POST /admin/edit-product
+router.get('/edit-product/:productId', productsController.getEditProduct);
+
+// POST /admin/edit-product
+// handle the POST request on form submission
+router.post('/edit-product', productsController.postEditProduct);
+
+// POST /admin/delete-product
+router.post('/delete-product', productsController.postDeleteProduct);
 
 module.exports = router;

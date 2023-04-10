@@ -12,7 +12,7 @@ const allProducts = [
 // register a middleware for request GET /
 router.get('/', (req, res, next) => {
     // Pug template that extends a common layout
-    res.render('shop', { pageTitle: 'My Shop', products: allProducts });
+    res.render('products', { pageTitle: 'Products', products: allProducts });
 });
 
 module.exports = router;

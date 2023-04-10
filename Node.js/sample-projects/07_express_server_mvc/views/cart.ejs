@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('includes/navbar.ejs') %>
+    <main>
+        <div class="cart-content">
+            <% if (cartItems.length === 0) { %>
+                <p>The cart is empty.</p>
+            <% } else { %>
+    
+                <h2>Cart content</h2>
+    
+                <table>
+                    <tr>
+                        <th class="visible title">Product Title</th>
+                        <th class="visible">Unit Price</th>
+                        <th class="visible">Quantity</th>
+                        <th></th>
+                    </tr>
+                    <% for (let item of cartItems) { %>
+                        <tr>
+                            <td class="visible"><%= item.product.title %></td>
+                            <td class="visible center">$<%= item.product.price %></td>
+                            <td class="visible center"><%= item.quantity %></td>
+                            <td>
+                                <form style="display: inline-block" action="/cart/delete" method="POST">
+                                    <!-- include the product ID in a hidden input to have it in the POST request body -->
+                                    <input type="hidden" name="productId" value="<%= item.product.id %>"/>
+                                    <button>×</button>    
+                                </form>                
+                            </td>
+                        </tr>
+                    <% } %>    
+                </table>
+    
+                <p>Total cart price : <b>$<%= totalPrice %></b></p>
+    
+            <% } %>
+        </div>
+    </main>
+</body>
+</html>

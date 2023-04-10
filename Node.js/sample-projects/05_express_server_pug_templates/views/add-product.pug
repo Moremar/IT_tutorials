@@ -3,7 +3,7 @@ html(lang="en")
         meta(charset="UTF-8")
         meta(http-equiv="X-UA-Compatible", content="IE=edge")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
-        title My Shop
+        title Add Product
         link(rel="stylesheet", href="/css/style.css")
     body 
         header
@@ -12,9 +12,9 @@ html(lang="en")
                     li
                         a(href="/") Shop
                     li
-                        a(href="/admin/add") Add product
+                        a(href="/admin/add-product") Add product
         main
-            form(action="/admin/message", method="POST")
+            form(action="/admin/add-product", method="POST")
                 div.form-control
                     input(type="text", name="mess")
                     button(type="submit") Send

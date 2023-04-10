@@ -1,1 +1,5 @@
+# Pycharm config files
 **/.idea
+
+# Node packages imported by NPM
+**/node_modules/
