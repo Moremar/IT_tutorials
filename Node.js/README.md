@@ -362,6 +362,7 @@ The content of these blocks is not necessarily valid HTML, it can open some tags
 <%- include('includes/navbar.ejs') %>
 ```
 
+
 ## MVC pattern
 
 The Model-View-Controller pattern separates the responsabilities in the app.
@@ -376,3 +377,191 @@ The Model-View-Controller pattern separates the responsabilities in the app.
 - the **Controllers** handle the incoming requests.  
   They call relevant operations from the models, and generate required dynamic information to pass to the views.  
   In a Node.js project, they are the callbacks attached to each route.
+
+
+## SQL Database
+
+### MySQL driver package
+
+Node.js can use a database for its data storage by using a driver package.  
+For example, MySQL can be installed from their website on the local machine (Communnity Server + Workbench GUI).
+Then it can be used from the Node.js app with the `mysql2` client driver :
+
+```
+npm install mysql2 --save
+```
+
+A connection is required to send a query to the MySQL database.  
+We could open and close a connection for each request, but it quickly becomes inefficient.  
+Instead we can create a connection pool that gets reused by incoming queries.  
+The connection pool must know the database host, user (for example `root` created during MySQL installation) and database schema.
+
+##### database.js
+
+```javascript
+const mysql = require('mysql2');
+
+const pool = mysql.createPool({
+  host: 'localhost',
+  user: 'root',
+  password: 'mypassword',
+  database: 'schemanodejs'
+});
+
+// return a promise so query results can be chained with .then()
+module.exports = pool.promise()
+```
+
+Using this connection pool, we can send raw SQL queries to the database and receive the results in a promise.  
+Queries with user-defined arguments should use parametrized queries, letting the MySQL driver sanitize the arguments to avoid SQL injection :
+
+##### server.js
+
+```javascript
+const db = require('./database');
+
+// query with no parameter
+db.execute('SELECT * FROM products')
+  .then( (res) => {
+    console.log(res[0]);  // query result
+    console.log(res[1]);  // metadata
+  }).catch( (err) => {
+    console.log(err);
+  });
+
+// parametrized query
+db.execute('INSERT INTO products(title, price, image_url, description) '
+         + 'VALUES (?, ?, ?, ?)', 
+           [ this.title, this.price, this.imageUrl, this.description ]
+    .then( ... )
+    .catch( ... );
+```
+
+### Sequelize
+
+Sequelize is an ORM (Object-Relational Mapping) library for SQL databases in Node.js.  
+It abstracts away the SQL queries, by exposing models (one JS class per database table) used as a handle to the DB.  
+We can call static methods of these model classes, or instantiate them and call object methods to execute SQL code in the DB.
+
+``` commandline
+npm install sequelize --save
+```
+
+##### database.js
+
+```javascript
+const Sequelize = require('sequelize').Sequelize;
+
+const sequelize = new Sequelize(
+      'schemanodejs', 'root', 'mypassword',
+      {dialect: 'mysql', 'host': 'localhost'});
+
+// The connection pool is now managed by Sequelize under the hood
+module.exports = sequelize;
+```
+
+Models can be completely rewritten as Sequelize models.  
+For example a `Product` Sequelize model can be created to wrap a `products` table in MySQL, and insert/update/delete rows.  
+The model definition specifies the database table fields.
+
+##### product.js
+
+```javascript
+const Sequelize = require('sequelize');   // sequelize package
+const sequelize = require('./database');  // sequelize instance wrapping the DB
+
+// define the table fields of a "products" table
+const Product = sequelize.define('product', {
+  id: { type: Sequelize.INTEGER, allowNull: false, primaryKey: true, autoIncrement: true },
+  title: { type: Sequelize.STRING, allowNull: false },
+  price: { type: Sequelize.DOUBLE, allowNull: false },
+  imageUrl: { type: Sequelize.STRING, allowNull: false },
+  description: { type: Sequelize.STRING, allowNull: false }
+});
+
+module.exports = Product;
+```
+
+In the main server code, we can create the DB tables with the `sync()` function.  
+By default it only creates the table if it does not exist.  
+The `force` option can be used to always re-create the tables (useful for dev to pick-up table columns changes).
+
+##### server.js
+
+```javascript
+// create all MySQL tables specified by the Sequelize models if they do not exist yet
+sequelize.sync({force: false})
+    // start the web server if the DB tables were correctly created
+  .then((res) => {
+    console.log(res);
+    app.listen(3000);
+  }).catch((err) => {
+    console.log(err);
+  });
+  ```
+
+Node.js controllers can use these models to create/update/delete rows in the DB.  
+Model classes expose `.build()` to create a JS instance, and `.create()` to create the JS instance and save it in the DB.
+Sequelize methods return Promise instances, that can be chained with `.then()` and `.catch()` :
+
+```javascript
+Product.create({title: myTitle, price: myPrice})
+       .then(  (res) => { console.log(res); } )
+       .catch( (err) => { console.log(err); } );
+
+Product.findAll({ where: { price: { [Op.gt]: 100.00 } } })
+       .then(  (res) => { console.log(res); } )
+       .catch( (err) => { console.log(err); } );
+```
+
+Sequelize lets us define 1-to-1, 1-to-N, N-to-1 or N-to-M relations between models.  
+We can for example specify that each Product belongs to a User (N to 1) by calling (usually in `server.js` before the sync):
+
+```javascript
+Product.belongsTo(User, {constraints: true, onDelete: 'CASCADE'});
+User.hasMany(Product);
+```
+
+This will create a `userId` column in the Product table, with a foreign key to the User table.  
+It also generates association methods in the User model, such as the `createProduct()` method that creates a new product and attaches the ID of the user object calling the method in the `userId` field.
+
+To create a N-to-M association, we need an intermediate table.  
+If we have a cart that can contain many products, and a product that can be in many carts, we can create 3 models `Product`, `Cart` and `CartItem`, and associate them with :
+
+```javascript
+// many-to-many relations use an intermediate table
+Product.belongsToMany(Cart, {through: CartItem});
+Cart.belongsToMany(Product, {through: CartItem});
+```
+
+This will create methods in `Cart` and `Product` models to access all associated products/carts.  
+The intermediate element in the `CartItem` model can be accessed via the `cartItem` property of every cart or product instance.
+
+
+## Useful Node.js libraries
+
+### dotenv
+
+Dotenv is a module that loads environment variables from a `.env` file into the `process.env` member variable, along with all other environment variables loaded by Node.js.  
+
+This can be useful to store  in the `.env` file all access keys, credentials or environment-specific parameters, properly separated from the code.  
+This configuration file can be listed in the `.gitignore` file to be excluded from the git repository.
+
+```commandline
+npm install dotenv --save
+```
+##### .env
+
+```javascript
+MYSQL_HOST="localhost"
+MYSQL_USER="root"
+MYSQL_PASSWORD="mypassword"
+```
+
+These values can be accessed from the `process.env` variable in the Node.js code :
+
+```javascript
+const dotenv = require('dotenv');
+dotenv.config();
+console.log('Host : ' + process.env.MYSQL_HOST);
+```

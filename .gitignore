@@ -3,3 +3,6 @@
 
 # Node packages imported by NPM
 **/node_modules/
+
+# Dotenv environment variables configuration files
+**/.env
