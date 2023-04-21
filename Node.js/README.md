@@ -381,7 +381,7 @@ The Model-View-Controller pattern separates the responsabilities in the app.
 
 ## SQL Database
 
-### MySQL driver package
+### MySQL driver
 
 Node.js can use a database for its data storage by using a driver package.  
 For example, MySQL can be installed from their website on the local machine (Communnity Server + Workbench GUI).
@@ -536,6 +536,80 @@ Cart.belongsToMany(Product, {through: CartItem});
 
 This will create methods in `Cart` and `Product` models to access all associated products/carts.  
 The intermediate element in the `CartItem` model can be accessed via the `cartItem` property of every cart or product instance.
+
+
+## No-SQL Databases
+
+### MongoDB driver
+
+To start a MongoDB server, we can either use a local instance (with the `mongod` executable) or create a new project in the cloud with Atlas (see full MongoDB guide).  
+In any case, we should have a MongoDB server running and a valid username/password pair to access it.
+
+The MongoDB Node.js driver lets us interact with this database from the Node.js code :
+
+```commandline
+npm install mongodb --save
+```
+
+##### database.js
+
+```javascript
+const mongodb = require('mongodb');
+
+// internal variable, exposed via the getDb() method
+let _db;
+
+const connect = (callbackFn) => {
+    const uri = "mongodb+srv://myuser:mypassword@myHost/?retryWrites=true&w=majority";
+
+    const mongoClient = new mongodb.MongoClient(uri).connect()
+    .then((client) => {
+        console.log('Connected to the MongoDB server');
+        _db = client.db(mongoDatabase);
+        callbackFn();
+    })
+    .catch((err) => {
+        console.log(err);
+    });
+};
+
+const getDb = () => {
+    if (_db) {
+        return _db;
+    }
+    throw 'Need to call connect() before accessing the database';
+}
+
+exports.connect = connect;
+exports.getDb = getDb;
+```
+
+The model of the Node.js app can then perform actions in the MongoDB database using the handler exposed by the `getDb()` method.
+
+For example, to create a user in a `users` collection, we can use the following methods, that return promises that the caller can react to in a `then()` block :
+
+```javascript
+const mongo = require('../database');
+
+// create with an insert MongoDB command
+const db = mongo.getDb();
+return db.collection('users').insertOne({ 
+  'name': 'userdev',
+  'email': 'xxxxx'
+});
+
+// create with an upsert MongoDB command
+const db = mongo.getDb();
+return db.collection('users').updateOne(
+    { 'email': 'xxxxx' },     // use the email as the unique identifier
+    { $set : { 'name': 'userdev' } } ,
+    { upsert: true }
+);
+```
+
+In MongoDB, documents have an ID of class `ObjectId` that can be used for SQL-like associations between collections.  
+MongoDB documents can also contain nested objects, which can be an alternative to associations.  
+This is a good solution when we want a snapshot of a document at one point in time, but it is creating an overhead if the duplicate nested document must be updated when the original document is modified.
 
 
 ## Useful Node.js libraries
