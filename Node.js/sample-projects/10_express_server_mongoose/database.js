@@ -1,7 +1,10 @@
-const mongodb = require('mongodb');
+const mongoose = require('mongoose');
 
 /**
- * MongoDB database using the native "mongodb" Node.js driver module.
+ * MongoDB database using the Mongoose ODM module.
+ * 
+ * Mongoose exposes a connect() method, so we only call it here with the MongoDB
+ * credentials from the config file.
  * 
  * This requires the connection parameters to be defined in the .env file.
  * This file is not included in the git repository.
@@ -13,22 +16,17 @@ const mongodb = require('mongodb');
  *    MONGODB_DATABASE="schemanodejs"
  */
 
-// internal variable, exposed via the getDb() method
-let _db;
-
 const connect = (callbackFn) => {
     const mongoUser     = process.env.MONGODB_USER;
     const mongoPassword = process.env.MONGODB_PASSWORD;
     const mongoHost     = process.env.MONGODB_HOST;
     const mongoDatabase = process.env.MONGODB_DATABASE;
     const uri = "mongodb+srv://" + mongoUser + ":" + mongoPassword
-              + '@' + mongoHost + "/?retryWrites=true&w=majority";
+              + "@" + mongoHost + "/" + mongoDatabase + "?retryWrites=true&w=majority";
 
-    const mongoClient = new mongodb.MongoClient(uri);
-    mongoClient.connect()
-    .then((client) => {
+    mongoose.connect(uri)
+    .then(() => {
         console.log('Connected to the MongoDB server');
-        _db = client.db(mongoDatabase);
         callbackFn();
     })
     .catch((err) => {
@@ -37,12 +35,4 @@ const connect = (callbackFn) => {
     });
 };
 
-const getDb = () => {
-    if (_db) {
-        return _db;
-    }
-    throw 'Need to call connect() before accessing the database';
-}
-
 exports.connect = connect;
-exports.getDb = getDb;

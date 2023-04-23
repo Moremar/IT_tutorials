@@ -25,7 +25,9 @@ const notFoundController = require('./controllers/error');
 
 /**
  * started with :    npm install
+ *                   vim .env      (create the .env file with DB config as detailed in database.js)
  *                   npm start     (that runs "node server.js")
+ * 
  *
  * Builds on 07_express_server_mvc, but uses a MySQL database for data storage (instead of a file).
  * It uses the Sequelize Object-Relational-Mapping (ORM) library to create the DB tables interact with the DB.

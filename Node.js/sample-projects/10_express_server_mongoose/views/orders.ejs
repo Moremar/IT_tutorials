@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('includes/navbar.ejs') %>
+    <main>
+        <div class="orders-content">
+            <% if (orders.length === 0) { %>
+                <p>There are no orders yet.</p>
+            <% } else { %>
+
+                <% for (let i = 0; i < orders.length; i++) { %>
+
+                    <div class="order">
+                        <div class="header">
+                            <b>Order <%= i + 1 %></b>
+                            <span class="light"><%= orders[i].orderDate %></span>
+                        </div>
+                        <table>
+                            <tr>
+                                <th class="visible title">Product Title</th>
+                                <th class="visible">Unit Price</th>
+                                <th class="visible">Quantity</th>
+                                <th></th>
+                            </tr>
+                            <% for (let item of orders[i].products) { %>
+                                <tr>
+                                    <td class="visible"><%= item.product.title %></td>
+                                    <td class="visible center">$<%= item.product.price.toFixed(2) %></td>
+                                    <td class="visible center"><%= item.quantity %></td>
+                                </tr>
+                            <% } %>    
+                        </table>
+                    </div>
+
+                <% } %>
+            <% } %>
+        </div>
+    </main>
+</body>
+</html>

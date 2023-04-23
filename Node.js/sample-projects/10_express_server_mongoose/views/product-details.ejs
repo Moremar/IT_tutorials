@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('includes/navbar.ejs') %>
+    <main>
+        <div class="product-details">
+            <div class="header">
+                <h1> <%= product.title %> </h1>
+            </div>
+            <img src="<%= product.imageUrl %>" alt="Product image" />
+            <p><%= product.description %></p>
+            <div class="footer">
+                <h2> $<%= product.price.toFixed(2) %> </h2>
+            </div>
+            <div class="options">
+                <form action="/cart" method="POST">
+                    <!-- include the product ID in a hidden input to have it in the POST request body -->
+                    <input type="hidden" name="productId" value="<%= product._id %>"/>
+                    <button>Add to Cart</button>    
+                </form>
+            </div>
+
+        </div>
+    </main>
+</body>
+</html>

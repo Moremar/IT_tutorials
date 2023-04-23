@@ -612,6 +612,80 @@ MongoDB documents can also contain nested objects, which can be an alternative t
 This is a good solution when we want a snapshot of a document at one point in time, but it is creating an overhead if the duplicate nested document must be updated when the original document is modified.
 
 
+### Mongoose
+
+Mongoose is an ODM (Object-Document Mapping) library for MongoDB in Node.js (like the Sequelize ORM for SQL databases).  
+It abstracts away the MongoDB commands, so we only use the Mongoose models to interact with the MongoDB database.  
+
+``` commandline
+npm install mongoose --save
+```
+
+Mongoose already ships with a built-in `connect()` method to create a connection to the MongoDB database :
+
+##### server.js 
+```javascript
+const mongoose = require('mongoose');
+
+[ ... ]
+
+const mongoUser     = process.env.MONGODB_USER;
+const mongoPassword = process.env.MONGODB_PASSWORD;
+const mongoHost     = process.env.MONGODB_HOST;
+const mongoDatabase = process.env.MONGODB_DATABASE;
+const mongoUri = "mongodb+srv://" + mongoUser + ":" + mongoPassword
+          + "@" + mongoHost + "/" + mongoDatabase + "?retryWrites=true&w=majority";
+
+mongoose.connect(mongoUri)
+.then((client) => {
+    console.log('Connected to the MongoDB server');
+    app.listen(3000);
+})
+```
+
+The models can now be Mongoose models, that define a schema for a collection.  
+They specify the types of fields in the collection, and support nested documents.  
+Fields can also be references to a document in another collection.  
+It is also possible to add custom methods to the model by defining them in `schema.methods` :
+
+#### product.js
+
+```javascript
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    cart: { items: [{
+        productId: {type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true},
+        quantity: {type: Number, required: true}
+    }]}
+});
+
+// example of custom model method
+userSchema.methods.clearCart = function() {
+  this.cart.items = [];
+  return this.save();
+}
+
+module.exports = mongoose.model('User', userSchema);   // create a "users" collection
+```
+
+The Mongoose model exposes methods to interact with the collection, suche as `find()`, `findById()`, `findByIdAndUpdate()`, `findByIdAndDelete()` ...
+
+Mongoose also exposes the `populate()` method, that replaces a reference ObjectId field in the result documents by their corresponding document :
+
+```javascript
+Product.find()
+// replace "userId" by a doc from the "users" collection
+.populate('userId') collection
+.then((enrichedProducts) => {
+  [ ... ]
+})
+```
+
+
+
 ## Useful Node.js libraries
 
 ### dotenv

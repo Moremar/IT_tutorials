@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('includes/navbar.ejs') %>
+    <main>
+        <h1>My products</h1>
+        <div class="grid">
+            <% if (products.length > 0) { %>
+                <% products.forEach(function(product) { %>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="header">
+                                <span> <%= product.title %> </span>
+                            </div>
+                            <img src="<%= product.imageUrl %>" alt="Product image" />
+                            <div class="footer">
+                                <span> $<%= product.price.toFixed(2) %> </span>
+                            </div>
+                        </div>
+                        <div class="options">
+                            <a class="button-link" href="/product/<%= product._id %>">Details</a>
+                            <form style="display: inline-block" action="/cart" method="POST">
+                                <!-- include the product ID in a hidden input to have it in the POST request body -->
+                                <input type="hidden" name="productId" value="<%= product._id %>"/>
+                                <button>Add to Cart</button>    
+                            </form>
+                        </div>
+                </div>
+                <% }) %>
+            <% } else { %>
+                <p>No products to display.</p>
+            <% } %>    
+        </div>
+    </main>
+</body>
+</html>
