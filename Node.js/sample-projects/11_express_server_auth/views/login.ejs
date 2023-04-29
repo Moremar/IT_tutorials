@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('includes/navbar.ejs') %>
+    <main>
+        <!-- error alert if any -->
+        <% if (errorMessage) { %>
+            <div class="alert alert-error"><%= errorMessage %></div>
+        <% } %>
+
+        <form class="edit-product-form" action="/login" method="POST">
+            <div class="form-control">
+                <label>Email</label>
+                <input type="text" name="email" id="email"/>
+            </div>
+            <div class="form-control">
+                <label>Password</label>
+                <input type="password" name="password" id="password""/>
+                
+                <div  class="reset-password-link">
+                    <a href="/reset-password-link">Reset password</a>
+                </div>
+            </div>
+
+            <!-- CSRF token in a hidden input -->
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+            <div class="button-div">
+                <button type="submit">Login</button>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

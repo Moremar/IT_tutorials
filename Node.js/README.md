@@ -683,6 +683,267 @@ Product.find()
   [ ... ]
 })
 ```
+## Cookies and Sessions
+
+#### Cookies
+
+Cookies are data sent by the server along with a response to a request.  
+Cookies are stored by the client (in the browser) and are attached to all later requests to that domain.  
+They are used for example to store authentication tokens after login.
+
+A cookie can be sent to the client by setting the `Set-Cookie` header in a HTTP response :
+
+ ```javascript
+ res.setHeader('Set-Cookie', 'mycookieval=aaa');
+ ```
+
+The received cookie is saved in the browser (in Chrome : `Developer Tools > Application > Cookies`) until the browser is closed.  
+All cookies stored in the browser for a given domain name are attached to each following request sent to that domain name under the `Cookie` header.  
+
+A cookie value in the request can be retrieved from Node.js with :
+
+```javascript
+req.get('Cookie')
+```
+
+A better way to retrieve cookies is to use the `cookie-parser` middleware :
+
+```javascript
+const cookieParser = require('cookie-parser');
+
+// middleware to parse cookies
+app.use(cookieParser());
+
+// example middleware to access the cookie
+app.use((req, res, next) => {
+  console.log('COOKIE: ' + req.cookies.mycookieval );
+  next();
+});
+```
+
+Note that cookies can be viewed and modified by the client from the browser, so the app should not store sensitive data in cookies.  
+For example, it should never store a boolean to know if the user is logged or not.
+
+
+#### Sessions
+
+Sessions are objects stored on server-side to identify a connection from a user, and share information (for example the login information) between requests from that user.  
+
+When an HTTP request is received by the server, a session can be created on server-side.  
+Each incoming request can indicate what session it belongs to.  
+
+This can be done using a cookie : 
+- at login, the server creates a session, and sends a hash of the session ID as a cookie
+- the client stores this session ID in a cookie in the browser
+- the session ID cookie is attached to the next requests from that user
+- the server checks this cookie to confirm the session and enriches the request with session data
+
+Sessions can be managed in Express with the `express-session` package.  
+Values stored in `req.session` can be accessed from later requests belonging to the same session.  
+Under the hood, the `express-session` middleware creates a `connect.sid` cookie in the client browser when we first use the session.  
+For later requests, this session ID is read by the session middleware that initializes the `req.session` object.
+
+We can specify a session store to save the session related data (in-memory by default).  
+For example `connect-mongodb-session` provides a session store in MongoDB.
+
+```commandline
+npm install express-session --save
+npm install connect-mongodb-session --save
+```
+##### server.js
+
+```javascript
+// import the session package
+const session = require('express-session');
+const mongoStore = require('connect-mongodb-session');
+
+// create a MongoDB session store
+const sessionStore = new mongoStore(session)({
+  uri: "mongodb+srv://<USERNAME>:<PASSWORD>@<HOST>/<DBNAME>",
+  collection: "sessions"
+});
+
+// configure the middleware for session management
+app.use(session({
+  secret: 'MY_SECRET_STRING',    // should come from a config file in a prod env
+  resave: false,                 // do not resave at every request
+  saveUninitialized: false,      // do not save when nothing changed
+  store: sessionStore            // store to save session data (in-memory by default)
+}));
+
+// example middleware storing a value in the session
+app.use((req, res, next) => {
+  req.session.mySessionVal = "bbb";
+  console.log(req.session);
+  next();
+});
+```
+
+A session can be destroyed on logout with the `req.session.destroy(callback)` method.  
+This will remove the session object on server side, not the cookie on client side.  
+The cookie on client side will be removed automatically by the browser on expiration or when the browser is closed.
+
+
+## Authentication
+
+Authentication is required to allow access to specific pages only to specific users.  
+Authentication is performed via a login request, containing the email and password.  
+The server confirms the credentials, and creates a session on server-side, so the next requests from that user do not need to contain the login credentials.  
+
+Passwords should not be saved in clear text in the database.  
+They should be stored as hashes, and on login the provided password should be compared to the stored hash.  
+The `bcrypt` package offers these functionalities :
+
+```commandline
+npm install --save bcryptjs
+```
+
+```javascript
+const bcrypt = require("bcryptjs");
+
+// create a hash for a password
+bcrypt.hash("mypassword", 12)
+.then((hashedPassword) => {
+  // save in DB
+})
+
+// compare a password with a hash
+bcrypt.compare("mypassword", hashedPassword)
+.then((ok) => {
+  if (ok) {
+    // password matches
+  }
+})
+```
+
+### Route Protection
+
+Some routes can be restricted user that are logged in, or to specific users.  
+The best way to implement that is to create a custom middleware function to execute before the protected route.  
+If the route access is not granted, the middleware redirects to another page.
+
+##### is-auth.js - custom middleware
+```javascript
+module.exports = (req, res, next) => {
+    // any kind of check on session variables can be done here
+    if (!req.session.isAuthenticated) {
+        // Access refused
+        return res.redirect("/login");
+    }
+    // Access granted
+    next();
+};
+```
+
+##### admin.js - controller
+```javascript
+const isAuth = require("../middlewares/is-auth");
+
+// can list multiple middlewares to execute from ledt to right
+router.post('/add-product', isAuth, productsController.postAddProduct);
+```
+
+### Cross-Site Request Forgery Protection
+
+If a website only relies on a cookie storing the session ID for authentication after login, it is vulnerable to Cross-Site Request Forgery (CSRF) attack.  
+This attack consists in tricking a user to send a forged HTTP request to the website while it has a session active, so his cookie with the session ID will be attached to the request, and the website will treat it as a legit request.  
+
+This can be done by tricking the user to :
+- click a forged link (GET method)
+- open a page with a malicious `<img>` tag with size 0 and the forged URL as its `src` field (GET method)
+- open a page with a malicious `<form>` tag with hidden fields for the body parameters and a `<script>` tag to submit the form (POST method)
+
+The attacker does not know the victim's cookie, but relies on the fact that the cookie will be attached automatically to the forged request to impersonate the victim.  
+It can be used for example to change the password of the victim, so the attacker can then login normally with the new password.
+
+A simple way to protect against CSRF attacks is to set the cookie as "Same-Site" to only attach it to requests initialized from the same website.
+
+A more robust solution is to use a CSRF token, generated randomly and delivered to the user as a hidden field of the form for the operation he wants to do (password reset, business object creation/modification/deletion, ...).  
+This CSRF token is stored on the backend along with the session, and operations are executed only if the token received from the user matches the one stored on server-site.  
+The attacker forging a request cannot know this token value, so the forged request will not be executed.  
+Obviously, the CSRF token should not be stored as a cookie, otherwise it gets automatically attached to the forged request in the same way as the session cookie !
+
+CSRF tokens can be generated in Node.js with `csurf` package :
+
+```commandline
+npm install csurf --save
+```
+
+```javascript
+const csurf = require('csurf');
+
+// middleware for CSRF protection (must come after the session middleware)
+app.use(csurf());
+```
+
+At every received POST request, `csurf` will compare the CSRF token.  
+This CSRF token is given by `req.csrfToken()` (made available by csurf) and must be added to the view in a hidden `<input>` tag with name `_csrf` :
+
+```html
+<!-- CSRF token in a hidden input -->
+<input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+```
+
+Instead of manually adding the `csrfToken` variable in every `res.render()` call, we can leverage Express's `locals`, letting us add some local variables to every request and passing them to the view :
+
+```javascript
+app.use((req, res, next) => {
+  // add csrfToken variable available to every views
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+```
+
+**NOTE :** `csurf` package is now deprecated, production projects should use alternatives like `tiny-csrf` or `csrf-csrf` packages !
+
+
+### Password Reset
+
+We can allow password reset by sending an email to the user with a password reset link.  
+This link should include a temporary token generated and stored in the database in the user object.  
+When the link is clicked, the server checks the token, and gives a form allowing to change the password.  
+When this form is submitted, the server checks again the token, update the password and remove the token from the database.  
+
+We can use the `crypto` built-in package to generate this token.
+
+```javascript
+const crypto = require('crypto');
+
+crypto.randomBytes(32, (err, buffer) => {
+  if (err) {
+    console.log(err);
+  } else {
+    const token = buffer.toString("hex");
+    // save the token in DB, create a link with this token and send it by mail
+  }
+});
+```
+
+
+## User feedback
+
+We often want to send a feedback to the user when an action was performed or an error occured.  
+This is not straight-forward because a call to `redirect()` generates a new requests so loses the current request.  
+We could store a message in the session, but we want this message to stay only for the time to display it.
+
+Express offers the `connect-flash` package for that purpose :
+
+```commandline
+npm install connect-flash --save
+```
+
+```javascript
+const flash = require('connect-flash');
+
+// initialize connect-flash for temporary messages
+// must be after the middleware to initialize of the session
+app.use(flash());
+```
+
+A message can be flashed to the session with `req.flash('myError', 'An error occured !');`.  
+This message can then be retrieved with `req.flash('myError')`, and it gets removed from the session.  
+A common use is to retrieve the message and pass it as a parameter to the `req.render()` function.
+
 
 
 
@@ -712,4 +973,36 @@ These values can be accessed from the `process.env` variable in the Node.js code
 const dotenv = require('dotenv');
 dotenv.config();
 console.log('Host : ' + process.env.MYSQL_HOST);
+```
+
+
+### nodemailer
+
+The `nodemailer` package makes it easy to send emails in Node.js code.  
+Node.js does not contain a mail server, so we need to use a 3rd party mail server.  
+SendGrid is a good choice for a test project, as it offers a free plan for up to 100 mails/day.  
+Create a SendGrid account and get an API key from Settings > Create API Key.  
+
+```commandline
+npm install nodemailer --save
+npm install nodemailer-sendgrid-transport --save
+```
+
+```javascript
+const nodemailer = require('nodemailer');
+const sendgrid = require('nodemailer-sendgrid-transport');
+
+// configure nodemailer with the SendGrid 3rd party mail server
+const transporter = nodemailer.createTransport(sendgrid({
+  auth: { api_key: 'API_KEY_FROM_SENDGRID' }
+}));
+
+// send an email with nodemailer
+transporter.sendMail({
+  to: 'xxx@xxx.com',
+  from: 'yyy@xxx.com',  // must be registered as an identity in SendGrid
+  subject: 'Signup succeeded',
+  html: `<h1>Signup succeeded, you can now login.</h1>`
+})
+.then((result) => { console.log(result); });
 ```

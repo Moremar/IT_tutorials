@@ -1,0 +1,27 @@
+<header>
+    <nav>
+        <ul>
+            <li><a href="/products">Products</a></li>
+            <% if (isAuthenticated) { %>
+                <li><a href="/cart">Cart</a></li>
+                <li><a href="/orders">Orders</a></li>
+                <li><a href="/admin/add-product">Add product</a></li>
+                <li><a href="/admin/products">Admin Products</a></li>
+            <% } %>
+        </ul>
+        <ul>
+            <% if (isAuthenticated) { %>
+                <li>
+                    <form action="/logout" method="POST">
+                        <!-- CSRF token in a hidden input -->
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                        <button type="submit">Logout</button>
+                    </form>
+                </li>
+            <% } else { %>
+                <li><a href="/login">Login</a></li>
+                <li><a href="/signup">Signup</a></li>
+            <% } %>
+        </ul>
+    </nav>
+</header>

@@ -8,7 +8,6 @@ dotenv.config();
 
 // database configuration (must come after the .env file is loaded)
 const mongoose = require('./database');
-//const User = require('./models/user');
 
 // import the custom routes
 const adminRoutes = require('./routes/admin');
@@ -73,7 +72,7 @@ mongoose.connect(() => {
   .then((users) => {
     if (users.length === 0) {
       console.log('Creating system user "userdev" in the database');
-      const systemUser = new User({ name: 'userdev', email: 'xxxxx', cart: [] });
+      const systemUser = new User({ name: 'userdev', email: 'xxxxx', cart: { items: [] } });
       return systemUser.save();
     }
     return Promise.resolve();
