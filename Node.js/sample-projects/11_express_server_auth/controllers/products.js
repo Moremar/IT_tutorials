@@ -1,3 +1,5 @@
+const { validationResult } = require('express-validator');
+
 // import the models
 const Order = require('../models/order');
 const Product = require('../models/product');
@@ -56,14 +58,18 @@ exports.getAdminProducts = (req, res, next) => {
       });    
 };
 
+
 exports.getAddProduct = (req, res, next) => {
     // use the product edition EJS template with an empty product
     res.render('edit-product', {
       pageTitle: 'Add Product',
       action: 'add',
-      product: { title: '', price: '', imageUrl: '', description: '' }
+      product: { title: '', price: '', imageUrl: '', description: '' },
+      errorMessage: '',
+      validationErrors: []
     });
 };
+
 
 exports.getEditProduct = (req, res, next) => {
     // use the same EJS template as add-product to display the same form
@@ -77,7 +83,13 @@ exports.getEditProduct = (req, res, next) => {
             });
         }
         // render the edit form for this product
-        res.render('edit-product', { pageTitle: 'Edit Product', action: 'edit', product: product });
+        res.render('edit-product', {
+          pageTitle: 'Edit Product',
+          action: 'edit',
+          product: product,
+          errorMessage: '',
+          validationErrors: []
+        });
       })
       .catch((err) => {
         console.log('ERROR - Could not fetch product ' + productId + ' from the DB');
@@ -85,12 +97,32 @@ exports.getEditProduct = (req, res, next) => {
       });
 };
 
+
 exports.postAddProduct = (req, res, next) => {
+  const title = req.body.title;
+  const price = Number(req.body.price);
+  const imageUrl = req.body.imageUrl;
+  const description = req.body.description;
+
+  // retrieve fields validation results from the validation middlewares
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    // 422 : Validation failed status
+    return res.status(422).render('edit-product', {
+      pageTitle: 'Add Product',
+      action: 'add',
+      // keep the previous user input so it does not get lost on reload
+      product: { title: title, imageUrl: imageUrl, price: price, description: description },
+      errorMessage: validationErrors.array()[0].msg,
+      validationErrors: validationErrors.array()    // used for red borders on error fields in the view
+    });
+  }
+  // save the new product
   const product = new Product({
-    title: req.body.title,
-    price: Number(req.body.price),
-    imageUrl: req.body.imageUrl,
-    description: req.body.description,
+    title: title,
+    price: price,
+    imageUrl: imageUrl,
+    description: description,
     userId: req.user
   });
   product.save()
@@ -104,15 +136,28 @@ exports.postAddProduct = (req, res, next) => {
     });
 };
 
+
 exports.postEditProduct = (req, res, next) => {
-  // retrieve the product to get its userId
+  const title = req.body.title;
+  const price = Number(req.body.price);
+  const imageUrl = req.body.imageUrl;
+  const description = req.body.description;
   const productId = req.body.productId;
-  const update = {
-    title: req.body.title,
-    price: Number(req.body.price),
-    imageUrl: req.body.imageUrl,
-    description: req.body.description
-  };
+
+  // retrieve fields validation results from the validation middlewares
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    // 422 : Validation failed status
+    return res.status(422).render('edit-product', {
+      pageTitle: 'Edit Product',
+      action: 'edit',
+      // keep the previous user input so it does not get lost on reload
+      product: { _id: productId, title: title, imageUrl: imageUrl, price: price, description: description },
+      errorMessage: validationErrors.array()[0].msg,
+      validationErrors: validationErrors.array()    // used for red borders on error fields in the view
+    });
+  }
+
   Product.findById(productId)
   .then((product) => {
     // do not edit if the product does not exist or belongs to another user
@@ -121,10 +166,10 @@ exports.postEditProduct = (req, res, next) => {
         pageTitle: 'Not Found'
       });
     }
-    product.title = update.title;
-    product.price = update.price;
-    product.imageUrl = update.imageUrl;
-    product.description = update.description;
+    product.title = title;
+    product.price = price;
+    product.imageUrl = imageUrl;
+    product.description = description;
     return product.save()
     .then(() => {
       console.log('Updated product ' + productId + ' in the DB.');
@@ -136,6 +181,7 @@ exports.postEditProduct = (req, res, next) => {
     console.log(err);
   });
 };
+
 
 exports.postDeleteProduct = (req, res, next) => {
     // get the product ID from the request URL
@@ -152,6 +198,7 @@ exports.postDeleteProduct = (req, res, next) => {
       });
 };
 
+
 exports.postToCart = (req, res, next) => {
     // get the product ID from the request URL
     const productId = req.body.productId;
@@ -166,6 +213,7 @@ exports.postToCart = (req, res, next) => {
     });
 };
 
+
 exports.deleteFromCart = (req, res, next) => {
     // get the product ID from the request URL
     const productId = req.body.productId;
@@ -179,6 +227,7 @@ exports.deleteFromCart = (req, res, next) => {
       console.log(err);
     });
 };
+
 
 exports.getCart = (req, res, next) => {
   // we already have the user in req.user, but we cann the model to get a promise and
@@ -199,6 +248,7 @@ exports.getCart = (req, res, next) => {
     res.render('cart', { pageTitle: 'My Cart', cartItems: cartItems, totalPrice: cartPrice });
   });
 };
+
 
 exports.checkout = (req, res, next) => {
   // we already have the user in req.user, but we cann the model to get a promise and
@@ -234,6 +284,7 @@ exports.checkout = (req, res, next) => {
     console.log(err);
   });
 };
+
 
 exports.getOrders = (req, res, next) => {
   Order.find({ userId: req.user._id })

@@ -1,4 +1,5 @@
 const express = require('express');
+const { body } = require('express-validator');
 
 const productsController = require('../controllers/products');
 const isAuth = require("../middlewares/is-auth");
@@ -18,7 +19,19 @@ router.get('/add-product', isAuth, productsController.getAddProduct);
 
 // POST /admin/add-product
 // handle the POST request on form submission
-router.post('/add-product', isAuth, productsController.postAddProduct);
+router.post('/add-product',
+    isAuth,
+    body('title', 'Invalid product title')
+        .trim()
+        .isLength({min: 3, max: 30}),
+    body('imageUrl', 'Invalid product image URL')
+        .isURL(),
+    body('price', 'Invalid product price')
+        .isFloat({min: 0}),
+    body('description', 'Invalid product description')
+        .trim()
+        .isLength({min: 5, max: 200}),
+    productsController.postAddProduct);
 
 // GET /admin/edit-product/<id>
 // returns the HTML page with the edit form
@@ -27,7 +40,19 @@ router.get('/edit-product/:productId', isAuth, productsController.getEditProduct
 
 // POST /admin/edit-product
 // handle the POST request on form submission
-router.post('/edit-product', isAuth, productsController.postEditProduct);
+router.post('/edit-product',
+    isAuth,
+    body('title', 'Invalid product title')
+        .trim()
+        .isLength({min: 3, max: 30}),
+    body('imageUrl', 'Invalid product image URL')
+        .isURL(),
+    body('price', 'Invalid product price')
+        .isFloat({min: 0}),
+    body('description', 'Invalid product description')
+        .trim()
+        .isLength({min: 5, max: 200}),
+    productsController.postEditProduct);
 
 // POST /admin/delete-product
 router.post('/delete-product', isAuth, productsController.postDeleteProduct);

@@ -945,6 +945,91 @@ This message can then be retrieved with `req.flash('myError')`, and it gets remo
 A common use is to retrieve the message and pass it as a parameter to the `req.render()` function.
 
 
+## User Input Validation
+
+Front-end frameworks (Angular, React...) can perform some input validation on client-side to improve user experience.  
+However, front-end code can be modified by the user, so validation on server-side is always required.
+
+Validation in Express can be done with the `express-validator` package :
+
+```commandline
+npm install express-validator --save
+```
+
+A validation middleware can be added to POST routes to check the values received in the request.  
+The `check()` middleware gives access to the entire request.  
+The `body()`, `header()` and `cookie()` middleware only check the request body/headers/cookies.
+
+```javascript
+// check that the "email" field is a valid email address
+router.post('/signup', 
+    check('email').isEmail().withMessage('The email is invalid.'),
+    authController.postSignup);
+```
+
+If the validation fails, the error is added to the request and can be accessed by the next middlewares with `validationResult(req)` :
+
+```javascript
+exports.postSignup = (req, res, next) => {
+  // retrieve fields validation results from the check() middleware
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    // 422 : Validation failed status
+    return res.status(422).render('signup', { pageTitle: 'Signup', errorMessage: validationErrors.array()[0].msg });
+  }
+  // logic to signup when no error
+}
+```
+
+The `expres-validator` package is a wrapper above the `validator.js` library, so it exposes all its validations :  
+`isEmail`, `isDecimal`, `isIP`, `isJSON` ... (full list on `validator.js` GitHub page).
+
+We can write custom validators with the `.custom()` method of the `check()` middleware :
+
+```javascript
+// check that the "email" field is a valid email address
+router.post('/signup', 
+    check('email')
+        .isEmail().withMessage('The email is invalid.'),
+        .custom((value, {req}) => { 
+            if (value === 'test@test.com') {
+                throw new Error('Forbidden email address.');
+            }
+            return true;
+        }),
+    authController.postSignup);
+```
+
+A validator can be asynchronous, in that case it should return a promise.  
+The validation will wait for the promise to resolve, and in case of rejection it will fail the validation :
+
+```javascript
+router.post('/signup', 
+    check('email')
+        .isEmail().withMessage('The email is invalid.')
+        .custom((value, { req }) => {
+            // asynchronous custom validation
+            return user.findOne({ email: value })
+              .then((user) => {
+                if (user) {
+                    // email already in use
+                    return Promise.reject('An account already exists for this email.');
+                }
+              });
+        }),
+    authController.postSignup);
+```
+
+The validation also provides methods to sanitize or normalize the input fields.  
+For example we can trim a field, or remove the sub-address of an email address.
+
+```javascript
+router.post('/signup', 
+    check('email')
+        .isEmail().withMessage('The email is invalid.')
+        .normalizeEmail(),
+    authController.postSignup);
+```
 
 
 ## Useful Node.js libraries

@@ -63,6 +63,11 @@ width: 400px;
     font: inherit;
 }
 
+.form-control input.invalid,
+.form-control textarea.invalid {
+    border: 2px solid red;
+}
+
 .button-div {
     margin: auto;
     text-align: center;

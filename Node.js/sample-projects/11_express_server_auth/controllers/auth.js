@@ -2,6 +2,8 @@ const bcrypt     = require("bcryptjs");
 const nodemailer = require('nodemailer');
 const sendgrid   = require('nodemailer-sendgrid-transport');
 const crypto     = require('crypto');
+const { validationResult } = require('express-validator');
+
 
 const User = require('../models/user');
 
@@ -24,8 +26,12 @@ exports.getLogin = (req, res, next) => {
   // if an error was flashed, display it in the view
   let errorMessage = req.flash('error');
   errorMessage = errorMessage.length > 0 ? errorMessage[0] : '';
-  res.render('login', { pageTitle: 'Login', errorMessage: errorMessage });
+  res.render('login', {
+    pageTitle: 'Login',
+    errorMessage: errorMessage
+  });
 };
+
 
 exports.postLogin = (req, res, next) => {
   console.log("Login");
@@ -65,38 +71,46 @@ exports.getSignup = (req, res, next) => {
   // if an error was flashed, display it in the view
   let errorMessage = req.flash('error');
   errorMessage = errorMessage.length > 0 ? errorMessage[0] : '';
-  res.render('signup', { pageTitle: 'Signup', errorMessage: errorMessage });
+  res.render('signup', {
+    pageTitle: 'Signup',
+    errorMessage: errorMessage,
+    oldInput: {email: '', password: '', confirmPassword: ''},
+    validationErrors: []    // used for red borders on error fields in the view
+  });
 };
+
 
 exports.postSignup = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
-  User.findOne({ email: email })
-  .then((existingUser) => {
-    if (existingUser) {
-      // a user with this email already exists in the database
-      console.log("WARNING - Email already in use");
-      req.flash('error', 'Email already in use');
-      return res.redirect("/signup");
-    }
-    // we can add validation on email and password here
-    // for this example project, we accept any email and any password
-    return bcrypt.hash(password, 12)
-    // nested promise chain in case we do create a user
-    .then((hashedPassword) => {
-      const newUser = new User({ email: email, password: hashedPassword, cart: {items: []} });
-      return newUser.save();
-    })
-    .then(() => {
-      console.log("Created new user " + email);
-      res.redirect("/login");
+  const confirmPassword = req.body.confirmPassword;
+
+  // retrieve fields validation results from the check() middleware
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    // 422 : Validation failed status
+    return res.status(422).render('signup', {
+      pageTitle: 'Signup',
+      errorMessage: validationErrors.array()[0].msg,
+      // keep the previous user input so it does not get lost on reload
+      oldInput: { email: email, password: password, confirmPassword: confirmPassword },
+      validationErrors: validationErrors.array()    // used for red borders on error fields in the view
     });
+  }
+
+  // no need to check that the email address is not already used
+  // this check was already done by the validation middleware
+  return bcrypt.hash(password, 12)
+  .then((hashedPassword) => {
+    const newUser = new User({ email: email, password: hashedPassword, cart: {items: []} });
+    return newUser.save();
   })
-  .catch((err) => {
-    console.log('ERROR - Could not signup');
-    console.log(err);
+  .then(() => {
+    console.log("Created new user " + email);
+    res.redirect("/login");
   });
 };
+
 
 // on logout, we destroy the session, so the session ID cookie is deleted
 exports.postLogout = (req, res, next) => {
@@ -106,6 +120,7 @@ exports.postLogout = (req, res, next) => {
   });
 };
 
+
 // the first step to reset a password is to request a reset link to be sent to our email
 // the will display to form to request this email
 exports.getResetPasswordLink = (req, res, next) => {
@@ -114,6 +129,7 @@ exports.getResetPasswordLink = (req, res, next) => {
   errorMessage = errorMessage.length > 0 ? errorMessage[0] : '';
   res.render('reset-password-link', { pageTitle: 'Reset Password Link', errorMessage: errorMessage });
 };
+
 
 // Send the password reset email to the address for which the password reset was requested
 exports.postResetPasswordLink = (req, res, next) => {
@@ -163,6 +179,7 @@ exports.postResetPasswordLink = (req, res, next) => {
   });
 };
 
+
 // when the user clicks the password reset link from the email, we check the token, and if it is valid
 // we render a form to actually reset the password
 exports.getResetPassword = (req, res, next) => {
@@ -183,6 +200,7 @@ exports.getResetPassword = (req, res, next) => {
     console.log(err);
   });
 };
+
 
 // on submission of the new password, we check again the token validity.
 // If valid, the password is updated and the temporary token is removed from the DB

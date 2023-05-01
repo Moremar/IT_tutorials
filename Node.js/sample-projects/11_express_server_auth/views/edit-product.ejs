@@ -10,22 +10,33 @@
 <body>
     <%- include('includes/navbar.ejs') %>
     <main>
+        <!-- error alert if any -->
+        <% if (errorMessage) { %>
+            <div class="alert alert-error"><%= errorMessage %></div>
+        <% } %>
+        
         <form class="edit-product-form" action="/admin/<%= action %>-product" method="POST">
             <div class="form-control">
                 <label>Title</label>
-                <input type="text" name="title" id="title" value="<%= product.title %>"/>
+                <input type="text" name="title" id="title" value="<%= product.title %>"
+                       class="<%= validationErrors.find(e => e.path == 'title') ? 'invalid' : '' %>" />
             </div>
             <div class="form-control">
                 <label>Image URL</label>
-                <input type="text" name="imageUrl" id="imageUrl" value="<%= product.imageUrl %>"/>
+                <input type="text" name="imageUrl" id="imageUrl" value="<%= product.imageUrl %>"
+                       class="<%= validationErrors.find(e => e.path == 'imageUrl') ? 'invalid' : '' %>" />
             </div>
             <div class="form-control">
                 <label>Price</label>
-                <input type="number" name="price" id="price" step="0.01" value="<%= product.price %>"/>
+                <input type="number" name="price" id="price" step="0.01" value="<%= product.price %>"
+                       class="<%= validationErrors.find(e => e.path == 'price') ? 'invalid' : '' %>" />
             </div>
             <div class="form-control">
                 <label>Description</label>
-                <textarea name="description" id="title" rows="3"><%= product.description %></textarea>
+                <textarea name="description" id="title" rows="3"
+                          class="<%= validationErrors.find(e => e.path == 'description') ? 'invalid' : '' %>">
+                    <%= product.description %>
+                </textarea>
             </div>
 
             <!-- hidden field to store the ID in case of edit -->

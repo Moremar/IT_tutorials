@@ -18,11 +18,20 @@
         <form class="edit-product-form" action="/signup" method="POST">
             <div class="form-control">
                 <label>Email</label>
-                <input type="text" name="email" id="email"/>
+                <input type="text" name="email" id="email" value="<%= oldInput.email %>"
+                       class="<%= validationErrors.find(e => e.path == 'email') ? 'invalid' : '' %>"/>
             </div>
+
             <div class="form-control">
                 <label>Password</label>
-                <input type="password" name="password" id="password""/>
+                <input type="password" name="password" id="password" value="<%= oldInput.password %>"
+                       class="<%= validationErrors.find(e => e.path == 'password') ? 'invalid' : '' %>"/>
+            </div>
+
+            <div class="form-control">
+                <label>Confirm Password</label>
+                <input type="password" name="confirmPassword" id="confirmPassword" value="<%= oldInput.confirmPassword %>"
+                       class="<%= validationErrors.find(e => e.path == 'confirmPassword') ? 'invalid' : '' %>"/>
             </div>
 
             <!-- CSRF token in a hidden input -->
