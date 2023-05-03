@@ -61,8 +61,8 @@ exports.postLogin = (req, res, next) => {
       });
     })
   }).catch((err) => {
-    console.log('ERROR - Could not login');
-    console.log(err);
+    console.log('ERROR - Server error during login');
+    next(err);
   });
 };
 
@@ -174,7 +174,7 @@ exports.postResetPasswordLink = (req, res, next) => {
     })
     .catch((err) => {
       console.log('ERROR - Could not send the password reset email.');
-      console.log(err);
+      next(err);
     });
   });
 };
@@ -197,7 +197,7 @@ exports.getResetPassword = (req, res, next) => {
   })
   .catch((err) => {
     console.log('ERROR - Could not display the reset password page');
-    console.log(err);
+    next(err);
   });
 };
 
@@ -233,6 +233,6 @@ exports.postResetPassword = (req, res, next) => {
   })
   .catch((err) => {
     console.log('ERROR - Could not reset the password');
-    console.log(err);
+    next(err);
   });
 };

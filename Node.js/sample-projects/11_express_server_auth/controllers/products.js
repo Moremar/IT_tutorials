@@ -21,7 +21,7 @@ exports.getProducts = (req, res, next) => {
       })
       .catch((err) => {
         console.log('ERROR - Could not fetch products from the DB');
-        console.log(err);
+        next(err);
       });
 };
 
@@ -40,7 +40,7 @@ exports.getProduct = (req, res, next) => {
       })
       .catch((err) => {
         console.log('ERROR - Could not fetch product ' + productId + ' from the DB');
-        console.log(err);
+        next(err);
       });
 };
 
@@ -54,7 +54,7 @@ exports.getAdminProducts = (req, res, next) => {
       })
       .catch((err) => {
         console.log('ERROR - Could not fetch products from the DB');
-        console.log(err);
+        next(err);
       });    
 };
 
@@ -93,7 +93,7 @@ exports.getEditProduct = (req, res, next) => {
       })
       .catch((err) => {
         console.log('ERROR - Could not fetch product ' + productId + ' from the DB');
-        console.log(err);
+        next(err);
       });
 };
 
@@ -132,7 +132,7 @@ exports.postAddProduct = (req, res, next) => {
     })
     .catch((err) => {
         console.log('ERROR - Could not create new product');
-        console.log(err);
+        next(err);
     });
 };
 
@@ -178,7 +178,7 @@ exports.postEditProduct = (req, res, next) => {
   })
   .catch((err) => {
     console.log('ERROR - Could not update product');
-    console.log(err);
+    next(err);
   });
 };
 
@@ -194,7 +194,7 @@ exports.postDeleteProduct = (req, res, next) => {
       })
       .catch((err) => {
         console.log('ERROR - Could not delete product ' + productId);
-        console.log(err);
+        next(err);
       });
 };
 
@@ -209,7 +209,7 @@ exports.postToCart = (req, res, next) => {
     })
     .catch((err) => {
       console.log('ERROR - Could not add product ' + productId + ' to the cart');
-      console.log(err);
+      next(err);
     });
 };
 
@@ -224,7 +224,7 @@ exports.deleteFromCart = (req, res, next) => {
     })
     .catch((err) => {
       console.log('ERROR - Could not delete product ' + productId + ' from the cart');
-      console.log(err);
+      next(err);
     });
 };
 
@@ -281,7 +281,7 @@ exports.checkout = (req, res, next) => {
   })
   .catch((err) => {
     console.log('ERROR - Could not checkout products from the cart');
-    console.log(err);
+    next(err);
   });
 };
 
@@ -293,6 +293,6 @@ exports.getOrders = (req, res, next) => {
   })
   .catch((err) => {
     console.log('ERROR - Could not get orders');
-    console.log(err);
+    next(err);
   });
 };

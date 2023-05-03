@@ -18,7 +18,7 @@ const mongoose = require('./database');
 const adminRoutes = require('./routes/admin');
 const shopRoutes  = require('./routes/shop');
 const authRoutes  = require('./routes/auth');
-const notFoundController = require('./controllers/error');
+const errorController = require('./controllers/error');
 const User = require('./models/user');
 
 /**
@@ -115,7 +115,12 @@ app.use(shopRoutes);                 // without a route prefix
 app.use(authRoutes);
 
 // return a 404 for unsupported requests
-app.use(notFoundController.getNotFoundPage);
+app.use(errorController.getNotFoundPage);
+
+// error-handling middleware
+// accessed when calling next(error)
+app.use(errorController.getServerErrorPage);
+
 
 // start the web server
 mongoose.connect(() => {

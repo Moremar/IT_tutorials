@@ -1032,6 +1032,41 @@ router.post('/signup',
 ```
 
 
+## Error Handling
+
+Depending on the type of error, several strategies can be used to handle errors :
+- return the same page and display an error message, for example if user input is invalid in a form
+- return a custom page for that error (404 when requesting an unknowned page, 500 when a server error occured...)
+
+Errors are handled in `try {} catch {}` blocks for synchronous code, and `.then().catch()` blocks for asynchronous code.  
+To avoid having similar `.catch()` block in many middlewares handling the same type of error (for example a DB issue), we can instead create a custom error from our middleware and pass it to the `next()` method.  
+When given an error parameter, `next(err)` will skip all following middlewares and go directly to an error-handling middleware.
+
+```javascript
+// logic inside a middleware :
+const error = new Error('A database error occured');
+error.httpStatusCode = 500;
+next(error);
+```
+
+An error-handling middleware can be defined in `server.js` after the default middleware returning a 404 to all incorrect requests.  
+It takes 4 parameters instead of 3, by receiving the error as a 1st parameter (so Express knows it is an error-handling middleware).
+
+```javascript
+// error-handling middleware
+// accessed when calling next(error)
+app.use((error, req, res, next) => {
+    console.log('Server error occured in call ' + req.method + ' ' + req.url);
+    console.log(error);
+    // use an EJS template
+    res.render('server-error', {pageTitle: 'Server error'});
+});
+```
+
+If an error is thrown in a middleware, Express will automatically reach this error-handling middleware (it calls `next(err)` for us).  
+That is not the case if the error is thrown asynchronously inside a `then()` or `catch()` promise block.
+
+
 ## Useful Node.js libraries
 
 ### dotenv
