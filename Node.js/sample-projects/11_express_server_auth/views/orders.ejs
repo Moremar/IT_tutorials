@@ -21,6 +21,7 @@
                         <div class="header">
                             <b>Order <%= i + 1 %></b>
                             <span class="light"><%= orders[i].orderDate %></span>
+                            <a href="/orders/<%= orders[i]._id %>">Invoice</a>
                         </div>
                         <table>
                             <tr>

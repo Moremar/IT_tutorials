@@ -1067,6 +1067,87 @@ If an error is thrown in a middleware, Express will automatically reach this err
 That is not the case if the error is thrown asynchronously inside a `then()` or `catch()` promise block.
 
 
+## File upload / download
+
+The `body-parser` middleware parses URL-encoded parameters in the request body (encoded as string).  
+This is good to parse forms with the default `application/x-www-form-urlencoded` encoding type.  
+
+To upload a file to the server, the form in the view must have the `multipart/form-data` encoding type to specify that the data is sent in binary format :
+
+```html
+<form class="edit-product-form"
+      action="/admin/edit-product"
+      method="POST" 
+      enctype="multipart/form-data" >
+
+  <div class="form-control">
+      <label>Image</label>
+      <input type="file" name="image" id="image" />
+  </div>
+
+   <!-- other inputs and submit button -->
+</form>
+```
+
+We parse this mutipart form data from the request with the `multer` middleware.  
+Multer can configure the storage details (folder and naming) and a filter to limit the accepted files.  
+If we have a single file upload in the app, we can use `multer().single(filename)`.
+
+```commandline
+npm install multer --save
+```
+
+```javascript
+// specify storage folder and file naming on the server
+const uploadStorage = multer.diskStorage({
+  destination: (req, file, cb) => { cb(null, './uploads/images/'); },
+  filename:    (req, file, cb) => { cb(null, new Date().getTime().toString() + '-' + file.originalname); }
+});
+
+// filter limiting the accepted files to PNG and JPG images
+const uploadFilter = (req, file, cb) => {
+  const validFormat = file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg';
+  cb(null, validFormat);
+};
+
+// middleware to extract the file in the "image" body field if available
+app.use(multer({storage: uploadStorage, fileFilter: uploadFilter}).single("image"));
+```
+
+In the middleware in charge of the route receiving the file, we can access the `req.file` object giving some info about the file saved by Multer.  
+
+```json
+{
+  fieldname: 'image',
+  originalname: 'car.png',
+  encoding: '7bit',
+  mimetype: 'image/png',
+  destination: './uploads/',
+  filename: '1683253893212-car.png',
+  path: 'uploads/images/1683253893212-car.png',
+  size: 2058560
+}
+```
+
+In the DB, we would only store the `path` of the image on the server.  
+This path can be used as a `href` to display an image from a view with the `<image>` tag.  
+For that, the folder containing the image should either be publicly accessible, or a route should exist for that path.
+
+To download a file from the server we can stream it to avoid loading the entire file in server memory :
+
+```javascript
+app.get('/download', function(req, res) {
+  const fileName = 'car.png';
+  const filePath = path.join('uploads', 'images', fileName);
+  
+  res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
+  res.setHeader('Content-type', 'application/png');
+
+  const readStream = fs.createReadStream(filePath);
+  readStream.pipe(res);
+});
+```
+
 ## Useful Node.js libraries
 
 ### dotenv
@@ -1125,4 +1206,32 @@ transporter.sendMail({
   html: `<h1>Signup succeeded, you can now login.</h1>`
 })
 .then((result) => { console.log(result); });
+```
+
+
+### pdfkit
+
+The `pdfkit` package lets us create PDF files.
+
+```commandline
+npm install pdfkit --save
+```
+
+```javascript
+const fs = require('fs');
+const PDFDocument = require('pdfkit');
+
+// Create a new PDF document in memory
+const doc = new PDFDocument();
+
+// Pipe the PDF document to a writable stream (a file here)
+doc.pipe(fs.createWriteStream('example.pdf'));
+
+// Generate the PDF file content
+pdfDoc.fontSize(24).text("My title", { underline: true });
+pdfDoc.fontSize(12).text("   ");
+pdfDoc.text("Some text here");
+
+// Finalize the PDF and end the stream
+doc.end();
 ```

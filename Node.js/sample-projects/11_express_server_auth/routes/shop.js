@@ -36,4 +36,8 @@ router.post('/cart/checkout', isAuth, productsController.checkout);
 // GET /orders
 router.get('/orders', isAuth, productsController.getOrders);
 
+// GET /orders/:orderId
+// create and download the invoice file for a specific order
+router.get('/orders/:orderId', isAuth, productsController.getInvoice);
+
 module.exports = router;

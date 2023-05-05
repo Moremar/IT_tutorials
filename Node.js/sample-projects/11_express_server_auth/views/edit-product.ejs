@@ -15,16 +15,19 @@
             <div class="alert alert-error"><%= errorMessage %></div>
         <% } %>
         
-        <form class="edit-product-form" action="/admin/<%= action %>-product" method="POST">
+        <form class="edit-product-form"
+              action="/admin/<%= action %>-product"
+              method="POST" 
+              enctype="multipart/form-data" >
+              
             <div class="form-control">
                 <label>Title</label>
                 <input type="text" name="title" id="title" value="<%= product.title %>"
                        class="<%= validationErrors.find(e => e.path == 'title') ? 'invalid' : '' %>" />
             </div>
             <div class="form-control">
-                <label>Image URL</label>
-                <input type="text" name="imageUrl" id="imageUrl" value="<%= product.imageUrl %>"
-                       class="<%= validationErrors.find(e => e.path == 'imageUrl') ? 'invalid' : '' %>" />
+                <label>Image</label>
+                <input type="file" name="image" id="image" />
             </div>
             <div class="form-control">
                 <label>Price</label>
@@ -33,10 +36,9 @@
             </div>
             <div class="form-control">
                 <label>Description</label>
-                <textarea name="description" id="title" rows="3"
-                          class="<%= validationErrors.find(e => e.path == 'description') ? 'invalid' : '' %>">
-                    <%= product.description %>
-                </textarea>
+                <textarea name="description" id="description" rows="3"
+                          class="<%= validationErrors.find(e => e.path == 'description') ? 'invalid' : '' %>"
+                ><%= product.description %></textarea>
             </div>
 
             <!-- hidden field to store the ID in case of edit -->

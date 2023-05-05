@@ -1,5 +1,6 @@
 const express      = require('express');
 const bodyParser   = require('body-parser');
+const multer       = require('multer');
 const cookieParser = require('cookie-parser');
 const session      = require('express-session');
 const mongoStore   = require('connect-mongodb-session');
@@ -23,10 +24,16 @@ const User = require('./models/user');
 
 /**
  * started with :    npm install
- *                   vim .env      (create the .env file with DB and SendGrid config)
- *                   npm start     (that runs "node server.js")
+ *                   vim .env               (create the .env file with DB and SendGrid config)
+ *                   mkdir uploads
+ *                   mkdir uploads/images
+ *                   mkdir uploads/invoices
+ *                   npm start              (that runs "node server.js")
  *
- * Builds on 10_express_server_mongoose, and adds user signup/login/logout/password reset
+ * Builds on 10_express_server_mongoose, and adds user management with signup/login/logout/password reset.
+ * It also adds file upload and download with multer.
+ * 
+ * The uploads/images/ and uploads/invoices empty folders must be created.
  * 
  * The .env configuration file should look like :
  * 
@@ -55,8 +62,24 @@ const sessionStore = new mongoStore(session)({
 // expose public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
+// expose all product images uploaded with Multer (all users can see all product images)
+// we specify the "/uploads/images" path to keep it in the image path
+app.use('/uploads/images/', express.static(path.join(__dirname, '/uploads/images/')));
+
 // middleware to parse the body of every incoming request
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// middleware to extract the file in the "image" body field if available
+// useful for the product upload POST requests
+const uploadStorage = multer.diskStorage({
+  destination: (req, file, cb) => { cb(null, './uploads/images/'); },
+  filename:    (req, file, cb) => { cb(null, new Date().getTime().toString() + '-' + file.originalname); }
+});
+const uploadFilter = (req, file, cb) => {
+  const validFormat = file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg';
+  cb(null, validFormat);
+};
+app.use(multer({storage: uploadStorage, fileFilter: uploadFilter}).single("image"));
 
 // middleware to parse cookies
 app.use(cookieParser());

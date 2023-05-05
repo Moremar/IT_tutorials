@@ -1,4 +1,10 @@
+const fs          = require('fs');
+const path        = require('path');
+const PDFdocument = require('pdfkit');
 const { validationResult } = require('express-validator');
+
+const utils = require('../utils.js');
+
 
 // import the models
 const Order = require('../models/order');
@@ -101,18 +107,34 @@ exports.getEditProduct = (req, res, next) => {
 exports.postAddProduct = (req, res, next) => {
   const title = req.body.title;
   const price = Number(req.body.price);
-  const imageUrl = req.body.imageUrl;
   const description = req.body.description;
+
+  // validate image uploaded by multer
+  const image = req.file;
+  if (!image) {
+    // multer failed to upload the image
+    return res.status(422).render('edit-product', {
+      pageTitle: 'Add Product',
+      action: 'add',
+      // keep the previous user input so it does not get lost on reload
+      product: { title: title, price: price, description: description },
+      errorMessage: 'Attached file is not a valid image.',
+      validationErrors: []
+    });
+  }
+  // we store in DB the path of the uploaded image in the file system
+  const imageUrl = image.path;
 
   // retrieve fields validation results from the validation middlewares
   const validationErrors = validationResult(req);
   if (!validationErrors.isEmpty()) {
     // 422 : Validation failed status
+    utils.deleteFile(imageUrl);
     return res.status(422).render('edit-product', {
       pageTitle: 'Add Product',
       action: 'add',
       // keep the previous user input so it does not get lost on reload
-      product: { title: title, imageUrl: imageUrl, price: price, description: description },
+      product: { title: title, price: price, description: description },
       errorMessage: validationErrors.array()[0].msg,
       validationErrors: validationErrors.array()    // used for red borders on error fields in the view
     });
@@ -140,19 +162,22 @@ exports.postAddProduct = (req, res, next) => {
 exports.postEditProduct = (req, res, next) => {
   const title = req.body.title;
   const price = Number(req.body.price);
-  const imageUrl = req.body.imageUrl;
   const description = req.body.description;
   const productId = req.body.productId;
+  const image = req.file;
 
   // retrieve fields validation results from the validation middlewares
   const validationErrors = validationResult(req);
   if (!validationErrors.isEmpty()) {
     // 422 : Validation failed status
+    if (image) {
+      utils.deleteFile(image.path);
+    }
     return res.status(422).render('edit-product', {
       pageTitle: 'Edit Product',
       action: 'edit',
       // keep the previous user input so it does not get lost on reload
-      product: { _id: productId, title: title, imageUrl: imageUrl, price: price, description: description },
+      product: { _id: productId, title: title, price: price, description: description },
       errorMessage: validationErrors.array()[0].msg,
       validationErrors: validationErrors.array()    // used for red borders on error fields in the view
     });
@@ -168,8 +193,13 @@ exports.postEditProduct = (req, res, next) => {
     }
     product.title = title;
     product.price = price;
-    product.imageUrl = imageUrl;
     product.description = description;
+    if (image) {
+      // delete the previous file from the server asynchronously
+      utils.deleteFile(product.imageUrl);
+      // if a new image was uploaded, update the image path in the DB
+      product.imageUrl = image.path;
+    }
     return product.save()
     .then(() => {
       console.log('Updated product ' + productId + ' in the DB.');
@@ -186,16 +216,24 @@ exports.postEditProduct = (req, res, next) => {
 exports.postDeleteProduct = (req, res, next) => {
     // get the product ID from the request URL
     const productId = req.body.productId;
-    // delete the product from the products list
-    Product.deleteOne({ _id: productId, userId: req.user._id })
-      .then(() => {
-        console.log('Deleted product ' + productId + ' from the DB.');
-        res.redirect('/admin/products'); 
-      })
-      .catch((err) => {
-        console.log('ERROR - Could not delete product ' + productId);
-        next(err);
-      });
+    Product.findOne({ _id: productId, userId: req.user._id })
+    .then((product) => {
+      if (!product) {
+        throw new Error("No product found with ID " + productId);
+      }
+      // asynchronously delete the image from the file system
+      utils.deleteFile(product.imageUrl);
+      // delete the product from the products collection
+      return Product.deleteOne({ _id: productId, userId: req.user._id });
+    })
+    .then(() => {
+      console.log('Deleted product ' + productId + ' from the DB.');
+      res.redirect('/admin/products'); 
+    })
+    .catch((err) => {
+      console.log('ERROR - Could not delete product ' + productId);
+      next(err);
+    });
 };
 
 
@@ -293,6 +331,66 @@ exports.getOrders = (req, res, next) => {
   })
   .catch((err) => {
     console.log('ERROR - Could not get orders');
+    next(err);
+  });
+};
+
+exports.getInvoice = (req, res, next) => {
+  const orderId = req.params.orderId;
+  Order.findById(orderId)
+  .then((order) => {
+    if (!order) {
+      console.log("WARNING - No order found with ID = " + orderId);
+      return next(new Error("Could not get invoice"));
+    }
+    if (order.userId.toString() !== req.user._id.toString()) {
+      console.log("WARNING - Order with ID = " + orderId + " does not belong to user " + order.userId.toString());
+      return next(new Error("Could not get invoice"));
+    }
+    const invoiceName = 'invoice-' + orderId + '.pdf';
+    const invoicePath = path.join('uploads', 'invoices', invoiceName);
+
+    // // Code to send an existing invoice file in one time
+    // // it could be used if we created on server side an invoice file at every order
+    // fs.readFile(invoicePath, (err, data) => {
+    //   if (err) {
+    //     return next(err);
+    //   }
+    //   // indication to the browser about how to open the file
+    //   //    attachment : the browser will open a "Save As" window
+    //   //    inline : the browser will open the file in a new tab
+    //   res.setHeader('Content-Disposition', 'attachment; filename="' + invoiceName + '"');
+    //   res.setHeader('Content-Type', 'application/pdf');
+    //   res.send(data);
+    // });  
+
+    // create a PDF file and pipe it to write it on server-side
+    const pdfDoc = new PDFdocument();
+    pdfDoc.pipe(fs.createWriteStream(invoicePath));
+
+    // generate the PDF file content
+    pdfDoc.fontSize(24).text("Order " + orderId, { underline: true });
+    pdfDoc.fontSize(12).text("   ");
+    let totalPrice = 0;
+    order.products.forEach((item) => {
+      totalPrice += item.quantity * item.product.price;
+      pdfDoc.text(item.quantity + ' x $ ' + item.product.price.toFixed(2) + "   " + item.product.title);
+    });
+    pdfDoc.text("   ");
+    pdfDoc.fontSize(16).text("Total :  $ " + totalPrice.toFixed(2));
+    pdfDoc.end();
+    
+    // indication to the browser about how to open the file
+    //    attachment : the browser will open a "Save As" window
+    //    inline : the browser will open the file in a new tab
+    res.setHeader('Content-Disposition', 'attachment; filename="' + invoiceName + '"');
+    res.setHeader('Content-Type', 'application/pdf');
+
+    // stream the file to the response, this avoids loading the entire file in memory on server side before strating the trnasmission
+    const fileToStream = fs.createReadStream(invoicePath);
+    fileToStream.pipe(res);
+  })
+  .catch((err) => {
     next(err);
   });
 };
