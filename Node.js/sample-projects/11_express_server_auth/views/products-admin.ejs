@@ -36,6 +36,7 @@
                         </div>
                     </div>
                 <% }) %>
+                <%- include('includes/pagination.ejs', { currentPage: currentPage, lastPage: lastPage}) %>
             <% } else { %>
                 <p>No products to display.</p>
             <% } %>    

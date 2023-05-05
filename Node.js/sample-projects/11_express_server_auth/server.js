@@ -32,6 +32,7 @@ const User = require('./models/user');
  *
  * Builds on 10_express_server_mongoose, and adds user management with signup/login/logout/password reset.
  * It also adds file upload and download with multer.
+ * Pagination was also added in the products pages.
  * 
  * The uploads/images/ and uploads/invoices empty folders must be created.
  * 

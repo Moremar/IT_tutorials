@@ -11,6 +11,8 @@ const Order = require('../models/order');
 const Product = require('../models/product');
 const User = require('../models/user');
 
+const ITEM_PER_PAGE = 8;
+
 /*
  * The controller exports the middleware functions it exposes, so they can be called from the routes files.
  * It uses the model to interact with data.
@@ -19,11 +21,27 @@ const User = require('../models/user');
 
 
 exports.getProducts = (req, res, next) => {
-    // get all products from the model
+    const page = Number(req.query.page) || 1;
+    let productCount = 0;
+
     Product.find()
+      .count()
+      .then(count => {
+        productCount = count;
+        return Product.find()
+          // skip up to the current page
+          .skip((page-1) * ITEM_PER_PAGE)
+          // only keep items of the current page
+          .limit(ITEM_PER_PAGE);
+      })
       .then((products) => {
         // render the view dynamically with the products
-        res.render('products', { pageTitle: 'Products', products: products });
+        res.render('products', {
+          pageTitle: 'Products',
+          products: products,
+          currentPage: page,
+          lastPage: Math.ceil(productCount / ITEM_PER_PAGE)
+        });
       })
       .catch((err) => {
         console.log('ERROR - Could not fetch products from the DB');
@@ -52,16 +70,32 @@ exports.getProduct = (req, res, next) => {
 
 // return all the products owned by the currently authenticated user, with admin options (edit/delete)
 exports.getAdminProducts = (req, res, next) => {
-    // get all products from the model that belong to the currently authenticated user
-    Product.find({ userId: req.user._id })
-      .then((products) => {
-        // render the view dynamically with the products
-        res.render('products-admin', { pageTitle: 'Admin Products', products: products });
-      })
-      .catch((err) => {
-        console.log('ERROR - Could not fetch products from the DB');
-        next(err);
-      });    
+  const page = Number(req.query.page) || 1;
+  let productCount = 0;
+
+  Product.find()
+    .count()
+    .then(count => {
+      productCount = count;
+      return Product.find()
+        // skip up to the current page
+        .skip((page-1) * ITEM_PER_PAGE)
+        // only keep items of the current page
+        .limit(ITEM_PER_PAGE);
+    })
+    .then((products) => {
+      // render the view dynamically with the products
+      res.render('products-admin', {
+        pageTitle: 'Admin Products',
+        products: products,
+        currentPage: page,
+        lastPage: Math.ceil(productCount / ITEM_PER_PAGE)
+      });
+    })
+    .catch((err) => {
+      console.log('ERROR - Could not fetch products from the DB');
+      next(err);
+    });
 };
 
 

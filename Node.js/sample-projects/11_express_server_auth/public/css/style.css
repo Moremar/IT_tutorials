@@ -231,3 +231,21 @@ span.light {
     text-align: right;
     margin: 5px 20px;
 }
+
+.pagination {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.pagination a {
+    text-decoration: none;
+    color: #f39810;
+    padding: 5px 10px;
+    border: 1px solid #f39810;
+}
+
+.pagination a:hover,
+.pagination a:active,
+.pagination a.active {
+    background-color: #fdd;
+}
