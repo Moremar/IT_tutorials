@@ -126,7 +126,8 @@ button:hover {
 
 .button-link,
 .options button,
-form button {
+form button,
+.btn {
     font: inherit;
     background-color: #f2b890;
     border: 1px solid #f39810;
@@ -186,12 +187,14 @@ td {
 }
 
 .cart-content,
+.checkout-content,
 .orders-content {
     margin: auto;
     text-align: center;
 }
 
 .cart-content table,
+.checkout-content table,
 .orders-content table {
     display: inline-block;
 }

@@ -1148,6 +1148,85 @@ app.get('/download', function(req, res) {
 });
 ```
 
+## Payment with Stripe
+
+Stripe is a 3rd-party payment processing platform that can be used to add payment in an app.  
+We can create an account for free at `https://stripe.com` and access test API keys.
+
+We can use Stripe to externalize the payment system.  
+For each payment, we create a session in the Stripe API, with the details of the products to pay for.  
+The user is redirected to a Stripe web page to enter his payment information.  
+On cancel or success, Stripe redirects the user to our app.
+
+```commandline
+npm install stripe --save
+```
+
+The button to pay needs to call the Stripe API with a session ID.  
+The controller showing the page with a pay button should create this Stripe session and attach the session ID to the page :
+
+```javascript
+// configure stripe with the Stripe API secret key of our account
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+exports.getCheckout = (req, res, next) => {
+  let products = [];
+  // logic to populate the products
+  // create and configure a Stripe session
+  return stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: products.map(item => {
+      // items must have this specific format
+      return {
+        price_data: {
+          currency: "usd",
+          unit_amount: item.price * 100,    // in cents
+          product_data: {
+            name: item.title,
+            description: item.description
+          }
+        },
+        quantity: item.quantity
+      };
+    }),
+    mode: "payment",
+    success_url: req.protocol + "://" + req.get("host") + "/checkout/success",
+    cancel_url: req.protocol + "://" + req.get("host") + "/checkout/cancel"
+  })
+  .then((session) => {
+    res.render('checkout', {
+      ...
+      sessionId: session.id,
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY
+    });
+  });
+};
+```
+
+This Stripe session ID can be used from the view to redirect to Stripe on button click :
+
+```html
+  <div>
+      <button class="btn" id="order-btn">Pay</button>
+
+      <!-- Stripe 3rd party script for payment -->
+      <script src="https://js.stripe.com/v3/"></script>
+
+      <script>
+          // create a handler to call the Stripe API
+          var stripe = Stripe("<%= stripePublicKey %>");
+          // make the pay button call the Stripe API with the provided session
+          var orderBtn = document.getElementById("order-btn");
+          orderBtn.addEventListener("click", function() {
+              stripe.redirectToCheckout({ sessionId: "<%= sessionId  %>" });
+          });
+      </script>
+  </div>
+```
+
+
+
 ## Background requests
 
 Express controllers are not limited to sending an HTML page with `res.render()` or `res.redirect()`.  

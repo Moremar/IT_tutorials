@@ -30,9 +30,16 @@ const User = require('./models/user');
  *                   mkdir uploads/invoices
  *                   npm start              (that runs "node server.js")
  *
- * Builds on 10_express_server_mongoose, and adds user management with signup/login/logout/password reset.
- * It also adds file upload and download with multer.
- * Pagination was also added in the products pages.
+ * Builds on 10_express_server_mongoose, and adds :
+ *   - user management with signup/login/logout/password reset
+ *   - file upload and download with multer for images and invoices
+ *   - pagination in the products pages
+ *   - product deletion handled by a background HTTP request
+ *   - a payment mechanism using Stripe :
+ *      - clicking "Checkout" in the cart creates a Stripe session and opens the checkout page
+ *      - clicking "Pay" in the checkout page redirects to a Stripe page to add payment info
+ *      - confirming payment on that page redirects to the order creation URL, that creates the order
+ *        in DB and redirects to the orders page
  * 
  * The uploads/images/ and uploads/invoices empty folders must be created.
  * 
@@ -44,6 +51,8 @@ const User = require('./models/user');
  *   MONGODB_DATABASE="xxxxx"
  *   SENDGRID_API_KEY="xxxxx"
  *   SENDGRID_FROM_EMAIL="xxxxx"
+ *   STRIPE_PUBLIC_KEY="xxxxx"
+ *   STRIPE_SECRET_KEY="xxxxx"
  */
 
 

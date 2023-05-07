@@ -29,9 +29,20 @@ router.post('/cart', isAuth, productsController.postToCart);
 // delete a product from the cart
 router.post('/cart/delete', isAuth, productsController.deleteFromCart);
 
-// POST /cart/checkout
+// GET checkout
+// show the page with the details of products about to be paid
+// clicking PAY calls Stripe for the actual payment page
+router.get("/checkout", isAuth, productsController.getCheckout);
+
+// GET checkout/cancel
+// redirected to this route when the payment with Stripe was cancelled
+// we simply redirect to the checkout page
+router.get("/checkout/cancel", isAuth, productsController.getCheckout);
+
+// GET checkout/success
+// redirected to this route when the payment with Stripe was successful
 // create an order with all products in the cart and empty the cart
-router.post('/cart/checkout', isAuth, productsController.checkout);
+router.get("/checkout/success", isAuth, productsController.getCheckoutSuccess);
 
 // GET /orders
 router.get('/orders', isAuth, productsController.getOrders);

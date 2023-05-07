@@ -10,41 +10,47 @@
 <body>
     <%- include('includes/navbar.ejs') %>
     <main>
-        <div class="cart-content">
+        <div class="checkout-content">
             <% if (cartItems.length === 0) { %>
-                <p>The cart is empty.</p>
+                <p>No product to checkout.</p>
             <% } else { %>
     
-                <h2>Cart content</h2>
+                <h2>Your order :</h2>
     
                 <table>
                     <tr>
                         <th class="visible title">Product Title</th>
                         <th class="visible">Unit Price</th>
                         <th class="visible">Quantity</th>
-                        <th></th>
                     </tr>
                     <% for (let cartItem of cartItems) { %>
                         <tr>
                             <td class="visible"><%= cartItem.product.title %></td>
                             <td class="visible center">$<%= cartItem.product.price.toFixed(2) %></td>
                             <td class="visible center"><%= cartItem.quantity %></td>
-                            <td>
-                                <form style="display: inline-block" action="/cart/delete" method="POST">
-                                    <!-- include the product ID in a hidden input to have it in the POST request body -->
-                                    <input type="hidden" name="productId" value="<%= cartItem.product._id %>"/>
-                                    <!-- CSRF token in a hidden input -->
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                                    <button>×</button>    
-                                </form>                
-                            </td>
                         </tr>
                     <% } %>    
                 </table>
                 
                 <p>Total cart price : <b>$<%= totalPrice.toFixed(2) %></b></p>
 
-                <a class="button-link" href="/checkout">Checkout</a>
+                <div>
+                    <button class="btn" id="order-btn">Pay</button>
+
+                    <!-- Stripe 3rd party script for payment -->
+                    <script src="https://js.stripe.com/v3/"></script>
+
+                    <script>
+                        // create a handler to call the Stripe API
+                        var stripe = Stripe("<%= stripePublicKey %>");
+                        // make the pay button call the Stripe API with the provided session
+                        var orderBtn = document.getElementById("order-btn");
+                        orderBtn.addEventListener("click", function() {
+                            stripe.redirectToCheckout({ sessionId: "<%= sessionId  %>" });
+                        });
+                    </script>
+                </div>
+
             <% } %>
         </div>
     </main>

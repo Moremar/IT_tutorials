@@ -1,6 +1,7 @@
 const fs          = require('fs');
 const path        = require('path');
 const PDFdocument = require('pdfkit');
+const Stripe      = require("stripe");
 const { validationResult } = require('express-validator');
 
 const utils = require('../utils.js');
@@ -12,6 +13,10 @@ const Product = require('../models/product');
 const User = require('../models/user');
 
 const ITEM_PER_PAGE = 8;
+
+
+// configure Stripe with the private key
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 /*
  * The controller exports the middleware functions it exposes, so they can be called from the routes files.
@@ -307,7 +312,7 @@ exports.deleteFromCart = (req, res, next) => {
 
 
 exports.getCart = (req, res, next) => {
-  // we already have the user in req.user, but we cann the model to get a promise and
+  // we already have the user in req.user, but we call the model to get a promise and
   // chain with populate() to get Mongoose to retrieve the underlying products
   User.findOne({ _id: req.user._id })
   // replace the productId by the actual product
@@ -327,8 +332,62 @@ exports.getCart = (req, res, next) => {
 };
 
 
-exports.checkout = (req, res, next) => {
-  // we already have the user in req.user, but we cann the model to get a promise and
+exports.getCheckout = (req, res, next) => {
+  let cartPrice = 0;
+  let cartItems = [];
+  // we already have the user in req.user, but we call the model to get a promise and
+  // chain with populate() to get Mongoose to retrieve the underlying products
+  User.findOne({ _id: req.user._id })
+  // replace the productId by the actual product
+  .populate("cart.items.product")
+  .then((user) => {
+    for (let item of user.cart.items) {
+      // skip products from the cart that have been deleted (populate() will return null for them)
+      if (item.product) {
+        cartPrice += item.product.price * item.quantity;
+        cartItems.push(item);
+      }
+    }
+    // create and configure a Stripe session
+    return stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: cartItems.map(item => {
+        // items must have this specific format
+        return {
+          price_data: {
+            currency: "usd",
+            unit_amount: item.product.price * 100,    // in cents
+            product_data: {
+              name: item.product.title,
+              description: item.product.description
+            }
+          },
+          quantity: item.quantity
+        };
+      }),
+      mode: "payment",
+      success_url: req.protocol + "://" + req.get("host") + "/checkout/success",
+      cancel_url: req.protocol + "://" + req.get("host") + "/checkout/cancel"
+    });
+  })
+  .then((session) => {
+    res.render('checkout', {
+      pageTitle: 'Checkout',
+      cartItems: cartItems,
+      totalPrice: cartPrice,
+      sessionId: session.id,
+      stripePublicKey: process.env.STRIPE_PUBLIC_KEY
+    });
+  });
+};
+
+/*
+ * This is called on payment success from Stripe
+ * In a real app we should have a mechanisme to ensure that it was called by Stripe
+ * and not by a user directly (to prevent the order creation without actual payment)
+ */
+exports.getCheckoutSuccess = (req, res, next) => {
+  // we already have the user in req.user, but we call the model to get a promise and
   // chain with populate() to get Mongoose to retrieve the underlying products
   User.findOne({ _id: req.user._id })
   // replace the productId by the actual product
@@ -357,7 +416,7 @@ exports.checkout = (req, res, next) => {
     res.redirect('/orders');
   })
   .catch((err) => {
-    console.log('ERROR - Could not checkout products from the cart');
+    console.log('ERROR - Could not create order from the cart');
     next(err);
   });
 };
