@@ -124,9 +124,8 @@ button:hover {
     margin-top: 10px
 }
 
-
-
 .button-link,
+.options button,
 form button {
     font: inherit;
     background-color: #f2b890;

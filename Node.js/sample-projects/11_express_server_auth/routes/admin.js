@@ -50,7 +50,7 @@ router.post('/edit-product',
         .isLength({min: 5, max: 200}),
     productsController.postEditProduct);
 
-// POST /admin/delete-product
-router.post('/delete-product', isAuth, productsController.postDeleteProduct);
+// DELETE /admin/product/:productId
+router.delete('/product/:productId', isAuth, productsController.deleteProduct);
 
 module.exports = router;

@@ -26,13 +26,13 @@
                         </div>
                         <div class="options">
                             <a class="button-link" href="/admin/edit-product/<%= product._id %>">Edit</a>
-                            <form class="inline-form" action="/admin/delete-product" method="POST">
-                                <!-- product ID in a hidden input to have it in the POST request body -->
-                                <input type="hidden" name="productId" value="<%= product._id %>"/>
-                                <!-- CSRF token in a hidden input -->
-                                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                                <button type="submit">Delete</button>  
-                            </form>
+
+                            <!-- product ID in a hidden input to have it in the POST request body -->
+                            <input type="hidden" name="productId" value="<%= product._id %>"/>
+                            <!-- CSRF token in a hidden input -->
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+                            <button type="button" onclick="deleteProduct(this)">Delete</button>
                         </div>
                     </div>
                 <% }) %>
@@ -44,3 +44,4 @@
     </main>
 </body>
 </html>
+<script src="/js/admin.js"></script>

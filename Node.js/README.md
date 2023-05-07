@@ -1148,6 +1148,50 @@ app.get('/download', function(req, res) {
 });
 ```
 
+## Background requests
+
+Express controllers are not limited to sending an HTML page with `res.render()` or `res.redirect()`.  
+We can also have the client-side code sending a background HTTP request, and the server responding with JSON data.  
+The client code can use a JS script with the `fetch()` method (successor of `XMLHttpRequest`).  
+It can use any HTTP verb, like `GET`, `DELETE`, `POST`, `PUT` ...   
+The server-side controller can respond with a JSON object with `res.json()` :
+
+##### views/product-admin.ejs (HTML template file)
+
+```html
+<button type="button" onclick="deleteProduct(this)">Delete</button>
+
+[...]
+
+<script src="/js/admin.js"></script>
+```
+
+##### public/js/admin.js
+
+```javascript
+const deleteProduct = (btnElement) => {
+    // access the product ID and CSRF tokens
+    const productId = btnElement.parentNode.querySelector('[name=productId').value;
+    const csrf      = btnElement.parentNode.querySelector('[name=_csrf').value;
+    
+    // send the HTTP request (fetch is a modern replacement of XMLHttpRequest)
+    fetch("/admin/product/" + productId, {
+        method: "DELETE",
+        headers: { "csrf-token": csrf }
+    })
+    .then((response) => {
+        return response.json();
+    })
+    .then((result) => {
+        // do something with the response
+    })
+    .catch((err) => {
+        console.log(err);
+    });
+};
+```
+
+
 ## Useful Node.js libraries
 
 ### dotenv

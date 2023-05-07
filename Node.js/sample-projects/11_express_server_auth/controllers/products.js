@@ -247,9 +247,14 @@ exports.postEditProduct = (req, res, next) => {
 };
 
 
-exports.postDeleteProduct = (req, res, next) => {
-    // get the product ID from the request URL
-    const productId = req.body.productId;
+/**
+ * Product deletion is now a background request
+ * It is now called from a JS script with the DELETE verb.
+ * Instead of redirecting to the products page, it returns JSON data
+ * to tell if it succeeded or not.
+ */
+exports.deleteProduct = (req, res, next) => {
+    const productId = req.params.productId;
     Product.findOne({ _id: productId, userId: req.user._id })
     .then((product) => {
       if (!product) {
@@ -262,11 +267,11 @@ exports.postDeleteProduct = (req, res, next) => {
     })
     .then(() => {
       console.log('Deleted product ' + productId + ' from the DB.');
-      res.redirect('/admin/products'); 
+      res.status(200).json({ success: true });
     })
     .catch((err) => {
       console.log('ERROR - Could not delete product ' + productId);
-      next(err);
+      res.status(500).json({ success: false });
     });
 };
 
