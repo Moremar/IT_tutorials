@@ -6,3 +6,6 @@
 
 # Dotenv environment variables configuration files
 **/.env
+
+# MacOS Desktop Service files
+**/.DS_Store
