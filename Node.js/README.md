@@ -1270,6 +1270,44 @@ const deleteProduct = (btnElement) => {
 };
 ```
 
+## REST APIs
+
+Node.js can be used to create REST APIs (REpresentational State Transfer).  
+With REST APIs, responses to incoming HTTP requests are only data, not an HTML page.  
+It means all endpoints behave like background requests, and the HTML rendering is handled on client-side (Single-page apps, mobile app, Service APIs...).  
+REST APIs usually use the JSON format both for the input requests and output responses.  
+
+When the server calling the REST API is different from the server running the REST API, the request is blocked by default.  
+This is a security guard against the mechanism called CORS (Cross-Origin Resource Sharing).  
+We can specify the allowed origins via CORS headers in the response :
+
+```javascript
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    next();
+});
+```
+
+The client code can call the REST API from JS with the `fetch()` method :
+
+```javascript
+fetch("http://localhost:8080/feed/posts", {
+  method: "POST",
+  body: JSON.stringify({ title: "my title", content: "my content" }),
+  headers: { "Content-Type": "application/json" }
+})
+.then((res) => res.json())
+.then((resData) => console.log(resData))
+.catch((err) => consoole.log(err));
+```
+
+The Node.js REST API implementation is very similar to a Node.js web server serving HTML pages.  
+All server-side code (request validation, DB operations, routing...) is identical.  
+The main differences are that input and output data format is JSON, and the requests are REST-ful, each request is independant from previous requests.  
+This implies that we no longer manage sessions to authenticate, but JWT tokens.
+
 
 ## Useful Node.js libraries
 

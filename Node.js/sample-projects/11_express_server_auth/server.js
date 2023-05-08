@@ -77,6 +77,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads/images/', express.static(path.join(__dirname, '/uploads/images/')));
 
 // middleware to parse the body of every incoming request
+// this supports the x-www-form-urlencoded format (returned by <form> HTML tags)
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // middleware to extract the file in the "image" body field if available
