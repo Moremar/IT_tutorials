@@ -1274,8 +1274,8 @@ const deleteProduct = (btnElement) => {
 
 Node.js can be used to create REST APIs (REpresentational State Transfer).  
 With REST APIs, responses to incoming HTTP requests are only data, not an HTML page.  
-It means all endpoints behave like background requests, and the HTML rendering is handled on client-side (Single-page apps, mobile app, Service APIs...).  
-REST APIs usually use the JSON format both for the input requests and output responses.  
+All endpoints behave like background requests, and the HTML rendering is handled on client-side (Single-page apps, mobile app, Service APIs...).  
+REST APIs usually use the JSON format both for the input request body and output responses.  
 
 When the server calling the REST API is different from the server running the REST API, the request is blocked by default.  
 This is a security guard against the mechanism called CORS (Cross-Origin Resource Sharing).  
