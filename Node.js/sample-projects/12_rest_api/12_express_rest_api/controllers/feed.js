@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const Post = require("../models/post");
+const User = require("../models/user");
 
 
 exports.getPosts = (req, res, next) => {
@@ -57,6 +58,7 @@ exports.createPost = (req, res, next) => {
         error.statusCode = 422;   // custom property
         throw error;
     }
+    let creator;
     const title = req.body.title;
     const content = req.body.content;
     const imageUrl = req.file.destination + req.file.filename;
@@ -64,13 +66,23 @@ exports.createPost = (req, res, next) => {
         title: title,
         content: content,
         imageUrl: imageUrl,
-        creator: { name: "John" },
+        creator: req.userId
     });
     post.save()
     .then((createdPost) => {
+        return User.findOne({ _id: req.userId });
+    })
+    .then((user) => {
+        // update the user with the new post he created
+        user.posts.push(post);
+        creator = user;
+        return user.save();
+    })
+    .then(() => {
         res.status(201).json({
             message: "Post created successfully",
-            post: createdPost
+            post: post,
+            creator: { _id: creator._id, name: creator.name }
         });
         })
     .catch((err) => {
@@ -101,7 +113,13 @@ exports.updatePost = (req, res, next) => {
             const error = new Error("No post found with ID = " + postId);
             error.statusCode = 404;
             throw error;
-            }
+        }
+        if (post.creator.toString() !== req.userId) {
+            // a user can only update his own posts
+            const error = new Error("Not Authorized");
+            error.statusCode = 403;
+            throw error;
+        }
         if (imageUrl != post.imageUrl) {
             // clear the old image if a new one was uploaded
             clearImage(post.imageUrl);
@@ -140,12 +158,25 @@ exports.deletePost = (req, res, next) => {
             error.statusCode = 404;
             throw error;
         }
-        // TODO check logged in user
+        if (post.creator.toString() !== req.userId) {
+            // a user can only delete his own posts
+            const error = new Error("Not Authorized");
+            error.statusCode = 403;
+            throw error;
+        }
         clearImage(post.imageUrl);
         return Post.deleteOne({ _id: postId });
     })
     .then((deleteResult) => {
-        console.log("Deleted existing post");
+        return User.findOne({ _id: req.userId });
+    })
+    .then((user) => {
+        // remove the deleted post from the user object
+        user.posts.pull(postId);
+        return user.save();
+    })
+    .then((result) => {
+            console.log("Deleted existing post");
         res.status(200).json({ message: "Deleted post" });
     })
     .catch((err) => {

@@ -1305,8 +1305,62 @@ fetch("http://localhost:8080/feed/posts", {
 
 The Node.js REST API implementation is very similar to a Node.js web server serving HTML pages.  
 All server-side code (request validation, DB operations, routing...) is identical.  
-The main differences are that input and output data format is JSON, and the requests are REST-ful, each request is independant from previous requests.  
-This implies that we no longer manage sessions to authenticate, but JWT tokens.
+
+One major difference between a REST API and a usual web server is the way that the client authenticates to the server.  
+In a web server, the client sends his username and password in a login request, the server creates a temporary session in its database, sends the session ID to the client, and the client attaches this session ID in a cookie to all following requests. The server validates that this session ID is valid by comparing to the one in its database.  
+In a REST API, requests are REST-ful, which means they are independant from each other.  
+The server does not store any session information in its database.  
+Instead, the client sends its username and password in a login request, the server validates them, and creates a Json Web Token (JWT).  
+This is an encrypted JSON object containing the username, a signature from the server and an expiration time.  
+The password MUST NOT be included in the JWT token, as the token content is accessible to the front-end, it can be inspected on the `jwt.io` decoder page.  
+This JWT token is attached as a header to all later requests, and the server just decrypts it and checks its authenticity and expiry.  
+This means the client now provides a JWT token with all his requests instead of a session ID, and no session ID is stored in the server database.
+
+```commandline
+npm install --save jsonwebtoken
+```
+
+``` javascript
+const jwt = require("jsonwebtoken");
+
+// create a JWT token
+const token = jwt.sign({
+    email: email,
+    userId: currUser._id.toString(),
+  }, 
+  // secret key used on server-side to encrypt and decrypt JWT tokens
+  process.env.JWT_KEY,
+  // JWT token options
+  { expiresIn: "1h" }
+);
+```
+
+JWT tokens are usually passed from the frontend to the backend in every request needing authentication via the `Authorization` HTTP header.
+
+The server can decode the token and verify its authenticity with the `verify()`  method.  
+This can be done in a custom `isAuth` middleware called by all routes requiring authentication.
+
+```javascript
+exports.isAuth = (req, res, next) => {
+    // the "Authorization" header looks like "Bearer <token>" so we keep only the token part
+    const token = req.get("Authorization").split(" ")[1];
+    let decodedToken;
+    try {
+        // verify() both decodes and checks the token
+        decodedToken = jwt.verify(token, process.env.JWT_KEY);
+    } catch (err) {
+        next(err);
+    }
+    if (!decodedToken) {
+        const error = new Error("Not Authenticated");
+        error.statusCode = 401;  // not authenticated
+        next(error);
+    }
+    // enrich the request with the user ID, and allow the request to continue
+    req.userId = decodedToken.userId;
+    next()
+};
+```
 
 
 ## Useful Node.js libraries

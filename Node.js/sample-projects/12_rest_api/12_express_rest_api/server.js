@@ -13,7 +13,7 @@ const mongoose = require('./database');
 
 // custom packages
 const feedRoutes = require("./routes/feed");
-//const authRoutes = require("./routes/auth");
+const authRoutes = require("./routes/auth");
 
 /**
  * REST API in Node.js using JSON format for input and output data format.
@@ -69,7 +69,7 @@ app.use((req, res, next) => {
 
 // register the routes
 app.use("/feed", feedRoutes);
-//app.use("/auth", authRoutes);
+app.use("/auth", authRoutes);
 
 // error-handling middleware
 app.use((err, req, res, next) => {
