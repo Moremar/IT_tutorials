@@ -5,6 +5,8 @@ const path = require("path");
 const Post = require("../models/post");
 const User = require("../models/user");
 
+const io = require("../socket");
+
 
 exports.getPosts = (req, res, next) => {
     const page = req.query.page || 1;
@@ -14,7 +16,11 @@ exports.getPosts = (req, res, next) => {
     .countDocuments()
     .then((count) => {
         totalItems = count;
-        return Post.find().skip((page -1) * itemsPerPage).limit(itemsPerPage);
+        return Post.find()
+                   .populate("creator")
+                   .sort({ createdAt: -1 })
+                   .skip((page - 1) * itemsPerPage)
+                   .limit(itemsPerPage);
     })
     .then((posts) => {
         res.status(200).json({
@@ -79,6 +85,14 @@ exports.createPost = (req, res, next) => {
         return user.save();
     })
     .then(() => {
+        // inform all connected clients via WebSockets that a new post was created,
+        // so they can refresh their UI
+        io.getIo().emit("posts", {
+            action: "create",
+            // enrich the post with creator name for the UI
+            post: { ...post._doc, creator: {_id: req.userId, name: creator.name } }
+        });
+        // send the HTTP response
         res.status(201).json({
             message: "Post created successfully",
             post: post,
@@ -107,14 +121,15 @@ exports.updatePost = (req, res, next) => {
         // a new image was set
         imageUrl = req.file.destination + req.file.filename;
     }
-    Post.findOne({ _id: postId })
+    let updatedPost;
+    Post.findOne({ _id: postId }).populate("creator")
     .then((post) => {
         if (!post) {
             const error = new Error("No post found with ID = " + postId);
             error.statusCode = 404;
             throw error;
         }
-        if (post.creator.toString() !== req.userId) {
+        if (post.creator._id.toString() !== req.userId) {
             // a user can only update his own posts
             const error = new Error("Not Authorized");
             error.statusCode = 403;
@@ -127,10 +142,18 @@ exports.updatePost = (req, res, next) => {
         post.title = title;
         post.content = content;
         post.imageUrl = imageUrl;
+        updatedPost = post;
         return post.save();
     })
     .then((updateResult) => {
         console.log("Updated existing post");
+        // inform all connected clients via WebSockets that a post was updated,
+        // so they can refresh their UI
+        io.getIo().emit("posts", {
+            action: "update",
+            post: updatedPost
+        });
+        // send the HTTP response
         res.status(200).json({ message: "Updated post", post: updateResult });
     })
     .catch((err) => {
@@ -176,7 +199,14 @@ exports.deletePost = (req, res, next) => {
         return user.save();
     })
     .then((result) => {
-            console.log("Deleted existing post");
+        console.log("Deleted existing post");
+        // inform all connected clients via WebSockets that a post was deleted,
+        // so they can refresh their UI
+        io.getIo().emit("posts", {
+            action: "delete",
+            post: postId
+        });
+        // send the HTTP response
         res.status(200).json({ message: "Deleted post" });
     })
     .catch((err) => {

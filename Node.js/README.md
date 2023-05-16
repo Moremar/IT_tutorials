@@ -1362,6 +1362,117 @@ exports.isAuth = (req, res, next) => {
 };
 ```
 
+## async / await
+
+The `async` and `await` keywords are a modern Javascript syntax (not specific to Node.js) to write asynchronous code.  
+It is an alternative way to write functions that use promises.  
+The function must specify the `async` keyword before its definition.  
+Then instead of using `.then()` chains to execute code after a promise resolves, we use the `await` keyword before the promise.  
+This lets us write code that looks like synchronous code, but it is still asynchronous, and JS converts it to promises under the hood :
+
+```javascript
+// with promises
+exports.getPosts = (req, res, next) => {
+    Post.find()
+    .then((posts) => {
+      res.status(200).json({ message: "success", posts: posts });
+    })
+    .catch((err) = {
+      next(err);
+    });
+};
+
+// equivalent with async/await syntax
+// it looks synchronous but it is still asynchronous !
+exports.getPosts = async (req, res, next) => {
+    try {
+      const posts = await Post.find();
+      res.status(200).json({ message: "success", posts: posts });
+    } catch (err) {
+      next(err);
+    }
+};
+```
+
+
+## WebSockets
+
+WebSockets is a protocol that can be used for client/server communication for messages initiated by the server.  
+With the usual HTTP protocol, the server listens to incoming requests and sends a response.  
+When the server should send messages to the client without an incoming request (for example in a chat app for a notification), we can use WebSockets, that is established by HTTP under the hood.  
+
+`socket.io` is one of the multiple Node.js libraries that offers client/server communication with the WebSockets protocol.  
+It needs to be installed on both the client (React, Angular, ...) and the Node.js backend for the 2 to communicate via WebSockets.
+
+``` commandline
+npm install --save socket.io             // on backend project (Node.js)
+npm install --save socket.io-client      // on frontend project (React, Angular...)
+```
+
+A Node.js app can use HTTP for all its endpoints, and additionally have a listener to incoming WebSockets connections.  
+It can emit WebSockets events to all connected clients, and clients can react on reception of the event.
+
+On server side, we can manage the Socket.io connection in a dedicated file :
+
+##### socket.js
+```javascript
+const socketIo = require("socket.io");
+
+// WebSockets connection object to send events to all connected clients
+let _io;
+
+module.exports = {
+    init: (httpServer) => {
+        _io = socketIo(
+          httpServer,
+          { cors: { origin: "http://localhost:3000", methods: ["GET"] } }
+        );
+        return _io;
+    },
+    getIo: () => {
+        if (!_io) {
+            throw new Error("Socket.io is not initialized!");
+        }
+        return _io;
+    }
+};
+```
+
+It can be initialized in the `server.js` entry file :
+
+##### server.js
+```javascript
+const socket = require("./socket");
+
+// start the web server
+mongoose.connect(() => {
+    console.log('Starting the web server');
+    const server = app.listen(8080);
+    const io = socket.init(server);
+    io.on("connection", conn => {
+        console.log("Client connected via WebSockets");
+    });
+});
+```
+
+Events can be emitted by the server to the connected clients :
+
+```javascript
+const socket = require("../socket");  // if the Socket.io connection is in socket.js
+
+socket.getIo().emit("myChannel", eventObject);
+```
+
+The client can initiate a connection to the server and react to received events :
+
+```javascript
+// open a WebSockets connection
+const socket = openSocket("http://localhost:8080");
+socket.on("myChannel", (eventObject) => {
+  // do something with the event object received from the server
+});
+```
+
 
 ## Useful Node.js libraries
 

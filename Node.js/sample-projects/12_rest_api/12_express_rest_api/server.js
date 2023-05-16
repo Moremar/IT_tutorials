@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const multer     = require('multer');
 const path       = require("path");
 
+const socket = require("./socket");
+
 // load custom env variables into process.env
 const dotenv = require('dotenv');
 dotenv.config();
@@ -29,6 +31,9 @@ const authRoutes = require("./routes/auth");
  *   MONGODB_DATABASE="xxxxx"
  * 
  * The React frontend using this REST API is started with the same command from the sibling folder ../12_react_frontend
+ * 
+ * The project also uses WebSockets so the server can inform the connected clients
+ * when a post was added, updated or deleted
  */
 
 // initialize the Express app
@@ -82,5 +87,9 @@ app.use((err, req, res, next) => {
 // start the web server
 mongoose.connect(() => {
     console.log('Starting the web server');
-    app.listen(8080);
+    const server = app.listen(8080);
+    const io = socket.init(server);
+    io.on("connection", conn => {
+        console.log("Client connected");
+    });
 });
