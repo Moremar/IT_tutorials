@@ -1395,22 +1395,22 @@ exports.getPosts = async (req, res, next) => {
 ```
 
 
-## WebSockets
+## WebSocket
 
-WebSockets is a protocol that can be used for client/server communication for messages initiated by the server.  
+WebSocket is a protocol that can be used for client/server communication for messages initiated by the server.  
 With the usual HTTP protocol, the server listens to incoming requests and sends a response.  
-When the server should send messages to the client without an incoming request (for example in a chat app for a notification), we can use WebSockets, that is established by HTTP under the hood.  
+When the server should send messages to the client without an incoming request (for example in a chat app for a notification), we can use WebSocket, that is established by HTTP under the hood.  
 
-`socket.io` is one of the multiple Node.js libraries that offers client/server communication with the WebSockets protocol.  
-It needs to be installed on both the client (React, Angular, ...) and the Node.js backend for the 2 to communicate via WebSockets.
+`socket.io` is one of the multiple Node.js libraries that offers client/server communication with the WebSocket protocol.  
+It needs to be installed on both the client (React, Angular, ...) and the Node.js backend for the 2 to communicate via WebSocket.
 
 ``` commandline
 npm install --save socket.io             // on backend project (Node.js)
 npm install --save socket.io-client      // on frontend project (React, Angular...)
 ```
 
-A Node.js app can use HTTP for all its endpoints, and additionally have a listener to incoming WebSockets connections.  
-It can emit WebSockets events to all connected clients, and clients can react on reception of the event.
+A Node.js app can use HTTP for all its endpoints, and additionally have a listener to incoming WebSocket connections.  
+It can emit WebSocket events to all connected clients, and clients can react on reception of the event.
 
 On server side, we can manage the Socket.io connection in a dedicated file :
 
@@ -1418,7 +1418,7 @@ On server side, we can manage the Socket.io connection in a dedicated file :
 ```javascript
 const socketIo = require("socket.io");
 
-// WebSockets connection object to send events to all connected clients
+// WebSocket connection object to send events to all connected clients
 let _io;
 
 module.exports = {
@@ -1450,7 +1450,7 @@ mongoose.connect(() => {
     const server = app.listen(8080);
     const io = socket.init(server);
     io.on("connection", conn => {
-        console.log("Client connected via WebSockets");
+        console.log("Client connected via WebSocket");
     });
 });
 ```
@@ -1466,13 +1466,172 @@ socket.getIo().emit("myChannel", eventObject);
 The client can initiate a connection to the server and react to received events :
 
 ```javascript
-// open a WebSockets connection
+// open a WebSocket connection
 const socket = openSocket("http://localhost:8080");
 socket.on("myChannel", (eventObject) => {
   // do something with the event object received from the server
 });
 ```
 
+## GraphQL
+
+[GraphQL](https://www.graphql.org) is an alternative to traditional REST API that offers more flexibility on fields to query.  
+With a traditional REST API, we would usually have one endpoint per type of object to retrieve.  
+If we need to retrieve only a subset of the fields of the object, we would either filter on frontend (causing unnecessary traffic over the network) or create another endpoint.  
+
+With GraphQL, all requests are sent to the single `POST /graphql` endpoint, with the query details in the request body.  
+GraphQL has its own query language, supporting 3 operations: `query` for GET, `mutation` for POST/PUT/DELETE, and `subscription` for WebSocket.  
+A GraphQL query specifies the object type, and the fields to retrieve.  
+The body is parsed on the server that will return only the requested data.
+
+On server side, we define the query definitions (equivalent of routes in standard REST APIs).  
+Each query definition is associated with a resolver (equivalent of a controller in standard REST APIs).  
+The resolver returns all the data for the object type, and GraphQL will filter the requested fields on server-side before sending the result.
+
+```commandline
+npm install --save graphql           // contains the buildSchema method
+npm install --save express-graphql   // for the graphqlHTTP middleware
+```
+
+In the schema, the `query` field lists GET endpoints, and the `mutation` field lists endpoints that modify the state.  
+The `input` keyword is used to define input types, and the `type` keyword for output types.
+
+##### graphql/schema.js
+```javascript
+const { buildSchema } = require("graphql");
+
+// create the GraphQL schema (use backticks to write a multi-line string)
+module.exports = buildSchema(`
+    type HelloResponse {
+        text: String!
+        views: Int!
+    }
+
+    type RootQuery {
+        hello: HelloResponse!
+    }
+
+    input SignupBody {
+        email: String!
+        password: String!
+    }
+
+    type User {
+        _id: ID!
+        email: String!
+    }
+
+    type RootMutation {
+        signup(userInput: SignupBody): User!
+    }
+
+    schema {
+        query: RootQuery
+        mutation: RootMutation
+    }
+`);
+```
+
+The resolvers declared in the schema (`hello` and `signup` in the above example) must be defined in another file :
+
+##### graphql/resolvers.js
+```javascript
+const User = require("../models/user");
+
+module.exports = {
+
+    // a resolver can be synchronous...
+    hello() {
+        return { text: "Hello World!", views: 123 };
+    },
+
+    // ... or asynchronous
+    // the 1st argument of a resolver is the argument from the schema
+    // the 2nd argument is the request itself
+    signup: async function(args, req) {
+        const email = args.userInput.email;
+        const password = args.userInput.password;
+        const existingUser = await User.findOne({ email: email });
+        // [... create object createdUser in DB ...]
+        return { ...createdUser._doc, _id: createdUser._id.toString() };
+    }
+};
+```
+
+To expose these endpoints, we add in `server.js` a middleware to handle the GraphQL queries.  
+It receives the query, validates its input, executes the resolver, and filters the result according to the requested fields.
+
+```javascript
+const { graphqlHTTP }  = require("express-graphql");
+const graphqlSchema    = require("./graphql/schema");
+const graphqlResolvers = require("./graphql/resolvers");
+
+// we use use() instead of post() to allow the use of GraphiQL GUI
+app.use("/graphql", graphqlHTTP({
+    schema: graphqlSchema,
+    rootValue: graphqlResolvers,
+    graphiql: true     // when set, we can access the GraphiQL GUI interface in the browser at GET /graphql 
+}));
+```
+
+The GraphQL endpoints can be executed by calling `POST /graphql` with the details of the query in the body in JSON format :
+- to call `hello` : `{ "query": "{ hello { text } } }"`
+- to call `signup` : `{ "query": "mutation { signup(userInput: { email: \"xxx\", name: \"xxx\", password: \"xxx\" }) { _id } }" }`
+
+An easier way to call the endpoints is to use the GraphiQL GUI accessible from a browser at `GET /graphql`.  
+It parses the schema, shows its documentation and offers auto-completion (Ctrl-Space) and request execution (Ctrl-Enter).
+
+To validate the request fields, we can no longer use `express-validator` that adds validation middlewares in our routes, because with GraphQL all requests go to the same route.  
+Instead, we perform validation in the resolvers using the `validator` package (used behind the hood by `express-validator`) :
+
+```javascript
+const validator = require("validator");
+
+module.exports = {
+    signup: async function(args, req) {
+        // extract data from request
+        const email = args.userInput.email;
+        const name = args.userInput.name;
+        const password = args.userInput.password;
+        // data validation
+        const errors = [];
+        if (!validator.isEmail(email)) {
+            errors.push({ message: "Invalid email" });
+        }
+        if (validator.isEmpty(password) || !validator.isLength(password, { min: 5 })) {
+            errors.push({ message: "Password too short" });
+        }
+        if (errors.length > 0) {
+            const error = new Error("Invalid input");
+            error.data = errors; // store the messages for display in the response
+            error.code = 422;
+            throw error;
+        }
+        ...
+    }
+}
+```
+
+The error details added to the custom error can be used in the error response delivered by GraphQL, by specifying the `customFormatErrorFn` method in the `graphqlHTTP` middleware configuration :
+
+```javascript
+app.use("/graphql", graphqlHTTP({
+    schema: graphqlSchema,
+    rootValue: graphqlResolvers,
+    graphiql: true,
+    customFormatErrorFn(err) {
+        // if the error is thrown by our code, express provide it in the "originalError" field
+        // it would not exist if there was a syntax error in the GraphQL query for example
+        if (!err.originalError) {
+            return err;
+        }
+        const data    = err.originalError.data;
+        const message = err.message || "An error occured";
+        const code    = err.originalError.code || 500;
+        return { message: message, data: data, code: code };
+    }
+}));
+```
 
 ## Useful Node.js libraries
 

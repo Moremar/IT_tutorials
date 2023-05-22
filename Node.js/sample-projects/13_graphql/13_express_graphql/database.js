@@ -1,0 +1,47 @@
+const mongoose = require('mongoose');
+
+/**
+ * MongoDB database using the Mongoose ODM module.
+ * 
+ * Mongoose exposes a connect() method, so we only call it here with the MongoDB
+ * credentials from the config file.
+ * 
+ * This requires the connection parameters to be defined in the .env file.
+ * This file is not included in the git repository.
+ * Once we have a MongoDB server running, we must specify in the .env file :
+ * 
+ *    MONGODB_HOST="localhost"
+ *    MONGODB_USER="nodejsdev"
+ *    MONGODB_PASSWORD="mypassword"
+ *    MONGODB_DATABASE="schemanodejs"
+ */
+
+let _uri = null;
+
+const getMongoUri = () => {
+    if (!_uri) {
+        const mongoUser     = process.env.MONGODB_USER;
+        const mongoPassword = process.env.MONGODB_PASSWORD;
+        const mongoHost     = process.env.MONGODB_HOST;
+        const mongoDatabase = process.env.MONGODB_DATABASE;
+        _uri = "mongodb+srv://" + mongoUser + ":" + mongoPassword
+             + "@" + mongoHost + "/" + mongoDatabase + "?retryWrites=true&w=majority";
+    }
+    return _uri;
+};
+
+const connect = (callbackFn) => {
+    mongoose.connect(getMongoUri())
+    .then(() => {
+        console.log('Connected to the MongoDB server');
+        callbackFn();
+    })
+    .catch((err) => {
+        console.log('ERROR - Could not connect to the MongoDB server');
+        console.log(err);
+    });
+};
+
+
+exports.getMongoUri = getMongoUri;
+exports.connect = connect;
