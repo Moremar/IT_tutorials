@@ -108,7 +108,7 @@ class Feed extends Component {
     event.preventDefault();
     const graphqlQuery = {
       query: `
-      mutation UpdateStatus($status) {
+      mutation UpdateStatus($status: String!) {
         updateUserStatus(status: $status)
       }
       `,

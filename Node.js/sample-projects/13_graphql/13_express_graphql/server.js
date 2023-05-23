@@ -3,6 +3,10 @@ const express    = require("express");
 const bodyParser = require("body-parser");
 const multer     = require('multer');
 const path       = require("path");
+const helmet     = require("helmet");
+const compression = require("compression");
+const morgan     = require("morgan");
+const fs         = require("fs");
 
 const fileUtil = require("./utils/file");
 
@@ -45,6 +49,19 @@ const app = express();
 // serve statically the /images folder
 app.use("/images", express.static(path.join(__dirname, "images")));
 
+// set some security HTTP headers to all HTTP responses
+app.use(helmet());
+
+// set up compression to reduce the response size
+app.use(compression());
+
+// specify a logger for all incoming HTTP requests
+const logStream = fs.createWriteStream(
+    path.join(__dirname, "access.log"),
+    { flags: "a" }   // append mode
+);
+app.use(morgan('combined', { stream: logStream }));
+
 // body parser middleware to parse JSON body
 app.use(bodyParser.json());
 
@@ -61,13 +78,7 @@ const uploadFilter = (req, file, cb) => {
  app.use(multer({storage: uploadStorage, fileFilter: uploadFilter}).single("image"));
 
 
-// middleware logging incoming requests
-app.use((req, res, next) => {
-    console.log(req.method + " " + req.url);
-    next();
-});
-
-// middleware to add CORS headers
+ // middleware to add CORS headers
 app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE");

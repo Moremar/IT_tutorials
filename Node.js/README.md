@@ -1648,7 +1648,7 @@ const graphqlQuery = {
 // equivalent query using variables
 const graphqlQuery = {
   query: `
-  mutation UpdateStatus($status) {
+  mutation UpdateStatus($status: String!) {
     updateUserStatus(status: $status)
   }
   `,
@@ -1657,6 +1657,19 @@ const graphqlQuery = {
   }
 };
 ```
+
+## Deployment
+
+Node.js server-side rendered apps (using static HTML or templates), REST APIs or GraphQL APIs all have the same hosting requirements : they need to be deployed to a server that can start a Node + Express web app.
+
+Before sending an app to production, ensure that :
+- we use env variables for secret keys, URLs, database names...
+- we use the production access keys (Stripe, Mongo ...)
+- we use the `helmet` middleware to add security headers
+- we have source compression with the `compression` package
+- we have logging of incoming requests (with `morgan` for example)
+
+// TODO continue
 
 
 ## Useful Node.js libraries
@@ -1685,6 +1698,67 @@ These values can be accessed from the `process.env` variable in the Node.js code
 const dotenv = require('dotenv');
 dotenv.config();
 console.log('Host : ' + process.env.MYSQL_HOST);
+```
+
+
+### helmet
+
+The `helmet` middleware adds some security HTTP headers to all outgoing HTTP responses.  
+It is recommended in any production Express app, to protect against many types of attacks.  
+
+```commandline
+npm install helmet --save
+```
+
+```javascript
+const helmet = require("helmet");
+
+const app = express();
+
+app.use(helmet());
+```
+
+
+### compression
+
+The `compression` middleware is used to compress the responses of the server, making their size smaller :
+
+```commandline
+npm install compression --save
+```
+
+```javascript
+const compression = require("compression");
+
+const app = express();
+
+app.use(compression());
+```
+
+
+### morgan
+
+The `morgan` middleware is a logger for Node.js that logs all incoming HTTP requests.  
+It can be configured to customize the format of the log.
+
+```commandline
+npm install morgan --save
+```
+
+```javascript
+const morgan = require("morgan");
+
+const app = express();
+
+// log incoming requests to the console
+app.use(morgan("combined"));   // tiny / common / short / combined
+
+// log incoming requests to a dedicated file
+const logStream = fs.createWriteStream(
+    path.join(__dirname, "access.log"),
+    { flags: "a" }   // append mode
+);
+app.use(morgan('combined', { stream: logStream }));
 ```
 
 
