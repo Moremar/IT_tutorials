@@ -1633,6 +1633,32 @@ app.use("/graphql", graphqlHTTP({
 }));
 ```
 
+GraphQL queries can also be written using variables, to separate clearly the query part from the values.  
+This only impacts the query object on the frontend, both forms are parsed the same way in the backend.
+
+```javascript
+// query including the values
+const graphqlQuery = {
+  query: `
+  mutation {
+    updateUserStatus(status: ${this.state.status})
+  }
+  `
+};
+// equivalent query using variables
+const graphqlQuery = {
+  query: `
+  mutation UpdateStatus($status) {
+    updateUserStatus(status: $status)
+  }
+  `,
+  variables: {
+    status: this.state.status
+  }
+};
+```
+
+
 ## Useful Node.js libraries
 
 ### dotenv

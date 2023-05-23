@@ -261,5 +261,30 @@ module.exports = {
             createdAt: post.createdAt.toISOString(),
             updatedAt: post.updatedAt.toISOString()
         };
+    },
+
+    getUser: async function(args, req) {
+        // validate that the user is authenticated
+        if (!req.isAuth) {
+            const error = new Error("Not authenticated");
+            error.code = 401;
+            throw error;
+        }
+        // return the authenticated user
+        const user = await User.findOne({ _id: req.userId });
+        return { ...user._doc, _id: user._id.toString() };
+    },
+
+    updateUserStatus: async function(args, req) {
+        // validate that the user is authenticated
+        if (!req.isAuth) {
+            const error = new Error("Not authenticated");
+            error.code = 401;
+            throw error;
+        }
+        const user = await User.findOne({ _id: req.userId });
+        user.status = args.status;
+        await user.save();
+        return true;
     }
 };

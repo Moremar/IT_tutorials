@@ -22,17 +22,31 @@ class Feed extends Component {
   };
 
   componentDidMount() {
-    fetch('URL')
-      .then(res => {
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch user status.');
-        }
-        return res.json();
-      })
-      .then(resData => {
-        this.setState({ status: resData.status });
-      })
-      .catch(this.catchError);
+    const graphqlQuery = {
+      query: `
+      {
+        getUser { status }
+      }
+      `
+    };
+    fetch('http://localhost:8080/graphql', {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + this.props.token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(graphqlQuery)
+    })
+    .then(res => {
+      return res.json();
+    })
+    .then(resData => {
+      if (resData.errors) {
+        throw new Error('Fetching the user failed!');
+      }
+      this.setState({ status: resData.data.getUser.status });
+    })
+    .catch(this.catchError);
 
     this.loadPosts();
   }
@@ -92,17 +106,34 @@ class Feed extends Component {
 
   statusUpdateHandler = event => {
     event.preventDefault();
-    fetch('URL')
-      .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error("Can't update status!");
-        }
-        return res.json();
-      })
-      .then(resData => {
-        console.log(resData);
-      })
-      .catch(this.catchError);
+    const graphqlQuery = {
+      query: `
+      mutation UpdateStatus($status) {
+        updateUserStatus(status: $status)
+      }
+      `,
+      variables: {
+        status: this.state.status
+      }
+    };
+    fetch('http://localhost:8080/graphql', {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + this.props.token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(graphqlQuery)
+    })
+    .then(res => {
+      return res.json();
+    })
+    .then(resData => {
+      if (resData.errors) {
+        throw new Error('Updating the status failed!');
+      }
+      console.log(resData);
+    })
+    .catch(this.catchError);
   };
 
   newPostHandler = () => {
@@ -201,12 +232,14 @@ class Feed extends Component {
       // add the new post at the beginning of the list
       this.setState(prevState => {
         let updatedPosts = [...prevState.posts];
+        let postCount = this.state.totalPosts;
         if (prevState.editPost) {
           const postIndex = prevState.posts.findIndex(
             p => p._id === prevState.editPost._id
           );
           updatedPosts[postIndex] = post;
         } else {
+          postCount += 1;
           if (prevState.posts.length >= 2) {
             updatedPosts.pop();
           }
@@ -216,7 +249,8 @@ class Feed extends Component {
           posts: updatedPosts,
           isEditing: false,
           editPost: null,
-          editLoading: false
+          editLoading: false,
+          totalPosts: postCount
         };
       });
     })
