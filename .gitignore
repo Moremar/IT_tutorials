@@ -1,6 +1,9 @@
 # Pycharm config files
 **/.idea
 
+# Gradle build files
+**/.gradle/
+
 # Node packages imported by NPM
 **/node_modules/
 

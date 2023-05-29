@@ -212,6 +212,55 @@ kafka-server-start /usr/local/etc/kafka/server.properties
 ```
 
 
+### Locally on Windows with a single broker
+
+Kafka can be run on Windows 10 using WSL2 (Windows Subsystem for Linux) that provides a real Ubuntu kernel inside Windows.  
+It is installed in an administrator shell with :  `wsl --install`  
+On completion, restart Windows, it opens a terminal installing Ubuntu.  
+After entering a username and password, the Ubuntu box is started.  
+We now have a Ubuntu app in the Windows Start menu.
+
+Install Java, for example the AWS Corretto JDK and ensure it got installed :
+```commandline
+sudo wget -O- https://apt.corretto.aws/corretto.key | sudo apt-key add - 
+sudo add-apt-repository 'deb https://apt.corretto.aws stable main'
+sudo apt-get update; sudo apt-get install -y java-17-amazon-corretto-jdk
+java --version
+```
+
+Install Kafka from their Download page to the Ubuntu box :
+```commandline
+wget https://downloads.apache.org/kafka/3.4.0/kafka_2.13-3.4.0.tgz
+tar xzvf kafka_2.13-3.4.0.tgz
+```
+
+Add the `bin/` folder to the `PATH` by adding to `~/.bashrc` :
+```commandline
+PATH="$PATH:~/kafka_2.13-3.4.0/bin/"
+```
+
+Start Zookeeper using the default property files in the tgz archive :
+```commandline
+zookeeper-server-start.sh ~/kafka_2.13-3.4.0/config/zookeeper.properties
+```
+
+Start a Kafka broker using the default property files in the tgz archive :
+```commandline
+kafka-server-start.sh ~/kafka_2.13-3.4.0/config/server.properties
+```
+
+To make the Kafka cluster reachable from ouside Ubuntu (PowerShell, Java...) we need to adjust the config.  
+First disable IPV6 :
+```commandline
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+```
+Then edit the `config/server.properties` Kafka configuration file to set the `listeners` property :
+```commandline
+listeners=PLAINTEXT://localhost:9092
+```
+
+
 ## Kafka CLI
 
 Since Zookeeper is getting deprecated, client commands should use the `--bootstrap-server` option instead of `--zookeeper` to use Kraft.
@@ -246,7 +295,7 @@ The replication factor can be set with `--replication-factor <INT>` and cannot b
 
 ```commandline
 kafka-topics --bootstrap-server localhost:9092 --create --topic test-topic
-``` 
+```
 
 #### List existing topics
 
@@ -330,3 +379,59 @@ kafka-consumer-groups --bootstrap-server localhost:9092 --list
 kafka-consumer-groups --bootstrap-server localhost:9092 --describe --group my-group
 ```
 
+
+## Kafka Java Programming
+
+The official SDK for Kafka is in Java, but the Kafka community has created an SDK for most other languages (Scala, C++, Python, JS...).
+
+### Project Setup
+
+Ensure a recent JDK is installed, for example AWS Corretto.   
+
+Create a new IntelliJ IDEA project using Gradle (Groovy) : `New Project > Java > Gradle (Groovy)`.
+
+Create a new module under the project : `right-click on project > New Module > Java + Gradle > set artifact name`  
+The artifact name can be anything, for example `com.tuto.kafka`.
+
+Add the Kafka and SLF4J dependencies to the `build.gradle` file :
+- type "Kafka Maven" on Google and open the `org.apache.kafka` MVN Repository result
+- choose `kafka-clients`, pick the latest version (3.4.0 now) and select the `Gradle(Short)` tab
+- copy the import code and add it in the `build.gradle` file in the `dependencies{}` block
+- same steps for `slf4j-api` and `slf4j-simple` (replace `testImplementation` by `implementation`)
+- remove junit dependencies
+- open the Gradle tab on the right of IntelliJ, and click the Reload icon to import the Kafka and SLF4 jars
+- ensure Kafka and SLF4J jars appear in the project tree under "External libraries"
+
+
+### Producer Process
+
+To send data to a cluster in Java, we use the generic `KafkaProducer` class.  
+It is configured with a `Properties` object that receives the connection and producer properties.  
+It must specify what serializers to use for the message key and value.  
+It can send generic objects of type `ProducerRecord` to Kafka.
+
+```java
+    public static void main(String[] args) {
+    
+        // create the properties for the producer
+        Properties properties = new Properties();
+        // connection property
+        properties.setProperty("bootstrap.servers", "localhost:9092");
+        // set producer properties
+        properties.setProperty("key.serializer", StringSerializer.class.getName());
+        properties.setProperty("value.serializer", StringSerializer.class.getName());
+
+        // create the producer
+        KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
+
+        // create a producer record
+        ProducerRecord<String, String> record = new ProducerRecord<>("demo_topic", "Hello World");
+
+        // send the record to Kafka
+        producer.send(record);
+
+        // force the producer to send its data and block until completion
+        producer.flush();
+        producer.close();
+    }
+```
