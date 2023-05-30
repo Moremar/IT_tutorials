@@ -62,7 +62,11 @@ Offsets are not re-used even after older messages get purged, they are always in
 
 A producer is a process writing some messages to a topic.  
 The producer decides what partition the message belongs to by hashing its message key.  
-If no message key is provided, the producer will choose a partition, for example with a round-robin strategy.  
+
+If no message key is provided, the producer will choose a partition using its partitioner.  
+The partitioner could choose to send messages without a key following a round-robin strategy.  
+For performance improvement, providers can use a sticky partitioner, that sends messages together to a same partition if sent close enough from each other.
+
 
 A producer can choose to receive an ack of each message sent to kafka :
 - `acks=0` : the producer does not wait for any ack (possible data loss)
@@ -424,14 +428,98 @@ It can send generic objects of type `ProducerRecord` to Kafka.
         // create the producer
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
 
-        // create a producer record
-        ProducerRecord<String, String> record = new ProducerRecord<>("demo_topic", "Hello World");
+        // create a producer record with an optional key
+        ProducerRecord<String, String> record = new ProducerRecord<>("demo_topic", "key1", Hello World");
 
         // send the record to Kafka
-        producer.send(record);
+        // we can pass an optional callback executed after the record is sent
+        producer.send(record, (metadata, e) -> {
+            if (e == null) {
+                // record successfully sent
+                log.info("Sent record :"
+                    + " topic = " + metadata.topic() + " partition = " + metadata.partition()
+                    + " offset = " + metadata.offset() + " timestamp = " + metadata.timestamp()
+                );
+            } else {
+                log.error("An error occurred while sending the record", e);
+            }
+        });
 
         // force the producer to send its data and block until completion
         producer.flush();
         producer.close();
     }
+```
+
+
+### Consumer Process
+
+A Kafka consumer is created in Java with the generic class `KafkaConsumer`.  
+It also receives a `Properties` object for its configuration, and can belong to a consumer group.  
+It can subscribe to a list of topics with `consumer.subscribe()`.  
+It retrieves messages or wait for new ones with the `consumer.poll()` method.
+
+To handle shutdown gracefully, it needs to use a shutdown hook.  
+The hook calls the `consumer.wakeup()` method, so it will throw a `WakeupException` that gets caught in the main thread.
+
+```java
+public static void main(String[] args) {
+
+    log.info("Starting the consumer...");
+
+    Properties properties = new Properties();
+    // set connection properties
+    properties.setProperty("bootstrap.servers", "localhost:9092");
+    // set consumer properties
+    properties.setProperty("key.deserializer", StringDeserializer.class.getName());
+    properties.setProperty("value.deserializer", StringDeserializer.class.getName());
+    properties.setProperty("group.id", "my-java-group");
+    properties.setProperty("auto.offset.reset", "earliest");  // none / earliest / latest
+
+    // create consumer
+    KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
+
+    // get a reference to the main thread and add a shutdown hook
+    final Thread mainThread = Thread.currentThread();
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+        public void run() {
+            log.info("Shutdown requested");
+            // wakeup the consumer so it will throw a WakeupException the next time it tries to poll
+            // our code can catch this WakeupException
+            consumer.wakeup();
+
+            try {
+                // join the main thread to wait for proper shutdown
+                mainThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    });
+
+    // subscribe to a topic
+    consumer.subscribe(Arrays.asList("demo_topic"));
+
+    // poll for data
+    // inside a try/catch to ensure we catch the WakeupException on shutdown
+    try {
+        while (true) {
+            log.info("Polling the topic...");
+            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000));
+
+            for (ConsumerRecord<String, String> record : records) {
+                log.info("key = " + record.key() + " value = " + record.value()
+                        + " partition = " + record.partition() + " offset = " + record.offset());
+            }
+        }
+    } catch (WakeupException e) {
+        log.info("Consumer shutting down...");
+    } catch (Exception e) {
+        log.error("An unexpected error occured while polling messages", e);
+    } finally {
+        // commit the offset and close the consumer
+        consumer.close();
+        log.info("Consumer shutdown successful");
+    }
+}
 ```

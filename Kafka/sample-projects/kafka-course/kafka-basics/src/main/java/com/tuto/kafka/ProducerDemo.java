@@ -1,7 +1,9 @@
 package com.tuto.kafka;
 
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,11 +27,41 @@ public class ProducerDemo {
         // create the producer
         KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
 
-        // create a producer record
-        ProducerRecord<String, String> record = new ProducerRecord<>("demo_topic", "Hello World");
+        // create a producer record with no key
+        String topic = "demo_topic";
+        ProducerRecord<String, String> record1 = new ProducerRecord<>(topic, "Hello 1");
+
+        // send the record with no key to Kafka
+        // provide an optional callback executed on message send completion
+        producer.send(record1, (metadata, e) -> {
+            if (e == null) {
+                // record successfully sent
+                log.info("Sent record 1 :"
+                        + " topic = " + metadata.topic() + " partition = " + metadata.partition()
+                        + " offset = " + metadata.offset() + " timestamp = " + metadata.timestamp()
+                );
+            } else {
+                log.error("An error occurred while sending the record", e);
+            }
+        });
+
+        // create a producer record with a key
+        ProducerRecord<String, String> record2 = new ProducerRecord<>(topic, "key1","Hello 2");
 
         // send the record to Kafka
-        producer.send(record);
+        // provide an optional callback executed on message send completion
+        producer.send(record2, (metadata, e) -> {
+            if (e == null) {
+                // record successfully sent
+                log.info("Sent record 2 :"
+                        + " topic = " + metadata.topic() + " partition = " + metadata.partition()
+                        + " offset = " + metadata.offset() + " timestamp = " + metadata.timestamp()
+                );
+            } else {
+                log.error("An error occurred while sending the record", e);
+            }
+        });
+
 
         // force the producer to send its data and block until completion
         producer.flush();
