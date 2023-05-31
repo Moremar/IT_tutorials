@@ -73,6 +73,10 @@ A producer can choose to receive an ack of each message sent to kafka :
 - `acks=1` : the producer waits for the ack from the leader broker (rare data loss)
 - `acks=all` : the producer waits for the ack from the leader and all replicas (no data loss)
 
+Producers retry to send messages when they get an exception, until their timeout is reached (`delivery.timeout.ms` property defaulting to 2min).
+
+Kafka supports idempotent producers, when we use them Kafka recognizes a duplicate if it receives one and does not commit it again.  
+Idempotent producers are the default from Kafka 3.0.
 
 ### Kafka Messages
 
@@ -102,6 +106,13 @@ Consumers request messages to the Kafka brokers (brokers do not push messages to
 Messages are read in order from lowest to highest offsets within each partition.  
 Consumers deserialize the binary data they receive from the brokers.  
 If the key is an integer and the message value is a string, we would use an IntegerDeserializer and a StringDeserializer. 
+
+Consumers re-balance their partition allocation at startup of shutdown of a consumer, driven by the `partition.assignment.strategy` property :
+- **eager rebalance** : stop all consumers and rejoin the group, for a short time all consumers are down, and a consumer may receive a partition different from what it had before.
+- **cooperative rebalance** : reassign only a subset of partitions, Kafka figures out what partitions need to be assigned to a new consumer, and only interrupts the read from these partitions, no interruption for partitions that are not changing consumer.
+
+A Kafka consumer commits its offsets when we call `poll()` and the `auto.commit.interval.ms` has elapsed.
+
 
 ### Kafka Consumer Groups
 
@@ -155,6 +166,23 @@ Without Zookeeper, Kafka can handle millions of partitions.
 Getting rid of Zookeeper also makes the Kafka configuration much easier to monitor and support.  
 With Kraft, there is no longer a software managing the cluster.  
 Instead, each broker is able to act as an entry point for any operation on the cluster. 
+
+
+## Message Compression
+
+Producers usually send text-based messages (like JSON) and can compress the batches with the `compression.type` (none / gzip / lz4 / snappy...)
+
+The compression type can also be specified with the `compression.type` property in the broker.  
+When set to `producer`, then it takes batches already compressed by producers and stores them as-is.  
+When set to the same compression type as the producer, it also stores compressed messages as-is.  
+When set to a different compression type (for ex `gzip` in producer and `lz4` on broker), it decompresses and recompresses to the broker compression format.
+
+There is no need to specify the compression type on consumer side, it automatically detects the compression type and decompresses messages.
+
+The `liger.ms` property specifies the time the producer can keep a message before sending it, so it can batch messages together (default to 0).  
+Increasing it can improve performance by reducing the network traffic and improving compression.
+
+The `batch.size` property can be adjusted too to send bigger batches.
 
 
 ## Kafka Setup

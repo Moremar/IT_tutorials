@@ -1,5 +1,6 @@
 package com.tuto.kafka;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -21,12 +22,12 @@ public class ConsumerDemo {
 
         Properties properties = new Properties();
         // set connection properties
-        properties.setProperty("bootstrap.servers", "localhost:9092");
+        properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         // set consumer properties
-        properties.setProperty("key.deserializer", StringDeserializer.class.getName());
-        properties.setProperty("value.deserializer", StringDeserializer.class.getName());
-        properties.setProperty("group.id", "my-java-group");
-        properties.setProperty("auto.offset.reset", "earliest");  // none / earliest / latest
+        properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "my-java-group");
+        properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");  // none / earliest / latest
 
         // create consumer
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
@@ -74,7 +75,5 @@ public class ConsumerDemo {
             consumer.close();
             log.info("Consumer shutdown successful");
         }
-
-//        log.info("Stopping the consumer...");
     }
 }
