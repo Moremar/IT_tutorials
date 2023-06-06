@@ -69,7 +69,7 @@ public class ConsumerDemo {
         } catch (WakeupException e) {
             log.info("Consumer shutting down...");
         } catch (Exception e) {
-            log.error("An unexpected error occured while polling messages", e);
+            log.error("An unexpected error occurred while polling messages", e);
         } finally {
             // commit the offset and close the consumer
             consumer.close();

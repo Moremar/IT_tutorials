@@ -50,7 +50,9 @@ Kafka messages are guaranteed to be ordered within a partition, but not across p
 A message only belongs to a single partition of a topic.  
 
 Once a message is written to a partition, it can never be modified or deleted.  
-Messages in Kafka are kept only for a limited time (by default one week), then they get purged.
+Messages in Kafka are kept only for a limited time, specified with `offset.retention.minutes` (7 days by default).  
+After that time, messages are deleted permanently from Kafka.
+
 
 ### Message Offsets
 
@@ -111,7 +113,12 @@ Consumers re-balance their partition allocation at startup of shutdown of a cons
 - **eager rebalance** : stop all consumers and rejoin the group, for a short time all consumers are down, and a consumer may receive a partition different from what it had before.
 - **cooperative rebalance** : reassign only a subset of partitions, Kafka figures out what partitions need to be assigned to a new consumer, and only interrupts the read from these partitions, no interruption for partitions that are not changing consumer.
 
-A Kafka consumer commits its offsets when we call `poll()` and the `auto.commit.interval.ms` has elapsed.
+A Kafka consumer commits its offsets when we call `poll()` and the `auto.commit.interval.ms` has elapsed.  
+It is possible to change this behavior by setting `enable.auto.commit` to false and committing manually. 
+
+Kafka consumers send a heartbeat regularly to the consumer regulator (a broker of the cluster).  
+The heartbeat interval is set with `heartbeat.interval.ms` (3sec by default).  
+The consumer is also considered dead if the time between 2 polls exceeds `max.poll.interval.ms` (5min by default).
 
 
 ### Kafka Consumer Groups

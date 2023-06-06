@@ -50,7 +50,7 @@ public class WikimediaProducerDemo {
         eventSource.start();
 
         // prevent the main thread to stop
-        TimeUnit.MINUTES.sleep(10);
+        TimeUnit.MINUTES.sleep(1);
 
         log.info("Stopping the producer...");
     }
