@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+
+  mern_mongodb:
+    image: 'mongo'
+    volumes:
+      - mern_mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+
+  mern_backend:
+    build: ./backend
+    ports:
+      - 80:80
+    volumes:
+      - mern_backend_logs:/app/logs
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    depends_on:
+      - mern_mongodb
+
+  mern_frontend:
+    build: ./frontend
+    ports:
+      - 3000:3000
+    stdin_open: true
+    tty: true
+    depends_on:
+      - mern_backend
+
+volumes: 
+  mern_mongodb_data:
+  mern_backend_logs:

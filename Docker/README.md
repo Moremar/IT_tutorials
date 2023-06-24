@@ -466,7 +466,7 @@ Docker networks can specify their driver with the `--driver` parameter, which de
 We can create a network with the `--internal` parameter to allow containers to communicate with each other but prevent internet access. 
 
 
-## Example of multi-container MERN web app
+## Example of multi-container MERN webapp
 
 A basic containerized MERN webapp can consist of 3 containers :
 - a MongoDB database server
@@ -548,3 +548,87 @@ docker run -d --rm -it --name mern_frontend
 Confirm that the frontend is now accessible at URL http://localhost:3000 and that it can reach the backend correctly.
 
 
+## Docker-Compose
+
+Docker-Compose is a tool that helps with the management of multi-container applications.  
+It uses a single configuration `docker-compose.yml` file that contains definitions of services, networks, volumes...  
+Starting of stopping all containers of the app can then be done by a single command.  
+
+The `docker-compose.yml` file describes services, that correspond to containers in the application.  
+Each service has some properties : an image, published ports, env vars, network, volumes...  
+These properties are translated by Docker-Compose into parameters for the underlying `docker run` commands.
+
+By default, Docker-Compose creates a network shared by all containers of the file.
+
+The `docker-compose.yml` available fields are detailed on the [official Docker-Compose documentation](https://docs.docker.com/compose/compose-file/).   
+The file first specifies a Docker-Compose `version` field (3.8 at time of writing).  
+It also takes a `services` field that will list all services that are part of the application.  
+Each service is given a name, and specifies its properties : `image`, `ports`, `volumes`, `environment` ...    
+If the image needs to be built, we can use the `build` field with the relative path to the folder containing the Dockerfile.
+
+The `--rm` flag does not need to be specified since it is the default behavior when using Docker-Compose.  
+The `-d` flag is not specified in this file either, it can be specified when launching the application.  
+The `-it` flag is replaced by fields `stdin_open` and `tty` both set to `true` in the container properties.
+
+All named volumes that Docker should create must be listed in a `volumes` field at the top-level. 
+
+We can enforce an order to create the containers by using the `depends_on` field for specific containers.
+
+By default, each container will have an auto-generated name of the form `<FOLDER_NAME>_<SERVICE_NAME>_<NUMBER>`.  
+This can be overriden with the `container_name` property in a service configuration.
+
+Docker-Compose commands are executed with the `docker-compose` executable :
+
+```commandline
+docker-compose build        // build services into images
+docker-compose up           // create images, then create and start the containers
+                            // -d to start in detached mode
+                            // --build to force the re-build of images
+docker-compose down         // stop and remove the containers
+                            // -v to also removed the attached volumes
+docker-compose logs
+docker-compose ps
+docker-compose start
+docker-compose stop
+```
+
+### MERN webapp example 
+
+##### docker-compose.yml
+```commandline
+version: '3.8'
+services:
+
+  mongodb:
+    image: 'mongo'
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+
+  backend:
+    build: ./backend
+    ports:
+      - 80:80
+    volumes:
+      - backend_logs:/app/logs
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./frontend
+    ports:
+      - 3000:3000
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+volumes: 
+  mongodb_data:
+  backend_logs:
+```
