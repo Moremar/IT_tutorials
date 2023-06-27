@@ -173,6 +173,8 @@ docker images                                  // list all images stored locally
 docker pull <IMAGE_NAME>                       // download an image from Docker Hub
 docker build .                                 // create an image from a Dockerfile
                                                // -t name[:tag]  to assign a name and optionally a tag to the image
+                                               // -f <DOCKERFILE_PATH> to specify a custom Dockerfile
+                                               // --target <STAGE_NAME> build up to the specified stage (for multi-stage Dockerfile)
 
 docker rmi <IMAGE_ID>                          // delete an image
 docker image prune                             // remove all unused images
@@ -580,12 +582,14 @@ This can be overriden with the `container_name` property in a service configurat
 Docker-Compose commands are executed with the `docker-compose` executable :
 
 ```commandline
-docker-compose build        // build services into images
-docker-compose up           // create images, then create and start the containers
-                            // -d to start in detached mode
-                            // --build to force the re-build of images
-docker-compose down         // stop and remove the containers
-                            // -v to also removed the attached volumes
+docker-compose build            // build services into images
+docker-compose up               // create images, then create and start the containers
+                                // -d to start in detached mode
+                                // --build to force the re-build of images
+                                // <NAME_1> <NAME_2>... to only start specific services
+docker-compose down             // stop and remove the containers
+                                // -v to also removed the attached volumes
+docker-compose run <NAME> <CMD> // run a single service and optionally give it a command                            
 docker-compose logs
 docker-compose ps
 docker-compose start
@@ -631,4 +635,143 @@ services:
 volumes: 
   mongodb_data:
   backend_logs:
+```
+
+
+## Docker Deployment
+
+To deploy a containerized application, its containers must run on non-local machines.
+
+There are a few differences between development and production environments :
+- bind mounts are useful in development but should not be used in production
+- some applications (like React) need a special build step for production
+- some multi-containers projects may need to split the containers across multiple hosts
+- in production, we may want to go for a managed solution (for the DB, or for the containers management)
+
+
+### Deployment to a Remote Host (AWS EC2)
+
+A remote host can be setup on the cloud with Docker installed on it.    
+Containers can be started on this host, pulling the application images from an image registry (Docker Hub or AWS ECR).  
+We can choose any Docker-supporting hosting providers, like AWS, Azure or GCP.
+
+For example, to start a mono-container Node webapp on AWS EC2 :  
+
+- create a repository in Docker Hub for the image, then create the image locally and push it to Docker Hub :
+```
+docker build -t <DOCKER_USERNAME>/<IMAGE_NAME> .
+docker login
+docker push <DOCKER_USERNAME>/<IMAGE_NAME>
+```
+- from an AWS account, start a `t2.micro` EC2 instance with Amazon Linux AMI, using a security group allowing traffic to port 20 (SSH) and 80 (HTTP)
+- connect to that EC2 instance, either with a web shell (Connect > EC2 Instance Connect > Connect) or via SSH : 
+```commandline
+# the private key file is generated when starting the EC2 instance
+chmod 400 <PEM private key>
+ssh -i "<PEM private key>" ec2-user@<public IP>
+```
+- install Docker on the remote host :
+```commandline
+sudo yum update -y
+sudo yum install -y docker
+sudo service docker start
+sudo usermod -aG docker ec2-user   # on new terminal, avoid to use "sudo" for docker command
+sudo systemctl enable docker       # make docker service auto-launch at startup
+docker version                     # will work without the "sudo" only in a new terminal
+```
+- launch the Docker container on this EC2 instance (no need to login if the image is public) :
+```commandline
+docker pull <DOCKER_USERNAME>/<IMAGE_NAME>
+docker run -d --name <CONTAINER_NAME> -p 80:80 <DOCKER_USERNAME>/<IMAGE_NAME>
+```
+- Ensure that the webapp is accessible from a browser using the public IP of the EC2 instance.
+
+To update the app, we would push a new image to Docker Hub, pull this updated image in the EC2 instance, then stop and re-run the container.
+
+This approach works well and offers full control over the remote host, but implies to manage ourselves the EC2 instance running the webapp.  
+We are responsible for the creation of the EC2 instance, its configuration (adding Docker), its scaling if traffic changes, its security... 
+
+
+### Deployment to a managed container service (AWS ECS)
+
+A managed service helps with the deployment and monitoring of containerized apps on the cloud.  
+Most cloud providers offer this kind of managed service, in AWS it is the ECS service (Elastic Container Service).  
+The creation, management, update, scaling and security of the underlying remote host are handled by the managed service.
+
+With a managed service, we no longer call Docker directly, instead we use the commands provided by the service.  
+The managed service then executes the Docker commands behind the hood.
+
+Just like the deployment to an EC2 instance, application images must be pushed to an image registry (Docker Hub or AWS ECR).  
+
+In AWS ECS, we can create a **container** with a custom image from the image registry.  
+We can specify the ports to publish, the working directory, the environment variables, the command override...    
+This configuration will be use by ECS when executing the `docker run` command.  
+We can also specify to use CloudWatch logs to store the container logs.  
+A container can specify mount points (Docker volumes) to a given path inside the container, from those defined in the task (using EFS).
+
+A **task** in ECS is the configuration of a remote host, that can contain one or more running container(s).  
+It corresponds to the EC2 instance in the remote host deployment.  
+It can be setup to use Fargate (serverless containers on the cloud) or EC2 (underlying EC2 machines).  
+Note that all containers within a same task are guaranteed to run on the same machine.  
+Containers cannot use another container's name to communicate with each others (as they can in local development), but ECS allows them to use `localhost`.  
+Tasks can specify volumes of type EFS (Elastic File System) for data persistence (it needs inbound NFS traffic allowed in its security group).  
+Within a task, all containers must expose different ports, if multiple containers need to expose port 80 for example they should be running in different tasks.
+
+A **service** in ECS is a layer above a task that define how many instances of this task should run, and it  handles load balancing.  
+It can be setup to use Fargate or EC2, and can use an application load-balancer for load-balancing and domain-name assignment.  
+When using a load balancer, we need to specify a security group and a URL to ping for continuous health check.
+  
+
+A **cluster** in ECS is the network in which our services run, all services of an app are part of the same cluster.
+
+Once all of these are configured, we can launch the cluster to deploy the app in ECS.
+
+To update the app, we can push new versions of the custom images to the image registry.  
+In the task definition, we can click "Create New Revision", then "Create", forcing ECS to pull the latest image.
+
+
+### Database Deployment
+
+For a production environment, it can be preferable to use a managed database solution instead of deploying ourselves a database container.  
+For example, an SQL database can use AWS RDS, or a Mongo database can use Mongo Atlas.  
+This managed solution would handle the availability, scalability, backup, update and security of our database.
+
+In that case, we must decide if the development environment would still use a local database, or also use the managed database solution.  
+Using a local database container for development provides more isolation.  
+Using the managed solution (with a different DB name for example) offers a development environment closer to the actual production environment, especially regarding the connection to the database and the database version.
+
+
+### Multi-Stage deployment
+
+Some containers need to be built differently for development and production.  
+
+A typical example is frontend containers like Angular and React.  
+For development, they use the `npm start` command that build debuggable non-optimized JS/HTML frontend code, creates a local development server and serves the frontend code.  
+For production, the `npm build` command must be run to generate optimized frontend code.  
+No web server is created for production, we need to serve the built frontend code with an external web server.  
+The most common choice is NGINX.
+
+This can be done with a different Dockerfile for production.  
+This Dockerfile can be multi-stage, which means it includes multiple `FROM` instructions.  
+Each `FROM` instruction creates a stage that can copy code from previous stages.  
+
+In an Angular or REACT application, it means we can have : 
+- a first stage using ` FROM node` to build the production frontend code
+- a second stage using `FROM nginx` copying the production code from the previous stage to the folder that NGINX serves
+
+##### Dockerfile.prod
+```commandline
+# build stage to generate production code  
+FROM    node:14-alpine as build_stage
+WORKDIR /app
+COPY    package.json .
+RUN     npm install
+COPY    . .
+RUN     npm run build
+
+# deploy stage to start a web server serving production code
+FROM    nginx:stable-alpine
+COPY    --from=build_stage /app/build /usr/share/nginx/html
+EXPOSE  80
+CMD     ["nginx", "-g", "daemon off;"]
 ```
