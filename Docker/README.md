@@ -775,3 +775,372 @@ COPY    --from=build_stage /app/build /usr/share/nginx/html
 EXPOSE  80
 CMD     ["nginx", "-g", "daemon off;"]
 ```
+
+
+
+## Kubernetes (K8s)
+
+Kubernetes is an orchestration framework for microservices applications running on containers.  
+It was developed by Google, inspired from Borg and Omega, and given to the open-source community.
+
+Some problems that Kubernetes help to solve are :
+- monitoring and replacement of containers when they go down
+- run more of less container instances to adapt to traffic spikes
+- equal distribution of traffic across all instances of a container
+
+Managed services like AWS ECS address these problems by offering health checks, automatic container deployment, auto-scaling and load balancing.  
+They are a good solution, but it locks the app in the AWS ecosystem by configuring the app according to AWS ECS requirements.  
+
+Kubernetes is an alternative to AWS ECS that is independent of any cloud service, and that became the standard for container orchestration.  
+It can be thought as a kind of Docker-Compose for multiple machines.  
+The architecture of the containers deployment is specified in a Kubernetes file, that can be used with any cloud provider.  
+This config file may be extended with cloud provider specific properties, but overall the same file is used on any provider.  
+
+
+### Kubernetes Architecture
+
+A **pod** is the atomic unit of scheduling in Kubernetes.  
+A container running in Kubernetes is always inside a pod.  
+It is possible to have several containers in one pod if they are tightly coupled (sharing memory, volumes...).  
+
+A **worker node** corresponds to a machine that can run some containers (for example an EC2 instance).  
+Every pod in a Kubernetes deployment belongs to one and only one worker node.  
+A worker node can contain multiple pods.  
+A worker node must have Docker installed on it.  
+A worker node has a **kubelet**, an agent process responsible for communication between the master node and the worker node.  
+A worker node contains a **kube-proxy** that controls the network traffic between pods within the worker node and with the outside.  
+Kubernetes can distribute pods evenly across worker nodes when scaling up or down.  
+
+The **master node** is the orchestrator of the Kubernetes cluster.  
+It contains the **API Server**, the service in charge of communication with the kubelet of each worker node.  
+It also contains the **scheduler**, watching for new pods and selecting which worker nodes to run them on.
+
+The Kubernetes **cluster** is the combination of the master nodes and its worker nodes.
+
+
+### Kubernetes Installation
+
+Kubernetes helps with the orchestration of containers, but it does not create the cluster and the nodes !  
+It is part of the Kubernetes installation and configuration process to setup the master and worker nodes.  
+The API server needs to be installed on the master node.  
+The Kubelet needs to be installed on each worker node.  
+Kubernetes will then use them to manage pods on the worker nodes.
+
+If we use AWS for hosting the Kubernetes cluster, it means we should create the EC2 instances, file systems, load balancers...  
+Kubernetes will not automatically create all those resources.
+
+Some cloud providers have a managed service that can create resources for a given Kubernetes configuration.  
+For example in AWS we can use the AWS EKS managed solution (Elastic Kubernetes service).  
+This is a good alternative to AWS ECS when we have a Kubernetes configuration file already in place.
+
+
+#### Kubernetes local installation
+
+A local Kubernetes platform can be easily setup using the **MiniKube** tool.  
+It creates a VM on our local machine and starts its cluster on it to simulate another machine.  
+It creates a single VM that contains both the master node and a worker node.
+
+First we install the `kubectl` executable to interact with a Kubernetes cluster.  
+It can be installed using Homebrew on Mac OS or Chocolatey on Windows : 
+```commandline
+brew install kubectl                # install kubectl on Mac OS
+choco install kubectl               # install kubectl on Windows
+
+kubectl version --client=true       # check the installation
+```
+
+We can then install MiniKube : 
+```commandline
+brew install minikube               # install minikube on Mac OS
+choco install minikube              # install minikube on Windows
+```
+
+Create the local Kubernetes cluster, including the master node, the worker node and their required software.  
+We need to specify the driver that MiniKube can use to create its VM, we can use Docker for that :
+```commandline
+minikube start --driver=docker         # start the Kubernetes local cluster
+minikube status                        # ensure it is running
+```
+
+MiniKube exposes a web server showing a dashboard of our local Kubernetes cluster.  
+It automatically opens a browser tab on port 52913 of the local machine showing all the Kubernetes cluster info.
+```commandline
+minikube dashboard
+```
+
+
+### Kubernetes Commands
+
+Kubernetes manages some objects, and creating these objects results in Kubernetes taking actions on the cluster.  
+There are different object types that can be created in Kubernetes.
+
+A **pod object** is the smallest unit in Kubernetes, it contains one or more containers (usually one).  
+A pod can contain shared resources, like volumes, usable by all containers in the pod.  
+A Pod has a cluster-internal IP address.  
+Containers inside a pod can communicate with each other using the `localhost` address (like in a task in AWS ECS).  
+Pods are designed to be ephemeral, they are started, stopped and replaced by Kubernetes.  
+Their internal data is lost, except what is saved in a volume.
+
+A **deployment object** is the controller that manages the creation of pod objects.  
+Usually we do not manually create pod objects, instead we create a deployment object that handles the pods creation.  
+The deployment knows about its target state, and Kubernetes creates required objects to reach that state.  
+Deployments can use auto-scaling to adapt to the traffic variation.  
+
+A **service object** can group pods together to expose them to other pods of the cluster, or to the outside of the cluster.  
+Pods already have an internal IP address, but it is not visible to the outside, and it changes when the pod is replaced.
+
+
+#### Imperative Approach
+
+The imperative approach consists in sending commands to `kubectl` to create/delete objects.
+
+We can create a deployment by specifying a deployment name and the Docker image to use.  
+This image must come from an image repository (not a local image) since it will be pulled by the worker node running on the VM.
+```commandline
+kubectl create deployment my-kub-app --image=my_image_repo/my_image
+```
+
+We can check that the deployment was created, and it should show as ready if the pod was correctly started from the image.
+```commandline
+kubectl get deployments
+kubectl get pods
+minikube dashboard       # show the deployment and pod
+```
+
+Create a service exposing the port 8080 in side the pod in that deployment to the outside :
+```commandline
+kubectl expose deployment my-kub-app --port=8080 --type=LoadBalancer
+kubectl get services
+```
+
+The service was created, since we use MiniKube it does not have a dedicated IP, but MiniKube provides an URL for it.  
+It returns a URL that we can use to access from a browser to the exposed port 8080 from the pod.
+```commandline
+minikube service my-kub-app
+```
+
+We can scale the deployment by setting a number of replicas for our pod :
+```commandline
+kubectl scale deployment/my-kub-app --replicas=3
+```
+
+To update the image in the pod to a new one, we use the command to set an image.  
+It specifies the container name and the new image, so we can use the same updated image or an image with another name.  
+The container name is visible in the "Pods" dashboard, it is given the name of the original image.  
+Note that an image will only be downloaded if it has a different name or tag from the current one.
+```commandline
+kubectl set image deployment/my-kub-app my_image=my_image_repo/my_new_image
+```
+
+We can monitor the status of this rollout to see if the image was updated successfully.  
+For example it will show that the rollout failed if the requested image name or tag does not exist.
+```commandline
+kubectl rollout status deployment/my-kub-app
+kubectl rollout history deployment/my-kub-app
+```
+
+If the deployment rollout failed, and we want to roll it back, we can run :
+```commandline
+kubectl rollout undo deployment/my-kub-app                    # rollback last rollout
+kubectl rollout undo deployment/my-kub-app --to-revision=1    # rollback to given revision (from kubectl rollout history)
+```
+
+Services and deployments can be deleted with :
+```commandline
+kubectl delete service my-kub-app
+kubectl delete deployment my-kub-app
+```
+
+#### Declarative approach
+
+The declarative approach to setup a cluster is to Kubernetes what Docker-Compose is to Docker.  
+It takes as input a resource definition file, and it creates the specified object.  
+This avoids to manually create the deployments and services, and allows version control on the configuration.
+
+An object can be created declaratively from a resource definition file with :
+```commandline
+kubectl apply -f config.yml
+```
+
+We can create a deployment from a resource definition file.  
+A deployment can contain multiple pods, but they will all be replicas of the same pod.  
+A pod can contain multiple containers.  
+Each container defines its image, its environment variables, its volumes...  
+By default Kubernetes checks the health of pods and restarts them if they are failed.  
+We can customize for each container what endpoint to use for the health check.
+
+###### deployment.yaml 
+```commandline
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-kub-deployment
+spec:
+  replicas: 1
+  # to identify existing containers that are part of this deployment
+  selector:
+    matchLabels:
+      app: my-kub-app
+      tier: backend
+  template:
+    metadata:
+      labels:
+        # can add any key/value labels
+        app: my-kub-app
+        tier: backend
+    spec:
+      containers:
+        - name: my-kub-container
+          image: my_image_repo/my_image
+          # environment variables
+          env:
+            - name: STORY_FOLDER
+              value: '/story'
+          volumeMounts:
+            - mountPath: /app/story
+              name: my_volume
+          liveness:
+            httpGet:
+              path: /
+              port: 8080
+            periodSeconds: 10
+            initialDelaySeconds: 5
+      volumes:
+        # use a volume of type "emptyDir"
+        - name: my_volume
+          hostPath:
+            path: /my/data/folder/on/host
+            type: DirectoryOrCreate
+```
+
+A service can also be created declaratively from a YAML resource definition file.  
+Its selector syntax is a bit simpler than the deployment one, because it is an older API. 
+
+###### service.yaml 
+```commandline
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-kub-service
+spec:
+  # to identify existing containers that are part of this service
+  selector:
+    app: my-kub-app
+    tier: backend
+  ports:
+    - protocol: 'TCP'
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+```
+
+To update the configuration of the cluster, we can simply modify and re-apply one of the resource definition files.  
+Kubernetes will automatically perform the required changes to update the cluster.
+
+Deleting objects imperatively also works for objects created declaratively.  
+We can also delete the objects declaratively :
+```commandline
+kubectl delete -f=deployment.yaml -f=service.yaml
+```
+
+If we prefer to have all resources defined in a single file, we can group all definitions in a single file and separate with the `---` separator.
+
+
+### Kubernetes Volumes
+
+Containers managed by Kubernetes can also use volumes to persist data.
+
+Volumes are defined at pod level, so their lifetime is the lifetime of the pod.  
+It means their data is persisted after container stop/failure, but does not persist if the pod is removed.
+
+In Docker, a volume is just a folder on the host machine that containers can access to store data.  
+In Kubernetes, volumes are more complex, they support multiple drivers and types.
+
+Kubernetes volumes are created in the `spec` property of the deployment resource definition file.  
+Each volume should have a `name`, and a type field with type-specific properties.  
+This creates the volume at pod level, so it is usable by containers inside the pod.   
+Then in a container definition, we can use `volumeMounts` to link a volume to a folder inside the container (see above _deployment.yaml_ example).   
+
+Volume types specify where the data of the volume is going to be stored.  
+There are many options, like `emptyDir`, `hostPath`, `csi`, `nfs`, `awsElasticBlockStore`, `azureFile` ...  
+
+An `emptyDir` volume simply creates a named empty directory in the pod that is used as a volume.  
+This is good for pods with a single replica, but if we have multiple replicas, they do not share this volume.  
+Each replica has its own instance of the volume locally.  
+This can be a problem when we reach a replica with a load balancer and do not see the changes made by other replicas.
+```commandline
+      volumes:
+        - name: my_volume
+          emptyDir: {}
+```
+
+A `hostPath` volume creates a folder in the host machine (the worker node).  
+Similarly to a Docker bind mount, we specify the path of the folder in the host that is used as a volume.  
+All pods running on the worker node can share the same volume.  
+However, pods running on different worker nodes would not share the same volume. 
+```commandline
+      volumes:
+        - name: my_volume
+          hostPath:
+            path: /my/data/folder/on/host
+            type: DirectoryOrCreate
+```
+
+The `csi` volume type (Container Storage Interface) was added recently by the Kubernetes team.  
+It is a very flexible type, offering an interface that any storage solution can implement by creating a driver.  
+For example, AWS EFS can be used, since there are CSI drivers for AWS EFS.
+
+Kubernetes also supports **persistent volumes (PV)**, which are pod and worker node independent.  
+They do not get removed even if the pods are replaced or a worker node is destroyed.  
+Persistent volumes are another object type that can be defined in Kubernetes.  
+Pods can use **persistent volume claims** to request access to one or more persistent volume(s).  
+
+PVs and PVCs can be created with a resource definition file :
+
+###### host-pv.yaml
+
+```commandline
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: host-pv
+spec:
+  capacity: 
+    storage: 1Gi
+  volumeMode: Block
+  storageClassName: standard
+  accessMOdes:
+    - ReadWriteOnce
+  # hostPath is a testing-only volume type
+  hostPath:
+    path: /data
+    type: DirectoryOrCreate
+```
+
+###### host-pvc.yaml
+
+```commandline
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: host-pvc
+spec:
+  volumeName: host-pv
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 1Gi
+```
+
+For a pod to use this PVC, we need to update the _deployment.yaml_ file.  
+The PVC must be declared in the volumes section :
+```commandline
+      volumes:
+        - name: my_volume
+          persistentVolumeClaim:
+            claimName: host-pvc
+```
+
+The `volumeMounts` field of the container is identical to any other type of volume.
