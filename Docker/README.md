@@ -1144,3 +1144,27 @@ The PVC must be declared in the volumes section :
 ```
 
 The `volumeMounts` field of the container is identical to any other type of volume.
+
+
+### Kubernetes Networking
+
+Containers within a pod can communicate with each other using the `localhost` host.  
+
+For inter-pod communication, the communication uses the services.  
+If a service needs to be accessed only from inside the cluster, it can be set to the `ClusterIP` type.  
+If it also needs to be exposed to outside the cluster, it can be set to `LoadBalancer` type.  
+
+Both `ClusterIP` and `LoadBalancer` services have a cluster-internal IP, shown by the `kubectl get services` command.  
+This address can be used to communicate between containers in different pods.  
+
+To avoid having to manually get the address of any service we need to communicate with, Kubernetes exposes some environment variables in every pod containing the cluster-internal IP of all other services in the cluster.  
+These env variables are called `<SERVICE_NAME>_SERVICE_HOST` where `<SERVICE_NAME>` is the capitalized underscore-separated service name.  
+
+An alternative to using the service cluster-internal IP is to use the service domain name.  
+Kubernetes uses internally the CoreDNS DNS server to generate a cluster-internal domain name for each service.  
+Each service is assigned a domain name automatically, set to `<SERVICE_NAME>.<NAMESPACE>`.  
+`<SERVICE_NAME>` is the service name as defined in the resource definition file, and `<NAMESPACE>` is the namespace where the service is defined.  
+If no namespace is specified in the service configuration, the `default` namespace is used.  
+Namespaces can be listed with the `kubectl get namespaces` command.
+
+
