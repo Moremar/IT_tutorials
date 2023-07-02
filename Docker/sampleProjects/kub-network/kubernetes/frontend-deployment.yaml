@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    # pod metadata and spec
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: moremar/kub-network-frontend:latest
+          env:
+            # set the USERS_HOST env var to the cluster-internal domain name of the users service
+            - name: USERS_HOST
+              value: users-service.default

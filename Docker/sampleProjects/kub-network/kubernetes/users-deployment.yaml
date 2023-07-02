@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users
+  template:
+    # pod metadata and spec
+    metadata:
+      labels:
+        app: users
+    spec:
+      containers:
+        - name: users
+          image: moremar/kub-network-users:latest
+          env:
+            # set the AUTH_HOST env var to the domain name of the auth service
+            - name: AUTH_HOST
+              value: auth-service.default
