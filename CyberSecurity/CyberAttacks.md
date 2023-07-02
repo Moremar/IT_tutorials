@@ -3,7 +3,7 @@
 ## 2013-2014 : Yahoo! Data Breaches
 
 <p align="center">
-<img alt="Yahoo Data Breaches" src="./images/yahoo_data_breaches.jpg" width=400>
+<img alt="Yahoo Data Breaches" src="./images/yahoo_data_breaches.jpg" width=400  style="border:1px solid black">
 </p>
 
 In 2016, Yahoo! revealed that some data breaches were detected, that exposed all 3 billion user accounts in 2013, and another 500 million user accounts in 2014.  
@@ -20,7 +20,7 @@ The US Intelligence suspects Russians to be the perpetrators of the attack, due 
 ## November 2014 : Sony Pictures Hack
 
 <p align="center">
-<img alt="Sony Pictures hack" src="./images/sony_hack.jpg" width=400>
+<img alt="Sony Pictures hack" src="./images/sony_hack.jpg" width=400  style="border:1px solid black">
 </p>
 
 On November 24th 2014, the Lazarus Group (calling themselves the "Guardians of Peace") hacked into Sony Pictures's internal network.  
@@ -38,10 +38,112 @@ The NSA announced that it has evidence that the attack was orchestrated by North
 North Korea declined any responsibility in the attack, but considered the attack righteous.
 
 
+## 2014-2018 : Carbanak Money Heist
+
+<p align="center">
+<img alt="Carbanak Money Heist" src="./images/carbanak.jpg" width=400  style="border:1px solid black">
+</p>
+
+In 2014, the "Carbanak" hacker group coordinated the biggest cyber-heist in cyber-crime history, stealing over $1B from financial institutions.   
+The main targeted bank was the Kaspersky Russian bank, but it was discovered later that over 200 institutions were victim of the same attack.  
+Many intelligence organizations teamed up to track the hackers (FBI, CIA, JCAT, FSB...).
+
+**Phase 1**  
+The hackers sent a spear fishing email to a bank employee.  
+When the malicious attachment was open, a malware installed a VNC backdoor (Virtual Network Computing) on the machine.  
+From this infected machine, the hackers infected other machines on the network and looked for the admin machine.  
+
+**Phase 2**  
+They slowed down the admin machine by running as many programs as possible, so someone calls IT support to check it.  
+When IT support came, they entered the admin password on the machine, which was recorded by a keylogger.  
+The hackers just gained access to the admin machine of the bank.
+
+**Phase 3**  
+They spied on employees for months to know exactly how they operated daily.  
+Once they got a perfect knowledge of how they operated, the robbery started.  
+They impersonated high-level banking employees and sent money transfer SWIFT requests.  
+They used the bank e-payment system to transfer this money to some other accounts in the US and in China.  
+Then some "Money Mules" were hired to withdraw the money from ATMs.  
+They got remote control over the ATMs and were able to make them spit out cash when they wanted.
+
+**Investigation**  
+In the Kaspersky bank, an employee noticed an unusual behavior of the domain server.  
+After a security audit, the bank realized that the VNC screen sharing software was installed on multiple machines.  
+An employee opened a text file and typed "Hello", and the computer replied "Hello, you won't catch us.", confirming that they were being hacked.  
+
+In 2016, the Carbanak group made an important mistake in Taipei.  
+2 money mules were withdrawing money from an ATM.  
+As a Taiwanese man approached, they left in a hurry and forgot over $2M in the ATM.  
+The Taiwanese man alerted the police, who identified them and tracked them using CCTV footage, which led to the identification of 22 suspects from Russia and Eastern Europe.  
+3 of them were still in Taipei and were arrested by the local police.
+
+In 2018, an investigation on a criminal money laundering organization in Spain led to the identification of Denis K, a Ukrainian computer specialist, as one of their client.   
+He is believed to be the mastermind of the operation, he was involved with the Russian and Moldavian mafias and coordinated some cyberattacks for them.  
+He was arrested, and the Spanish police found at his place several boxes of jewellery and over 15.000 bitcoins.
+
+
+## Avril 2015 : TV5 Monde 
+
+<p align="center">
+<img alt="TV5 Monde" src="./images/tv5_monde.png" width=400 style="border:1px solid black">
+</p>
+
+TV5 Monde is the biggest French public TV network, broadcasting 11 channels in French in over 200 countries.
+
+On April 8th 2015, the hacker group called "CyberCaliphate" attacked the headquarters of TV5 Monde TV Network in Paris.  
+All 11 channels were interrupted for over 20 hours, showing a black screen.  
+The hackers published on the social medias of TV5 Monde some messages from IS.
+
+The attack was started on January 23rd, only 2 weeks after the Charlie Hebdo terrorist attack in Paris.  
+Hackers scanned TV5 Monde public IP addresses, and gained access to the live-stage cameras (using default credentials).  
+For months, they discovered the internal network, and gained access to more and more machines and accounts.  
+Finally, they gained access to the 2 main multiplexers in charge of broadcasting all 11 channels (main one and backup one).
+
+<table>
+<tr>
+  <td><b>19:57</b></td>
+  <td>Multiplexers parameters changed to make them impossible to reboot.</td>
+</tr>
+<tr>
+  <td><b>20:58</b></td>
+  <td>TV5 Monde social network accounts show some messages from IS.</td>
+</tr>
+<tr>
+  <td><b>21:48</b></td>
+  <td>The 2 multiplexers are down, causing all 11 channels to stop broadcasting.</td>
+</tr>
+<tr>
+  <td><b>22:40</b></td>
+  <td>The internal messaging system is down.</td>
+</tr>
+<tr>
+  <td><b>Night</b></td>
+  <td>TV5 Monde disconnects their entire network from the public internet.<br/>
+They calls the ANSII (Agence Nationale de la Sécurité des Systèmes d'Information) for help.<br/>
+The ANSII tracks the hackers operation and rebuilds a network by changing all the machines.</td>
+</tr>
+<tr>
+  <td><b>10:00</b></td>
+  <td>Channels can broadcast pre-recorded programs (not live yet)<br/>
+Broadcast on all channels of a speech from Yves Bigot (TV5 Monde CEO) to explain the attack.</td>
+</tr>
+<tr>
+  <td><b>18:00</b></td>
+  <td>First live broadcast.</td>
+</tr>
+</table>
+
+The attack has taken down all 11 channels for 22 hours, and costed over 10M€ to TV5 Monde.
+
+The investigation led to the suspicion of a russian hackers group called "APT 28".  
+They possibly worked for IS, or were using IS as a cover to collect data for the Russian government.  
+The Ministry of Foreign Affairs took over the investigation, and there were no later official update. 
+
+
 ## May 2017 : WannaCry
 
 <p align="center">
-<img alt="WannaCry" src="./images/wannacry.png" width=400>
+<img alt="WannaCry" src="./images/wannacry.png" width=400  style="border:1px solid black">
 </p>
 
 WannaCry is a ransomware launched on May 12th, 2017.  
