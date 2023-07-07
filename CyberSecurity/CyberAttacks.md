@@ -1,5 +1,26 @@
 # Famous Cyber Attacks
 
+
+## March 1999 : The Melissa Virus
+
+<p align="center">
+<img alt="Melissa Virus" src="./images/melissa.jpg" width=400  style="border:1px solid black">
+</p>
+
+On 26th March 1999, David Lee Smith launched Melissa, one of the fastest-spreading mass-mailing macro virus.  
+It was designed to target systems running Microsoft Word and Outlook.
+
+The Melissa virus was a Visual-Basic macro included in a Word file called List.doc, and executed when the file is open.  
+It was attached to a social engineering email with title `Important message from [sender]` and body `Here is that document you asked for... don't show anyone else ;)`  
+When a user opened it, the VB macro executed, deactivating some safeguards in Microsoft Word 97 and 2000, and sent itself to the first 50 contacts in the Outlook address book.
+
+The virus did not destroy any file or steal any data, but it caused an email flood that crippled many networks, causing an estimated $80M of damage.  
+According to the FBI, it overloaded email servers in over 300 corporations, and infected thousands of computers.
+
+David Lee Smith was arrested on April 1st 1999, cooperating with authorities and claiming it was intended as a joke.  
+He was sentenced to 20 months in federal prison and a $5000 fine.
+
+
 ## 2013-2014 : Yahoo! Data Breaches
 
 <p align="center">
