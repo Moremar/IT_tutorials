@@ -12,7 +12,7 @@ It can include scripts, binaries, and any dependencies needed to run the softwar
 A container runs stand-alone, independently of the machine it runs on.
 
 A container can run on any machine that runs Docker, on any OS.  
-The same container always behave in the exact same way on any machine it is deployed.
+The same container always behave in the exact same way on any machine where it is deployed.
 
 Each container contains a specific version of every binary or library it uses (JDK, Node.js, ...).  
 For example, a container can use Python 3, while another container running on the same machine uses Python 2.7.
@@ -29,8 +29,8 @@ This also ensures that all developers and testers use the exact same development
 - **Docker Container** : lightweight self-contained application running on Docker
 - **Docker Image** : blueprint of a container specifying its content and behavior
 - **Dockerfile** : file containing the instructions to build a custom Docker image
-- **Docker Hub** : official registry of Docker images
-- **Docker Compose** : tool to orchestrate several containers running and interacting together
+- **Docker Hub** : official registry for Docker images
+- **Docker-Compose** : tool to orchestrate several containers running and interacting together
 
 Docker uses a client/server architecture.  
 The Docker engine is the server, it needs to run all the time for Docker to be used.  
@@ -111,14 +111,9 @@ docker run -it my-python-image
 ```
 
 
-
-
-
-
-
 ## Docker Hub
 
-Docker Hub is the official registry of Docker images, where all popular images are stored and documented.  
+Docker Hub is the official registry for Docker images, where all popular images are stored and documented.  
 Anyone can store Docker images on Docker Hub, and users can download/use/rate them.  
 Multiple images can be organized in a repository and have a different name (tag).
 
@@ -130,7 +125,7 @@ To share an image with someone we can either :
 - share the already built image on Docker Hub, so other people can download it 
 
 An image can be uploaded either to Docker Hub or to any private image registry.  
-Docker Hub offers unlimited public repos and one private repo.
+Docker Hub offers unlimited public repos and one free private repo (premium account required for multiple private repos).
 
 To push an image to Docker Hub, create a Docker Hub account, then create a repository.  
 One repository will contain all images for the same app on different versions.  
@@ -165,7 +160,7 @@ docker logout                  // logout from Docker Hub
 #### Images
 
 Images can be listed, pulled from the Docker Hub, built locally and removed.  
-Images can have a name and a tag, for example `node:14` so many images can have the same name with different tags.
+Images can have a name and a tag, for example `node:14` so multiple images can have the same name with different tags.
 
 ```commandline
 docker images                                  // list all images stored locally
@@ -205,17 +200,19 @@ docker rm <CONTAINER_ID>              // delete a stopped container
 docker container prune                // delete all stopped containers
 
 docker run <IMAGE_NAME>               // run a container from an image (download it if not available locally)
-                                      // --name <NAME>    : assign a name to the image
+                                      // --name <NAME>    : assign a name to the container
                                       // -d               : run in detached mode (in the background)
                                       // -p 8081:8080     : bind port 8081 on host to 8080 in the container
                                       // -it              : run in interactive mode (for example Node.js terminal for "node")
                                       // -rm              : delete the container when it is stopped
                                       // -e AAA=aaa       : create env variable AAA equal to "aaa"
                                       // --network <NAME> : start the container inside an existing network
-                                      // -v <NAME>:<DIR>  : create a named volume in the container 
+                                      // -v <NAME>:<DIR>  : create a named volume in the container
+                                      // -v <DIR>         : create an anonymous volume in the container
+                                      // -v <DIR1>:<DIR2> : create a bind mount between DIR1 on host and DIR2 in the container 
                                          
 
-docker exec -it <CONTAINER_ID> bash      // open a shell inside the container
+docker exec -it <CONTAINER_ID> bash      // open a shell inside a running container
 docker cp <FILE> <CONTAINER_ID>:<PATH>   // copy a file from the host machine to inside a container
 
 docker logs <CONTAINER_ID>            // show the logs printed by a container
@@ -225,19 +222,19 @@ docker logs <CONTAINER_ID>            // show the logs printed by a container
 
 ### Docker Volumes
 
-Images are READ ONLY layered file systems (one layer per instruction in the Dockerfile).  
-Since images are READ ONLY, their FS is shared across all containers using them.
+Images are read-only layered file systems (one layer per instruction in the Dockerfile).  
+Since images are read-only, their FS is shared across all containers using them.
 
-A container is using the READ ONLY layered file system from the image, and creates above it a WRITE container layer.  
-If multiple containers run the same image, there will be no code duplication, just a WRITE layer created for each container above the same READ ONLY file system from the image.  
-A container's WRITE layer is destroyed when the container is destroyed.
+A container is using the read-only layered file system from the image, and creates above it a read-write container layer.  
+If multiple containers run the same image, there will be no code duplication, just a read-write layer created for each container above the same read-only file system from the image.  
+A container's read-write layer is destroyed when the container is destroyed.
 
 To have some persisting data, we can use Docker volumes to give the container access to a persisted folder in the host machine.
 
 The 3 ways to store data when running a container are :
-- stored in the image : read-only data in the image layers, shared by all containers using the image (code/binaries/dependencies...)
+- stored in the image : read-only data in the image layers, shared by all containers using the image (source code, binaries, dependencies...)
 - stored in the container layer : temporary data destroyed when the container is removed (in-memory, temporary files...)
-- stored in a volume : permanent application data persisted even after the container is removed (database, files...)
+- stored in a volume : permanent application data persisted even after the container is removed (database, log files...)
 
 A Docker volume is a folder of the host machine that is mounted (made available) in the container.  
 When the container is removed, the data in the volume are persisted on the host machine.  
@@ -336,35 +333,35 @@ docker build -t myapp:v1 .		// -t for image name and tag
 
 The Dockerfile is the sequence of instructions to build an image.  
 The image needs to contain all the files used to run the application (jar, war, bundle.js).  
-Once the image is created, it can be used to start a container of pushed to Docker Hub.
+Once the image is created, it can be used to start a container of pushed to Docker Hub or any other image registry.
 
 A Dockerfile is a sequence of instructions written in a Docker specific language.  
 Docker images are layered : each instruction in the Dockerfile creates an additional layer for the image.  
 When building an image, Docker caches the state after each layer, and only applies the instruction if anything changed.  
 If a layer needs to be rebuilt, all later layers are also rebuilt.
 
-When a container starts, it uses all READ layers from its image, and an additional WRITE layer specific to this container.
+When a container starts, it uses all read-only layers from its image, and an additional read-write layer specific to this container.
 
 Main instructions in a Dockerfile :
 
 ```commandline
-FROM <image_name>              // docker image to build upon, take it from DockerHub if not locally available
+FROM <image_name>              // docker image to build upon, take it from Docker Hub if not locally available
 LABEL <key>="<value>"          // add metadata to the image (version, maintainer, ...)
 EXPOSE <port>                  // port used inside the container intended to be exposed to the host machine
                                // this is only informative, ports still needs to be binded with -p in "docker run"
 ENV <name>=<value>             // define an environment variable inside the image and default it
 ARG <name>=<value>             // define a build-time argument usable in the Dockerfile and default it
 WORKDIR <dir>                  // working directory in the image from where the COPY, RUN, and CMD commands will run
-RUN <unix command>             // command executed inside the image in the WRITE layer
-                               // used to install packages, can have several RUN lines in the Dockerfile
+RUN <unix command>             // command executed inside the image in the read-write layer
+                               // used to install packages, there can be multiple RUN instructions in a Dockerfile
 COPY <host_dir> <image_dir>    // copy a folder from the host machine to inside the image
 CMD <unix command or params>   // default command run when starting a container with this image
                                // can be overriden with another command with "docker run <image> <other cmd>"
-                               // only one CMD line is allowed in a Dockerfile
+                               // only one CMD instruction is allowed in a Dockerfile
                                // can be either a unix command (CMD npm start) or a list of values (CMD ["npm", "start"])
 ENTRYPOINT <unix command>      // entrypoint command at container startup
                                // can not be overriden, but add the params in CMD at the end (to customize the command)
-                               // only one ENTRYPOINT line allowed in a Dockerfile
+                               // only one ENTRYPOINT instruction allowed in a Dockerfile
 VOLUME [<volume_paths>]        // specify all folders inside the container that should be mapped to a volume at container startup
 ```
 
@@ -375,10 +372,11 @@ At least one of `CMD` and `ENTRYPOINT` must be specified :
 To prevent the copy of some specific files from the host to the container with the `COPY` instruction, we can create a `.dockerignore` file.  
 It must be in the same folder as the Dockerfile, and list files to ignore (Dockerfile, npm_modules, .git folder ...).
 
-Once an image is built, it can be pushed to Docker Hub with :
+Once an image is built, it can be pushed to Docker Hub.  
+This requires to have a Docker Hub account, and to have created in Docker Hub a repository for this image.
 ```commandline
-docker login		   // require account on Docker Hub, will ask for login/pwd/email
-docker push <IMAGE>
+docker login
+docker push <DOCKER_HUB_NAME>/<IMAGE_NAME>
 ```
 
 
@@ -425,6 +423,25 @@ They are used inside the Docker file with the same syntax as env variables using
 They can be set when building an image with `--build-arg DEFAULT_PORT=8000` in the `docker build` parameters.
  
 
+## Popular Docker Images on Docker Hub
+
+| Image         | Description                                                                                  |
+|---------------|----------------------------------------------------------------------------------------------|
+| ubuntu        | Official OS for Ubuntu, used as based to many images                                         |
+| alpine        | Less user friendly but lighter Linux distribution                                            |
+| nginx         | Web and reverse-proxy server, used to serve a JS/HTML website (React or Angular for example) |
+| mysql         | MySQL relational database server                                                             |
+| postgres      | PostgreSQL relational database server                                                        |
+| redis         | Redis in-memory database                                                                     |
+| mongo         | MongoDB noSQL database                                                                       |
+| mongo-express | MongoDB web admin console                                                                    |
+| node          | Node server, used as base for Node-based applications (Express, Angular, React...)           |
+| php           | Base image for PHP projects                                                                  |
+| python        | Base for projects running Python                                                             |
+| bitnami/kafka | All binaries to start a Kafka cluster and producers or consumers                             |
+| busybox       | Collection of common Unix utilities with limited features, used in embedded systems          |
+| wordpress     | WordPress content management system                                                          |
+
 
 ## Docker Networking
 
@@ -470,8 +487,9 @@ We can create a network with the `--internal` parameter to allow containers to c
 
 ## Example of multi-container MERN webapp
 
-A basic containerized MERN webapp can consist of 3 containers :
+A containerized MERN webapp can consist of 4 containers :
 - a MongoDB database server
+- a MongoDB console to monitor the MongoDB database
 - a Node.js Express backend
 - a React frontend
 
@@ -481,7 +499,7 @@ docker network create mern_network
 ```
 
 Then we start the MongoDB container using the public `mongo` image.  
-No port needs to be exposed because only the frontend container will access it, and it will share a network.  
+No port needs to be exposed because only the frontend container and the MongoDB console container will access it, and they will share a network.  
 To have data persistence even after MongoDB container is removed, we store its data in a named volume.  
 We use environment variables for authentication (user and password).
 ```commandline
@@ -491,6 +509,18 @@ docker run -d --rm --name mern_mongodb
                    -e MONGO_INITDB_ROOT_USERNAME=admin
                    -e MONGO_INITDB_ROOT_PASSWORD=password
                    mongo
+```
+
+We can then start a `mongo-express` container and expose its port 8081.  
+It connects to the MongoDB database and offers a web GUI to monitor its content at [http://localhost:8081/](). 
+```commandline
+docker run -d --rm --name mern_mongodb_gui
+                   --network mern_network
+                   -e ME_CONFIG_MONGODB_SERVER=mern_mongodb
+                   -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+                   -e ME_CONFIG_MONGODB_ADMINPASSWORD=password
+                   -p 8081:8081
+                   mongo-express
 ```
 
 Build the backend image from the code using a Dockerfile :
@@ -553,7 +583,7 @@ Confirm that the frontend is now accessible at URL http://localhost:3000 and tha
 ## Docker-Compose
 
 Docker-Compose is a tool that helps with the management of multi-container applications.  
-It uses a single configuration `docker-compose.yml` file that contains definitions of services, networks, volumes...  
+It uses a single `docker-compose.yml` configuration file that contains definitions of services, networks, volumes...  
 Starting of stopping all containers of the app can then be done by a single command.  
 
 The `docker-compose.yml` file describes services, that correspond to containers in the application.  
@@ -562,9 +592,9 @@ These properties are translated by Docker-Compose into parameters for the underl
 
 By default, Docker-Compose creates a network shared by all containers of the file.
 
-The `docker-compose.yml` available fields are detailed on the [official Docker-Compose documentation](https://docs.docker.com/compose/compose-file/).   
-The file first specifies a Docker-Compose `version` field (3.8 at time of writing).  
-It also takes a `services` field that will list all services that are part of the application.  
+The exhaustive list of properties that can be set in the file are detailed on the [official Docker-Compose documentation](https://docs.docker.com/compose/compose-file/).   
+A Docker-Compose `version` field (3.8 at time of writing) must be specified.  
+It also takes a `services` field that lists all services that are part of the application.  
 Each service is given a name, and specifies its properties : `image`, `ports`, `volumes`, `environment` ...    
 If the image needs to be built, we can use the `build` field with the relative path to the folder containing the Dockerfile.
 
@@ -668,7 +698,7 @@ docker push <DOCKER_USERNAME>/<IMAGE_NAME>
 ```commandline
 # the private key file is generated when starting the EC2 instance
 chmod 400 <PEM private key>
-ssh -i "<PEM private key>" ec2-user@<public IP>
+ssh -i "<PEM private key>" ec2-user@<EC2 instance public IP>
 ```
 - install Docker on the remote host :
 ```commandline
@@ -755,7 +785,7 @@ This can be done with a different Dockerfile for production.
 This Dockerfile can be multi-stage, which means it includes multiple `FROM` instructions.  
 Each `FROM` instruction creates a stage that can copy code from previous stages.  
 
-In an Angular or REACT application, it means we can have : 
+In an Angular or React application, it means we can have : 
 - a first stage using ` FROM node` to build the production frontend code
 - a second stage using `FROM nginx` copying the production code from the previous stage to the folder that NGINX serves
 
@@ -793,8 +823,8 @@ They are a good solution, but it locks the app in the AWS ecosystem by configuri
 
 Kubernetes is an alternative to AWS ECS that is independent of any cloud service, and that became the standard for container orchestration.  
 It can be thought as a kind of Docker-Compose for multiple machines.  
-The architecture of the containers deployment is specified in a Kubernetes file, that can be used with any cloud provider.  
-This config file may be extended with cloud provider specific properties, but overall the same file is used on any provider.  
+The architecture of the containers deployment is specified in Kubernetes resource files, that can be used with any cloud provider.  
+This config file may be extended with cloud provider specific properties, but overall the same files are used on any provider.  
 
 
 ### Kubernetes Architecture
@@ -818,7 +848,7 @@ It also contains the **scheduler**, watching for new pods and selecting which wo
 The Kubernetes **cluster** is the combination of the master nodes and its worker nodes.
 
 
-### Kubernetes Installation
+### Kubernetes Local Installation
 
 Kubernetes helps with the orchestration of containers, but it does not create the cluster and the nodes !  
 It is part of the Kubernetes installation and configuration process to setup the master and worker nodes.  
@@ -831,10 +861,7 @@ Kubernetes will not automatically create all those resources.
 
 Some cloud providers have a managed service that can create resources for a given Kubernetes configuration.  
 For example in AWS we can use the AWS EKS managed solution (Elastic Kubernetes service).  
-This is a good alternative to AWS ECS when we have a Kubernetes configuration file already in place.
-
-
-#### Kubernetes local installation
+This is a good alternative to AWS ECS when we have a Kubernetes configuration already in place.
 
 A local Kubernetes platform can be easily setup using the **MiniKube** tool.  
 It creates a VM on our local machine and starts its cluster on it to simulate another machine.  
@@ -876,7 +903,7 @@ There are different object types that can be created in Kubernetes.
 
 A **pod object** is the smallest unit in Kubernetes, it contains one or more containers (usually one).  
 A pod can contain shared resources, like volumes, usable by all containers in the pod.  
-A Pod has a cluster-internal IP address.  
+A pod has a cluster-internal IP address.  
 Containers inside a pod can communicate with each other using the `localhost` address (like in a task in AWS ECS).  
 Pods are designed to be ephemeral, they are started, stopped and replaced by Kubernetes.  
 Their internal data is lost, except what is saved in a volume.
@@ -913,7 +940,7 @@ kubectl expose deployment my-kub-app --port=8080 --type=LoadBalancer
 kubectl get services
 ```
 
-The service was created, since we use MiniKube it does not have a dedicated IP, but MiniKube provides an URL for it.  
+The service was created, since we use MiniKube it does not have a dedicated IP, but MiniKube provides a URL for it.  
 It returns a URL that we can use to access from a browser to the exposed port 8080 from the pod.
 ```commandline
 minikube service my-kub-app
@@ -1109,7 +1136,7 @@ spec:
     storage: 1Gi
   volumeMode: Block
   storageClassName: standard
-  accessMOdes:
+  accessModes:
     - ReadWriteOnce
   # hostPath is a testing-only volume type
   hostPath:
@@ -1168,3 +1195,119 @@ If no namespace is specified in the service configuration, the `default` namespa
 Namespaces can be listed with the `kubectl get namespaces` command.
 
 
+### Kubernetes Deployment
+
+Kubernetes needs a configured cluster to run on.  
+When installed locally, we use **Minikube** that creates this cluster on a virtual machine (or on Docker).  
+In production, we need to configure this cluster with real production machines.
+
+The cluster can be deployed either on a custom data center or using a cloud provider.  
+When using a custom data center, Kubernetes needs to be installed and configured manually on each machine.  
+With a cloud provider, we can also manage manually the entire cluster (for example using AWS EC2).  
+Most cloud providers offer a managed service for Kubernetes, that manages this deployment and configuration for us.  
+We simply have to define the cluster architecture, and the managed service creates and configure the machines.
+
+#### Cluster creation on AWS EKS
+
+The managed service for Kubernetes in AWS is **AWS EKS** (Elastic Kubernetes Service).  
+It is functionally similar to the AWS ECS managed service, but it is aware of the Kubernetes concepts.  
+While ECS uses AWS-specific concepts and configuration, EKS can use the existing Kubernetes resource definition files.
+
+In the EKS section of the AWS console, create a new EKS cluster.  
+It needs a name, a Kubernetes version, an IAM Role (can select the "EKS Cluster" template in IAM), a cluster VPC...  
+AWS EKS has a CloudFormation template that we can use to create the cluster VPC, detailed [here](https://docs.aws.amazon.com/eks/latest/userguide/creating-a-vpc.html).  
+Choose "Public and Private" endpoint access, so that the cluster is accessible from outside, but pod to pod communication stays inside the cluster VPC.  
+
+The `kubectl` command should still be used to interact with our Kubernetes cluster on AWS EKS.  
+To configure it to access the AWS EKS cluster (instead of the MiniKube local cluster used so far), we should replace its configuration file under `.kube/config`  
+While the AWS EKS cluster is running, the config file can be generated from the AWS CLI :
+```commandline
+# to get the AWS CLI configured with access keys
+aws configure
+
+# update .kube/config to reference a given EKS Kubernetes cluster
+aws eks --region <REGION> update-kubeconfig --name <CLUSTER_NAME>
+```
+
+Once the cluster is created, we can create some nodes inside the cluster.  
+From the cluster page, click the "Compute" tab and click the "Add Node group" button.  
+We can configure a node group with a name and IAM role (need EC2 + EKS worker + EKS CNI + EC2 Container Registry RO).  
+We configure the EC2 instances that will be launched by AWS EKS (AMI, instance type, disk space).  
+We can also configure a scaling policy to create more nodes when the traffic increases.  
+Creating this node group will result in EKS creating the EC2 instances and installing required software to be usable by Kubernetes.  
+
+Once the node group is running, we can apply our Kubernetes YAML resource definition files, just like we did in MiniKube :
+```commandline
+kubectl apply -f=my_resource.yaml
+```
+Note that services deployed on AWS EKS with LoadBalancer type create a Load Balancer in AWS, and it has a URL listed with `kubectl get services`  
+We do not need to run any command like `minikube service xxxx` to get this URL, this was only because MiniKube manages a local cluster.
+
+
+#### Volumes on AWS EKS
+
+For Volumes, we can use the `csi` type and use the Amazon EFS CSI driver.  
+The driver installation is detailed on the driver GitHub page : [https://github.com/kubernetes-sigs/aws-efs-csi-driver]()  
+It is installed on the cluster with the `kubectl apply` command.  
+
+On AWS, in the EFS service page, we can create an EFS volume in the same network as the EKS cluster.  
+It needs a security group with NFS inbound permission from the EKS cluster IP.  
+
+To use this EFS volume in our Kubernetes configuration files, we must create and apply a few yaml resource description files :
+
+- a storage class for EFS volumes :
+```commandline
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc
+provisioner: efs-csi.aws.com
+```
+
+- a persistent volume :
+```commandline
+apiVersion: v1
+kind : PersistentVolume
+metadata:
+  name: efs-pv
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: FileSystem
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  csi: 
+    driver: efs.csi.aws.com
+    volumeHandle: fs-59d14521      # file system ID of the EFS volume in AWS
+```
+
+- a persistent volume claim on that volume :
+```commandline
+apiVersion: v1
+kind : PersistentVolumeClaim
+metadata:
+  name: efs-pvc
+spec:
+  volumeName: efs-pv
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources: 
+    requests:
+      storage: 5Gi
+```
+
+- the deployment can then be updated to declare this volume and mount it to a container :
+```commandline
+    containers:
+      - name: users-api
+        image: my_docker_name/my_docker_image
+        volumeMounts:
+          - name: efs-vol
+            mountPath: /app/users
+    volumes:
+      - name: efs-vol
+        persistentVolumeClaim: 
+          claimName: efs-pvc
+```
