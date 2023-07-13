@@ -1,4 +1,4 @@
-# Famous Cyber Attacks
+# Famous Cyber-attacks and Cyber-crimes
 
 
 ## March 1999 : The Melissa Virus
@@ -21,6 +21,60 @@ David Lee Smith was arrested on April 1st 1999, cooperating with authorities and
 He was sentenced to 20 months in federal prison and a $5000 fine.
 
 
+## 2011-2013 : Silk Road
+
+<p align="center">
+<img alt="Silk Road" src="./images/silk_road.png" width=400  style="border:1px solid black">
+</p>
+
+Silk Road was the most successful darknet market.  
+It was launched in 2011 by the American Ross Ulbricht (born in 1984) under the pseudonym "Dread Pirate Roberts" (from the Princess Bride).   
+All transactions on Silk Road were settled in Bitcoin to protect users identity.
+
+Silk Road operated as a hidden service on the dark web on the Tor network.  
+It was originally designed to sell some mushrooms, but many sellers quickly used Silk Road to offer all kinds of illegal products (drug, weapons, fake IDs, credentials...).
+
+Ross Ulbricht was arrested by the FBI in a library in San Francisco in 2013.  
+His identity was discovered because the FBI investigated the first references of Silk Road on the dark web, and found his early promotion posts.   
+He was using the nickname "altoid", but was looking for staff and used his real name in the email address to contact.  
+
+His computer was taken by the FBI, who got access to all his conversation history.  
+They seized 26.000 bitcoins, worth around $3.6M dollars at the time.  
+2 agents of the FBI have been prosecuted because they were making illegal business on Silk Road.
+
+Ross was charged for engaging in a criminal entreprise, distributing narcotics, computer hacking, money laundering and false identity document.  
+He also ordered and paid for the assassination of some Silk Road users who tried to steal money, but the murders were never actually executed so he was not prosecuted for them.  
+He was sentenced to a lifetime in prison.
+
+
+## 2013 : Edward Snowden's NSA Secret Files Leaks
+
+<p align="center">
+<img alt="Edward Snowden" src="./images/edward_snowden.jpg" width=400  style="border:1px solid black">
+</p>
+
+Edward Snowden (born in 1983) was an American computer intelligence consultant who worked for Dell, the CIA and the NSA.
+
+Snowden gradually became disillusioned with the programs he worked on, and was ignored when he raised his ethical concerns.   
+He stole over 1.7M top-secret documents while working for the NSA.  
+He flew to Hong-Kong in May 2013, leaving his job at the Hawaii facility of the NSA.  
+In June 2013, he met some journalists from The Guardian and The Washington Post in the Mira hotel, and revealed thousands of classified NSA documents.
+
+Publications started on June 6th, revealing that Verizon allowed the NSA to collect data on millions of Americans.  
+Soon after, the existence of the PRISM surveillance programme was leaked, exposing that the NSA tapped directly into the servers of 9 major internet firms, including Facebook, Google, Microsoft and Yahoo.  
+Snowden also revealed that 38 embassies have been targeted by US spying operations. 
+
+On June 9th, The Guardian published a video where Snowden confesses to be the source of the leaks, becoming the most wanted man on the planet.  
+On June 21st, US authorities charged Snowden with espionage and theft of government property.  
+On June 23rd, Snowden arrived in Moscow, accompanied by the Wikileaks journalist Sarah Harrison.  
+They were planning to go to Ecuador, the country that offered asylum to Julian Assange (Wikileaks founder), but the US government revoked Snowden's passport.  
+They stayed in the airport transit lounge for 40 days, before Snowden was granted the right of asylum in Russia and received a 1-year visa.  
+His visa was renewed multiple times, and he was granted the Russian citizenship from Vladimir Putin in 2022.
+
+Edward Snowden's case is controversial, and he is seen as a hero by some and as a traitor by others.  
+His revelations have started debates and led to new regulations in many countries regarding mass surveillance, government secrecy and information privacy.
+
+
 ## 2013-2014 : Yahoo! Data Breaches
 
 <p align="center">
@@ -29,7 +83,7 @@ He was sentenced to 20 months in federal prison and a $5000 fine.
 
 In 2016, Yahoo! revealed that some data breaches were detected, that exposed all 3 billion user accounts in 2013, and another 500 million user accounts in 2014.  
 Compromised data include user names, dates of birth, emails, phone numbers, security questions and hashed passwords and "Nonce" values.  
-This is regarded as the largest data breach in cybercrime hystory. 
+This is regarded as the largest data breach in cybercrime history. 
 
 Hackers managed to access the network by using spear fishing, getting some Yahoo! employees to click a link and execute a malware.  
 They got access to the user database content, and used the "Nonce" value (number used to create user session cookies) to access user accounts without the need of the password.
