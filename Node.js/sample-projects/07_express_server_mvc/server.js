@@ -1,6 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const https = require('https');
+const fs = require('fs');
 
 const notFoundController = require('./controllers/error');
 
@@ -48,11 +50,18 @@ app.use((req, res, next) => {
 });
 
 // register the routes middlewares
-app.use('/admin', adminRoutes);      // with a route prefix
-app.use(shopRoutes);                 // without a route prefix
+app.use('/admin', adminRoutes); // with a route prefix
+app.use(shopRoutes); // without a route prefix
 
 // return a 404 for unsupported requests
 app.use(notFoundController.getNotFoundPage);
 
-// create the web server using the express config and listen on port 3000
-app.listen(3000);
+// create an HTTP web server using the express config and listen on port 3000
+//app.listen(3000);
+
+// create an HTTPS connection using an SSL certificate
+const privateKey = fs.readFileSync('server.key');
+const certificate = fs.readFileSync('server.cert');
+const httpsOptions = { key: privateKey, cert: certificate };
+https.createServer(httpsOptions, app)
+    .listen(3000);
