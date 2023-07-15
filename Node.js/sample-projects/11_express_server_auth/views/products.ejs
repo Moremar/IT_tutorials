@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,6 +8,7 @@
     <title><%= pageTitle %></title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
     <%- include('includes/navbar.ejs') %>
     <main>
@@ -19,7 +21,7 @@
                             <div class="header">
                                 <span> <%= product.title %> </span>
                             </div>
-                            <img src="/<%= product.imageUrl %>" alt="Product image" />
+                            <img src="<%= product.imageUrl %>" alt="Product image" />
                             <div class="footer">
                                 <span> $<%= product.price.toFixed(2) %> </span>
                             </div>
@@ -29,20 +31,21 @@
                             <% if (isAuthenticated) { %>
                                 <form style="display: inline-block" action="/cart" method="POST">
                                     <!-- product ID in a hidden input to have it in the POST request body -->
-                                    <input type="hidden" name="productId" value="<%= product._id %>"/>
+                                    <input type="hidden" name="productId" value="<%= product._id %>" />
                                     <!-- CSRF token in a hidden input -->
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                                    <button>Add to Cart</button>    
+                                    <button>Add to Cart</button>
                                 </form>
                             <% } %>
                         </div>
-                </div>
+                    </div>
                 <% }) %>
                 <%- include('includes/pagination.ejs', { currentPage: currentPage, lastPage: lastPage}) %>
-            <% } else { %>
-                <p>No products to display.</p>
-            <% } %>    
+                <% } else { %>
+                    <p>No products to display.</p>
+                <% } %
         </div>
     </main>
 </body>
+
 </html>
