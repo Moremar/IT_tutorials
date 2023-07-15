@@ -52,7 +52,7 @@ Here are the main `npm` commands :
 
 ```commandline
 npm install mongodb           Install mongodb module locally (in node_modules/ folder)
-npm install mongodb --save    Install mongdb locally and save it in package.json
+npm install mongodb --save    Install mongodb locally and save it in package.json
 npm install mocha --save-dev  Install a dev-only dependency (tests, build...)
 npm install mongodb -g        Install mongodb globally
                               Used for packages offering command line utilities
@@ -269,7 +269,7 @@ Then we use the `express.static` built-in Express middleware to specify the publ
 app.use(express.static(path.join(__dirname, 'public')));
 ```
 
-### Static HTML repsonse
+### Static HTML response
 
 Instead of sending a hardcoding HTML string, we can create some HTML files in a `./views/` folder and reference then as the response :
 
@@ -298,16 +298,16 @@ npm install --save express-handlebars
 The templating engine configuration is done in Express by calling :
 ```javascript
 app.set('view engine', 'pug');
-app.set('views', 'views');       // forlder containing the templates
+app.set('views', 'views');       // folder containing the templates
 ```
 
 Some templating engines (for example Handlebars) are not known by default by Node.js, and need to be registered first :
 ```javascript
-const hbs = require('express-handlebars');
+const exphbs = require('express-handlebars');
 
-app.engine('hbs', hbs());        // register the template engine
-app.set('view engine', 'pug');   // use it
-app.set('views', 'views');       // specify the templates location
+app.engine('handlebars', exphbs());        // register the template engine
+app.set('view engine', 'handlebars');      // use it
+app.set('views', 'views');                 // specify the templates location
 ```
 
 Once the template engine is specified, Node.js can render some templates in response to some requests, by using the `app.render()` method. It takes as parameters the template to render, and the objects to use in the template for dynamic content.
@@ -384,7 +384,7 @@ The Model-View-Controller pattern separates the responsabilities in the app.
 ### MySQL driver
 
 Node.js can use a database for its data storage by using a driver package.  
-For example, MySQL can be installed from their website on the local machine (Communnity Server + Workbench GUI).
+For example, MySQL can be installed from their website on the local machine (Community Server + Workbench GUI).  
 Then it can be used from the Node.js app with the `mysql2` client driver :
 
 ```
@@ -430,9 +430,8 @@ db.execute('SELECT * FROM products')
   });
 
 // parametrized query
-db.execute('INSERT INTO products(title, price, image_url, description) '
-         + 'VALUES (?, ?, ?, ?)', 
-           [ this.title, this.price, this.imageUrl, this.description ]
+db.execute('INSERT INTO products(title, price, image_url, description) VALUES (?, ?, ?, ?)', 
+           [ this.title, this.price, this.imageUrl, this.description ])
     .then( ... )
     .catch( ... );
 ```
@@ -560,6 +559,7 @@ const mongodb = require('mongodb');
 let _db;
 
 const connect = (callbackFn) => {
+    // URI for a MongoDB Atlas database, slightly different for a local MongoDB instance
     const uri = "mongodb+srv://myuser:mypassword@myHost/?retryWrites=true&w=majority";
 
     const mongoClient = new mongodb.MongoClient(uri).connect()
@@ -593,14 +593,14 @@ const mongo = require('../database');
 
 // create with an insert MongoDB command
 const db = mongo.getDb();
-return db.collection('users').insertOne({ 
+db.collection('users').insertOne({ 
   'name': 'userdev',
   'email': 'xxxxx'
 });
 
 // create with an upsert MongoDB command
 const db = mongo.getDb();
-return db.collection('users').updateOne(
+db.collection('users').updateOne(
     { 'email': 'xxxxx' },     // use the email as the unique identifier
     { $set : { 'name': 'userdev' } } ,
     { upsert: true }
@@ -629,10 +629,12 @@ const mongoose = require('mongoose');
 
 [ ... ]
 
+// retrieve env variables
 const mongoUser     = process.env.MONGODB_USER;
 const mongoPassword = process.env.MONGODB_PASSWORD;
 const mongoHost     = process.env.MONGODB_HOST;
 const mongoDatabase = process.env.MONGODB_DATABASE;
+
 const mongoUri = "mongodb+srv://" + mongoUser + ":" + mongoPassword
           + "@" + mongoHost + "/" + mongoDatabase + "?retryWrites=true&w=majority";
 
@@ -648,7 +650,7 @@ They specify the types of fields in the collection, and support nested documents
 Fields can also be references to a document in another collection.  
 It is also possible to add custom methods to the model by defining them in `schema.methods` :
 
-#### product.js
+#### models/user.js
 
 ```javascript
 const mongoose = require('mongoose');
@@ -675,10 +677,32 @@ The Mongoose model exposes methods to interact with the collection, suche as `fi
 
 Mongoose also exposes the `populate()` method, that replaces a reference ObjectId field in the result documents by their corresponding document :
 
+#### models/product.js
+
 ```javascript
+const mongoose = require('mongoose');
+
+const productSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    price: { type: Number, required: true },
+    imageUrl: { type: String, required: true },
+    description: { type: String, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+});
+
+module.exports = mongoose.model('Product', productSchema);
+```
+
+#### controllers/xxx.js
+
+```javascript
+const Product = require('../models/product');
+
+[ ... ]
+
 Product.find()
 // replace "userId" by a doc from the "users" collection
-.populate('userId') collection
+.populate('userId')
 .then((enrichedProducts) => {
   [ ... ]
 })
@@ -818,7 +842,7 @@ bcrypt.compare("mypassword", hashedPassword)
 
 ### Route Protection
 
-Some routes can be restricted user that are logged in, or to specific users.  
+Some routes can be restricted to logged users, or to specific users.  
 The best way to implement that is to create a custom middleware function to execute before the protected route.  
 If the route access is not granted, the middleware redirects to another page.
 
@@ -839,14 +863,14 @@ module.exports = (req, res, next) => {
 ```javascript
 const isAuth = require("../middlewares/is-auth");
 
-// can list multiple middlewares to execute from ledt to right
+// can list multiple middlewares to execute from left to right
 router.post('/add-product', isAuth, productsController.postAddProduct);
 ```
 
 ### Cross-Site Request Forgery Protection
 
 If a website only relies on a cookie storing the session ID for authentication after login, it is vulnerable to Cross-Site Request Forgery (CSRF) attack.  
-This attack consists in tricking a user to send a forged HTTP request to the website while it has a session active, so his cookie with the session ID will be attached to the request, and the website will treat it as a legit request.  
+This attack consists in tricking a user to send a forged HTTP request to the website while he has a session active, so his cookie with the session ID will be attached to the request, and the website will treat it as a legit request.  
 
 This can be done by tricking the user to :
 - click a forged link (GET method)
@@ -958,9 +982,11 @@ npm install express-validator --save
 
 A validation middleware can be added to POST routes to check the values received in the request.  
 The `check()` middleware gives access to the entire request.  
-The `body()`, `header()` and `cookie()` middleware only check the request body/headers/cookies.
+The `body()`, `header()` and `cookie()` middlewares only check the request body/headers/cookies.
 
 ```javascript
+const { check } = require('express-validator');
+
 // check that the "email" field is a valid email address
 router.post('/signup', 
     check('email').isEmail().withMessage('The email is invalid.'),
@@ -990,7 +1016,7 @@ We can write custom validators with the `.custom()` method of the `check()` midd
 // check that the "email" field is a valid email address
 router.post('/signup', 
     check('email')
-        .isEmail().withMessage('The email is invalid.'),
+        .isEmail().withMessage('The email is invalid.')
         .custom((value, {req}) => { 
             if (value === 'test@test.com') {
                 throw new Error('Forbidden email address.');
@@ -1036,7 +1062,7 @@ router.post('/signup',
 
 Depending on the type of error, several strategies can be used to handle errors :
 - return the same page and display an error message, for example if user input is invalid in a form
-- return a custom page for that error (404 when requesting an unknowned page, 500 when a server error occured...)
+- return a custom page for that error (404 when requesting an unknown page, 500 when a server error occured...)
 
 Errors are handled in `try {} catch {}` blocks for synchronous code, and `.then().catch()` blocks for asynchronous code.  
 To avoid having similar `.catch()` block in many middlewares handling the same type of error (for example a DB issue), we can instead create a custom error from our middleware and pass it to the `next()` method.  
@@ -1089,9 +1115,9 @@ To upload a file to the server, the form in the view must have the `multipart/fo
 </form>
 ```
 
-We parse this mutipart form data from the request with the `multer` middleware.  
+We parse this multipart form data from the request with the `multer` middleware.  
 Multer can configure the storage details (folder and naming) and a filter to limit the accepted files.  
-If we have a single file upload in the app, we can use `multer().single(filename)`.
+If we have at most one file upload in each form, we can use `multer().single(filename)`.
 
 ```commandline
 npm install multer --save
@@ -1116,7 +1142,7 @@ app.use(multer({storage: uploadStorage, fileFilter: uploadFilter}).single("image
 
 In the middleware in charge of the route receiving the file, we can access the `req.file` object giving some info about the file saved by Multer.  
 
-```json
+```javascript
 {
   fieldname: 'image',
   originalname: 'car.png',
@@ -1358,7 +1384,7 @@ exports.isAuth = (req, res, next) => {
     }
     // enrich the request with the user ID, and allow the request to continue
     req.userId = decodedToken.userId;
-    next()
+    next();
 };
 ```
 
@@ -1402,7 +1428,7 @@ With the usual HTTP protocol, the server listens to incoming requests and sends 
 When the server should send messages to the client without an incoming request (for example in a chat app for a notification), we can use WebSocket, that is established by HTTP under the hood.  
 
 `socket.io` is one of the multiple Node.js libraries that offers client/server communication with the WebSocket protocol.  
-It needs to be installed on both the client (React, Angular, ...) and the Node.js backend for the 2 to communicate via WebSocket.
+It needs to be installed on both the client (React, Angular, ...) and the Node.js backend for them to communicate via WebSocket.
 
 ``` commandline
 npm install --save socket.io             // on backend project (Node.js)
@@ -1480,7 +1506,7 @@ With a traditional REST API, we would usually have one endpoint per type of obje
 If we need to retrieve only a subset of the fields of the object, we would either filter on frontend (causing unnecessary traffic over the network) or create another endpoint.  
 
 With GraphQL, all requests are sent to the single `POST /graphql` endpoint, with the query details in the request body.  
-GraphQL has its own query language, supporting 3 operations: `query` for GET, `mutation` for POST/PUT/DELETE, and `subscription` for WebSocket.  
+GraphQL has its own query language, supporting 3 operations : `query` for GET, `mutation` for POST/PUT/DELETE, and `subscription` for WebSocket.  
 A GraphQL query specifies the object type, and the fields to retrieve.  
 The body is parsed on the server that will return only the requested data.
 
@@ -1620,7 +1646,7 @@ app.use("/graphql", graphqlHTTP({
     rootValue: graphqlResolvers,
     graphiql: true,
     customFormatErrorFn(err) {
-        // if the error is thrown by our code, express provide it in the "originalError" field
+        // if the error is thrown by our code, Express provides it in the "originalError" field
         // it would not exist if there was a syntax error in the GraphQL query for example
         if (!err.originalError) {
             return err;
@@ -1668,8 +1694,235 @@ Before sending an app to production, ensure that :
 - we use the `helmet` middleware to add security headers
 - we have source compression with the `compression` package
 - we have logging of incoming requests (with `morgan` for example)
+- we use SSL/TLS to encrypt traffic between client and server (with HTTPS instead of HTTP)
 
-// TODO continue
+Compression, logging and SSL encryption are often offered by the hosting provider, in which case the app code does not need to address it.
+
+
+### SSL/TLS Certificates
+
+In a production environment, we should use a SSL/TLS certificate from a trusted certificate authority (CA) to establish secure connections.  
+Some popular CAs are Let's Encrypt (free), DigiCert, Comodo...
+
+For development or testing, we can create a self-signed SSL/TLS certificate and private key using OpenSSL.  
+The command asks to fill some fields : country, province, organization, sector, domain name...  
+The server name must be `localhost` for local testing.
+```commandline
+openssl req -nodes -new -x509 -keyout server.key -out server.cert
+```
+
+In Node.js, we must start an HTTPS server instead of an HTTP server :
+```javascript
+const https = require('https');
+const fs = require('fs');
+
+const privateKey = fs.readFileSync('server.key');
+const certificate = fs.readFileSync('server.cert');
+const sslOptions = {key: privateKey, cert: certificate};
+
+https.createServer(sslOptions, app).listen(3000);
+```
+
+The app is then accessed at : [https://localhost:3000]() (HTTPS instead of HTTP)
+
+When using a self-signed SSL/TLS certificate, the browser shows a warning saying that the connection is not private.  
+This is because our SSL/TLS certificate is not issued by a trusted CA.  
+This warning can be skipped when testing our own app : Advanced > Proceed to localhost.
+
+
+### Heroku Deployment
+
+There are many hosting providers available : Heroku, AWS Elastic Beanstalk, Google Cloud App Engine, Digital Ocean App Platform...  
+A common choice is Heroku, that used to have a free tiers until late 2022.
+
+On the Heroku web page, we can create an app and access a dashboard.  
+Heroku works on Git projects, so we need to have Git setup for the project we want to deploy.  
+Download the Heroku CLI, then run locally :
+```commandline
+heroku login                         // login to heroku
+heroku git:remote -a my-repo-name    // link a local repo to a Heroku app
+git add .                            // commit to Heroku
+git commit -am "xxx"
+git push heroku master
+```
+
+Heroku does not have compression, so the app code should use the compression module in Node.  
+Heroku requires a Heroku-specific file called _Procfile_ containing : `web: node app.js`
+
+In the Heroku dashboard for the app, we can create some environment variables in the "Settings" tab, under "Config Vars".  
+
+Note that files uploaded to the server running on Heroku would be lost when Heroku restarts the app.  
+Instead, we should upload files to a different place, for example AWS S3 (using the `multer-s3` package).
+
+
+## Testing
+
+Tests in Node.js can be written using the following packages :
+- `mocha` to run the tests
+- `chai` for the result assertion and validation
+- `sinon` for the stubs and side effects
+
+```commandline
+npm install --save-dev mocha chai sinon
+```
+
+The _package.json_ file should be updated to set the "test" command to `"mocha"`.  
+A folder called _test_ must be created and contain some test files with the .js extension.
+
+```javascript
+const { expect } = require('chai');
+
+it('should add integers', function() {
+  const n1 = 2;
+  const n2 = 3;
+  expect(n1 + n2).to.equal(5);
+});
+```
+
+Then execute tests by running : `npm test`
+
+A unit test is created with the `it()` function exposed by Mocha.  
+Multiple tests can be grouped inside a `describe()` function, so their output is grouped together.
+
+In a test, we may want to replace the behavior of an external object used inside the tested method.  
+One solution is to override a method of the object used in the tested method, for example a method of a package accessed with `require()`.  
+That is a bad solution because the override stays in place for later tests as well.  
+Instead we can use a stub with the `sinon` package, that overrides a method only for the duration of the current test :
+
+```javascript
+const { expect } = require('chai');
+const jwt = require('jsonwebtoken');
+const sinon = require('sinon');
+
+const isAuth = require('../middlewares/is-auth');
+
+// unit tests group
+describe('Auth middleware', function() {
+ 
+   it('should throw an error when no Authorization header', function() {
+        const req = {
+          get: function(headerName) { return null; }
+        };
+        // do not call the function ourselves, just bind its args and let Chai call it
+        expect(isAuth.bind(this, req, {}, () => {})).to.throw('Not Authenticated');
+    });
+
+    it('should throw an error when single-chunk Authorization header', function() {
+        const req = {
+          get: function(headerName) { return 'abc'; }
+        };
+        expect(isAuth.bind(this, req, {}, () => {})).to.throw();
+    });
+
+    it('should throw an error when the JWT token is incorrect', function() {
+        const req = {
+          get: function(headerName) { return 'Bearer abc'; }
+        };
+        expect(isAuth.bind(this, req, {}, () => {})).to.throw();
+    });
+
+    it('should add a userId property on successful auth', function() {
+        const req = {
+          get: function(headerName) { return 'Bearer abcdef'; }
+        };
+        
+        // we stub jwt.verify() so it returns an object with a userId field
+        sinon.stub(jwt, 'verify');
+        jwt.verify.returns({ userId: 'xxx' })
+        
+        isAuth(req, {}, () => {});
+        expect(req).to.have.property('userId', 'xxx');
+        expect(jwt.verify.called).to.be.true;
+        
+        // remove the stub so other tests are not impacted
+        jwt.verify.restore();
+    });
+});
+```
+
+The `sinon` package can also be used with methods that return a promise.  
+We can either use `async` and `await` inside the test function, or use the `done()` method.  
+This method is a callback parameter provided by Mocha to the test function.  
+When invoked, it lets Mocha know that the assertions have all been done for the test.  
+If it is not invoked before a certain timeout, the test will report the test as failed.
+
+```javascript
+    it('should throw an error with code 500 if accessing the database fails', function(done) {
+        sinon.stub(User, 'findOne');
+        User.findOne.throws();
+
+        const req = { body: { email: 'test@test.com', password: 'tester' } };
+
+        // call an async method
+        AuthController.login(req, {}, () => {})
+        .then(result => {
+            // do the assertions on the async result
+            expect(result).to.be.an('error');
+            expect(result).to.have.property('statusCode', 500);
+            // let Mocha know that the async test asserions are done
+            done();
+        });
+
+        // restore the stubbed method to not affect other tests
+        User.findOne.restore();
+    });
+```
+
+To test some code that accesses a database, we can either stub the database accessors, or use a dedicated test database without mocking the accessor (only changing the database URL and credentials to testing ones). 
+
+Mocha lets us create some hooks to manage the lifecycle of our tests.  
+Those hooks also use the `done()` mocha-provided method to mark that they are complete when used with async code.
+- `before(function(done) { ... })` to run code before a test suite (DB connection, static object creation...)
+- `after(function(done) { ... })` to run code after a test suite (DB teardown, cleanup...)
+- `beforeEach(function(done) { ... })` to run code before every single test case
+- `afterEach(function(done) { ... })` to run code after every single test case
+
+
+
+## Typescript in Node.js
+
+We can use the Typescript syntax instead of Javascript in a Node.js project.  
+Typescript is a super-set of Javascript that adds strict typing, interfaces, and some next-gen features.   
+Typescript is not interpreted by browsers, it needs to be converted to JS before sending the code to production.    
+It is a development-only tool to write more robust code.
+
+To use Typescript in a Node.js project :
+```commandline
+npm install --save-dev @types/express      // for Express types recognition
+npm install -g typescript                  // for the tsc Typescript compiler
+```
+
+Typescript configuration can be initialized with :
+```commandline
+tsc --init
+```
+
+It creates a `tsconfig.json` file with Typescript options, that looks like :
+```json
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "esModuleInterop": true
+  }
+}
+```
+
+All the Node.js source code can be written in Typescript under the `./src/` folder.  
+To generate the equivalent JS code under the `./dist/` folder, we can run the `tsc` command.  
+A convenient solution is to configure the `npm start` script to compile the TS code and start the Node server.  
+In `package.json` the `npm start` command can be mapped to :
+```commandline
+[...]
+  "scripts" : {
+    "start" : "tsc && node dist/app.js" 
+  }
+[...]
+```
+
+
 
 
 ## Useful Node.js libraries
