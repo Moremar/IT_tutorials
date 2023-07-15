@@ -21,6 +21,60 @@ David Lee Smith was arrested on April 1st 1999, cooperating with authorities and
 He was sentenced to 20 months in federal prison and a $5000 fine.
 
 
+## 2007 - Stuxnet
+
+<p align="center">
+<img alt="Stuxnet" src="./images/stuxnet.jpg" width=400  style="border:1px solid black">
+</p>
+
+Stuxnet is known as the world's first cyber-weapon.  
+It targetted the Natanz nuclear facility, the headquarters for Iran's nuclear program, where they were building a nuclear bomb.  
+
+Stuxnet is a worm created by the CIA and Israel to sabotage the Iranian nuclear program.  
+It has been in developement since 2005, and was designed to damage hardware without being noticed.
+
+The US knew the model of centrifuges used in the Iran nuclear facility, so they created an entire replica in Tenessee to create a malware that attacks it.  
+Stuxnet was using 4 zero-day exploits, and was preventing the centrifuges to release the pressure, slowly destroying them.
+
+The first version was deployed in 2007, it slowed down Iranian's nuclear program, and wasted their uranium supplies.
+
+The main problem with the attack was that the nuclear facility was on a totally independent network.  
+The malware had to be physically connected by USB drive onto a machine.  
+In 2009, Stuxnet V2 was developed, much more infectious than the original version, and able to propagate to any connected device.  
+It quickly infected all machines in the nuclear facility, and personal laptops of the facility staff.  
+Some of those machines were brought outside and connected to other networks, leading to the quick propagation of Stuxnet to the entire country and the world.
+
+
+## 2011 : PSN Hack
+
+<p align="center">
+<img alt="PSN Hack" src="./images/psn_hack.jpg" width=400  style="border:1px solid black">
+</p>
+
+The PlayStation Network (PSN) is Sony's social gaming platform, first released with the PS3 in 2006.
+
+In January 2010, George Hotz (born in 1989, nickname "geohot") hacked the PS3 using the OtherOS feature, and managed to get Read and Write access to the machine.  
+He released the exploit to the public, that allowed the installation and execution of any pirated software.  
+Sony quickly reacted by releasing a firmware update removing the OtherOS functionality of the PS3.
+
+In January 2011, Hotz successfully jailbroke the PS3 firmware, and distributed the jailbreak through his website.  
+Sony filed a lawsuit against Hotz, and demanded to access his PayPal account and the IP of all visitors of his website.
+
+The Anonymous hacker group threatened Sony for suing Hotz and started the "Operation Sony" attack.  
+From April 4th to 7th 2011, Anonymous coordinated multiple DDoS attacks, preventing gamers to login, play or stream.
+
+On April 20th, Sony suspended all PSN and Qriosity services worldwide.  
+They detected an intrusion on April 19th, and their team was working on understanding the impact and fixing the security issues.
+
+On May 1st, Sony revealed that personal information of 77M PSN users (names, passwords, addresses, emails, credit card info, ...) were compromised, due to some known vulnerabilities that were not patched.
+
+As an apology for the data breach, Sony offered 1 month of PSN+ and free games to all their users.  
+Sony estimated the cost of the attack to $171M.
+
+The authors of the attack are still not identified.  
+The Anonymous group is the main suspect, but they deny any involvment and they have never been stealing personal data in the past.
+
+
 ## 2011-2013 : Silk Road
 
 <p align="center">
