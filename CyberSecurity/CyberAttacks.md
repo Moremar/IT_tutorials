@@ -21,6 +21,34 @@ David Lee Smith was arrested on April 1st 1999, cooperating with authorities and
 He was sentenced to 20 months in federal prison and a $5000 fine.
 
 
+
+## 2006 : WikiLeaks
+
+<p align="center">
+<img alt="WikiLeaks" src="./images/wikileaks.jpg" width=400  style="border:1px solid black">
+</p>
+
+In 2006, the Australian Julian Assange founded the Wikileaks website, where journalists can publish news leaks.  
+WikiLeaks works using a dropbox where whistleblowers can drop leaked documents anonymously.  
+These documents are checked for authenticity, and published on the WikiLeaks website.
+
+WikiLeaks is technically not breaking any US law, but many governemnt officials tried to shut it down.  
+Many financial organizations (Visa, Paypal, Western Union) stopped funding WikiLeaks.  
+It is now funded by donation in bitcoins.
+
+Wikileaks has released millions of documents, exposing serious violations of human rights and civil liberties.  
+In 2007, WIkileaks released the **Collateral Murder** showing a US helicopter crew shooting civilians and 2 Iraqi Reuters journalists.  
+In 2010, it released the **Iraq and Afghan War Logs** revealing US operations and human rights violation during the Iraq and Afghanistan conflicts.  
+It also published documents exposing surveillance by the CIA or the NSA.
+
+In 2010, Lassange faced allegations for sexual misconduct in Sweden and sought asylum in the Embassy of Ecuador in London, where he continued to oversee the WikiLeaks operations.  
+In 2019, his asylum status was revoked and he was arrested by the British authorities.  
+The US government wanted his extradition to charge him with espionnage act violation.
+
+
+
+
+
 ## 2007 - Stuxnet
 
 <p align="center">
