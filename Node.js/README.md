@@ -2073,3 +2073,30 @@ pdfDoc.text("Some text here");
 // Finalize the PDF and end the stream
 doc.end();
 ```
+
+
+## Deno
+
+Deno is another Javascript and Typescript runtime built on the V8 JS engine.  
+It was created by Ryan Dahl, the creator of Node.js, to address some design issues and security concerns with Node.js.  
+
+A few of the key features of Deno over Node.js are :
+- **improved security model**, with fine-grained control over files, network, permissions...
+- **built-in Typescript support**, with the `deno` command that can compile and run directly Typescript files
+- **URL-based module import**, to import modules from URLs, local files or package registry without a package manager :
+```commandline
+import { server } from "https://deno.land/std/http/server.ts";
+```
+- **built-in tools**, including a package manager, a test runner, a code formatter...
+- **standard library**, offering common tasks (file system, http, networking, cryptography...) without external libraries
+
+Deno gives access to a `Deno` object that exposes methods for common tasks. for example `Deno.writeFile()`.
+
+By default, Deno does not grant much permissions to the running program.  
+Required permissions must be explicitly specified as arguments to the `deno` command, for example :
+```commandline
+deno run --allow-net --allow-write app.ts
+```
+
+Deno uses the `Oak` middleware framework, playing the same role as Express for Node.js apps.  
+It helps with building web applications and APIs with Deno, offering a similar routing and middleware mechanism.
