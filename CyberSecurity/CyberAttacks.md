@@ -46,9 +46,6 @@ In 2019, his asylum status was revoked and he was arrested by the British author
 The US government wanted his extradition to charge him with espionnage act violation.
 
 
-
-
-
 ## 2007 - Stuxnet
 
 <p align="center">
@@ -155,6 +152,24 @@ His visa was renewed multiple times, and he was granted the Russian citizenship 
 
 Edward Snowden's case is controversial, and he is seen as a hero by some and as a traitor by others.  
 His revelations have started debates and led to new regulations in many countries regarding mass surveillance, government secrecy and information privacy.
+
+
+## 2013 : Target Data Breach
+
+<p align="center">
+<img alt="Target Data Breaches" src="./images/target.jpg" width=400  style="border:1px solid black">
+</p>
+
+From November 27th 2013 (just before Black Friday), Target was hacked and 110M customers credit card data were stolen.
+
+This was a supply-chain attack, where Target was reached via Fazio Mechanical services, their refrigeration contractor.  
+Using a phishing email, the Citadel trojan was installed on a Fazio employee's computer, allowing hackers to get his login credentials.  
+Citadel is a well-known trojan, but Fazio was only using the free version of MalwareBytes that only runs on-demand.  
+Since the scan was not run regularly, the trojan remained undetected.  
+This malware most likely also provided the hackers with the credentials of the portal to Target's network used by Fazio.
+
+Once they got access to the Target network, the hackers installed a trojan on the Target POS terminals (point of sales).  
+This trojan was storing credit card data and sending them regularly to an internal compromised server.
 
 
 ## 2013-2014 : Yahoo! Data Breaches
@@ -335,3 +350,25 @@ its availability by using a cached version of the site to protect the domain fro
 The perpetrators of the WannaCry attack are not clearly identified.  
 The main suspect is the Lazarus Group, a cybercrime group from North Korea.  
 Some code similarities were found with previous of their malwares, and the analysis of the WannaCry language file revealed that the machine that created it had Hangul installed and was on timezone UTC+09:00.
+
+
+# May 2021 : Colonial Pipeline Ransomware
+
+<p align="center">
+<img alt="Colonial Pipeline" src="./images/colonial_pipeline.jpg" width=400  style="border:1px solid black">
+</p>
+
+On May 6th 2021, Colonial Pipeline was infected by a ransomware that forced the US energy company to shut down its entire fuel distribution pipeline.
+
+Hackers gained access to the Colonial Pipeline network using a VPN account that was no longer in use but still active.
+The password was used on another website that got compromised and leaked to the dark web.  
+The account had no MFA, so the password was all the hackers needed to gain access.
+
+They stole 100Gb of data before locking computers with a ransomware.  
+Colonial Pipeline paid the requested ransom of 75 bitcoins (nearly $5M) on May 7th.  
+Most of the ransom was recovered later by the US governement.
+
+On May 12th, Colonial Pipeline was able to restart pipeline operations.  
+After several days, the delivery supply chain was back to normal.
+
+The DarkSide hacker group is believed to be the authors of the attack.
