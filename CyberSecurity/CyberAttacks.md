@@ -352,6 +352,27 @@ The main suspect is the Lazarus Group, a cybercrime group from North Korea.
 Some code similarities were found with previous of their malwares, and the analysis of the WannaCry language file revealed that the machine that created it had Hangul installed and was on timezone UTC+09:00.
 
 
+# September 2017 : Equifax Data breach
+
+<p align="center">
+<img alt="Equifax" src="./images/equifax_data_breach.png" width=400  style="border:1px solid black">
+</p>
+
+Equifax was an American multi-billion dollar multinational customer credit reporting agency.  
+It is one of the 3 main credit reporting companies, along with Experian and TransUnion.  
+It manages many personal data on most American citizens, making it a valuable targets for hackers trying to commit identity theft.
+
+Equifax was victim of one of the biggest data breaches in history, leaking over 150 million customer financial records (40% of the US population).  
+Leaked data included their customer's name, date of birth, address, social security number...
+
+Hackers exploited a critical CVE in Apache Structs (open-source Java web application framework) that had not been patched by Equifax.  
+They were able to gain access to the network and found a file with credentials to the 43 databases.  
+Then they sent the content of these databases by increments of 10Mbs through the firewall back to China.
+
+The breach was noticed when Equifax engineers updated their SSL servers and noticed the outgoing traffic.  
+When announced to the public the Equifax stock dropped by 40%, and took 2 years to recover.
+
+
 # May 2021 : Colonial Pipeline Ransomware
 
 <p align="center">

@@ -65,7 +65,7 @@ It is a concise version of the OSI model with only 4 layers.
 |    DHCP    |   67 / 68   |  Dynamic Host Configuration Protocol  |   7   | Automatically assign an available IP to machines joining a network.<br/>Port 67 is used by the DHCP server.<br/>Port 68 is used by DHCP clients.                                                                                                    |
 |    SMTP    |  25 / 587   |     Simple Mail Transfer Protocol     |   7   | Send emails to a mail server.<br/>The secure version using TLS encryption uses port 587.                                                                                                                                                            |
 |    IMAP    |  143 / 993  |   Internet Message Access Protocol    |   7   | Used by a mail client to retrieve messages from a mail server, replacing POP3.<br/>The secure version using SSL uses port 993.                                                                                                                      |
-|    POP3    |     110     |         Post Office Protocol          |   7   | Alternative to IMAP to retrieve messages from a mail server.<br/>The secure version using SSL uses port 995.                                                                                                                                        |
+|    POP3    |  110 / 995  |         Post Office Protocol          |   7   | Alternative to IMAP to retrieve messages from a mail server.<br/>The secure version using SSL uses port 995.                                                                                                                                        |
 |    RDP     |    3389     |        Remote Desktop Protocol        |   7   | Microsoft-proprietary protocol to provide a GUI to connect to a remote machine.</br>Client and server exist for Linux and MacOS as well.                                                                                                            |
 |    NTP     |     123     |         Network Time Protocol         |   7   | Use UDP for clock synchronization between machines over a network.                                                                                                                                                                                  |
 |    SIP     | 5060 / 5061 |      Session Initiation Protocol      |   7   | Voice + messaging + video real-time sessions.                                                                                                                                                                                                       |
@@ -81,7 +81,7 @@ It is a concise version of the OSI model with only 4 layers.
 
 ### Syslog
 
-Syslog is a protocol used to gather all logs from network devices into one centralized Syslog server (on port UDP 514).  
+Syslog is a protocol used to gather all logs from network devices into one centralized Syslog server (on port 514/UDP ot 6514/TCP).  
 Logs can be monitored, searched and archived from this Syslog server.  
 It simplifies troubleshooting network issues on network devices.  
 It also allows data retention of the logs (otherwise not persisted by Cisco devices storing logs in RAM).  
@@ -113,7 +113,7 @@ The steps of the DHCP workflow is **DORA** (Discover - Offer - Request - Ack) :
 - the device responds with a REQUEST for this IP
 - the DHCP server responds with a ACK
 
-The provided IP is available for a limited amount of time (DHCP lease).  
+The provided IP is available for a limited amount of time called the **DHCP lease**.  
 To keep its IP address, the device must send a renewal request before the end of the lease to extend the lease duration.
 
 The OFFER message contains options with network information to use : default gateway, lease time, DNS server...
@@ -154,6 +154,55 @@ nslookup -type=SOA facebook.com      # query the SOA data for a domain name (nam
 nslookup facebook.com 8.8.8.8        # use a custom DNS server (8.8.8.8 is Google's public DNS server) 
 ```
 
+### SNMP
+
+SNMP is used to collect information and metrics about all devices in a network.  
+It is heavily used by network engineers to monitor the networking equipment (switches, routers, firewalls, AP...).  
+
+SNMP follows a client/server application model : 
+- the **SNMP Manager** (server) is a software component gathering data by sending queries to SNMP agents
+- the **SNMP Agents** (clients) are software components running on each networking device sending data about the device to the SNMP manager
+
+Each device that supports SNMP has a local **MIB** (Management Information Base).  
+It is a hierarchical database storing information about the device as key/value pairs.  
+The keys in the MIB are called **OID** (Object ID).  
+The SNMP manager can request specific OIDs to a device, and its SNMP agent will retrieve their value in its local MIB.  
+OIDs are referenced by name or ID (each level in the tree structure has a name and an ID), for ex 1.3.6.1.  
+Some OIDs are standard and common across devices, others are vendor-specific for a given device.  
+
+Most SNMP operations expect a poll, and the SNMP manager constantly needs to query the agents for monitoring.  
+We can configure **SNMP traps** on some devices (over UDP/162) so the agent sends an alert to the manager when a 
+specific condition is met or a threshold is breached.
+
+**SNMPv1** used clear data in both the request and the response and all traffic used UDP.  
+**SNMPv2** introduced new types of data to query, allowed multi-OIDs queries and support for both UDP and TCP, but still sends in clear text.  
+**SNMPv3** adds security with encryption, authentication and message integrity check.
+
+
+### SSL (Secure Socket Layer) and TLS (Transport Layer Security)
+
+SSL and TLS are cryptographic protocols allowing authentication and encryption for traffic between a web server and HTTPS clients.  
+SSL2 (1995) and SSL3 (1996) were replaced by TLS in 1999 to address security issues with SSL.  
+
+Both use certificates that are not protocol-dependent, so they can be used both with SSL and TLS.
+
+
+## Types of Networks
+
+- **PAN** (Personal Area Network) : very small network, usually a single room (USB, Bluetooth devices, IR, NFC...)
+
+- **LAN** (Local Area Network) : uses switches and routers, usually connected with Ethernet
+
+- **SAN** (Storage Area Network) : dedicated high-speed network of storage devices providing access to large amount of data and allowing sharing data as if it were a drive attached to a server.
+
+- **WLAN** (Wireless LAN) : LAN with wireless access points and devices connecting to it.
+
+- **CAN** (Campus Area Network) : network connecting some LANs together, covering several buildings.
+
+- **MAN** (Metropolitan Area Network) : covering an entire city.
+
+- **WAN** (Wide Area Network) : global network connecting multiple locations in the world, like the Internet.
+
 
 ## TCP 3-ways Handshake
 
@@ -171,7 +220,7 @@ The connection is established by 3 segments exchanged between the client and the
 ### Ethernet Cable Categories
 
 - **Category 3** (obsolete) : Original Ethernet standard  
-  10-BASE-T over 100m (10 Mbps)  
+10-BASE-T over 100m (10 Mbps)  
 
 
 - **Category 5** (obsolete) : 10x and 100x faster than the original Ethernet standard  
@@ -199,9 +248,79 @@ The connection is established by 3 segments exchanged between the client and the
 40G-BASE-T over 30m (40Gbps)
 
   
+### 802.3 Ethernet standards
+
+- **10-BASE-5** _[Deprecated]_ : 10Mbs over 500m using RG-8 coaxial cables with vampire tap connectors.  
+First available cable standard, called "Thick Ethernet".
+
+
+- **10-BASE-2** _[Deprecated]_ : 10Mbs Ethernet, max length of 125m using RG-58 coaxial cables.   
+Physical bus topology with BNC connectors with 50 Ohm terminators.  
+RG-58 cables are thiner than RG-8 cables so 10-BASE-2 is called "Thin Ethernet".
+
+
+- **10-BASE-T** : LAN standard for 10Mbs Ethernet using UTP cables (sometimes STP).  
+Max length 100m, use RJ-45 connectors with Cat 3/4/5 cables.  
+Physical start topology, support full-duplex, up to 1024 machines in the network.
+
+
+- **10-BASE-FL** _[Rare]_ : 10Mbs Ethernet over fiber-optic cables, max length 2km.  
+Rarely used due to the existence of faster fiber-optic standards.
+
+  
+- **100-BASE-TX** : 100Mbs Ethernet (Fast Ethernet) using UTP (sometimes STP) with Cat 5/5e cables.  
+Max length 100m, allow full duplex. 
+It is the most common Ethernet standard in today's networks.
+
+
+- **100-BASE-T4** _[Rare]_ : 100Mbs Ethernet allowing the use of Cat 3/4/5 cables, max length 100m
+
+
+- **100-BASE-FX** : 100Mbs Ethernet over fiber optic cables, usually used for network backbones.  
+With multi-mode, max length 412m in half-duplex and 2km in full-duplex.  
+With single mode, max length 10km.  
+Often uses SC or ST connectors.
+
+
+- **1000-BASE-SX** : Short-wavelength laser using multi-mode fiber optic cables.  
+Max length 275m in half-duplex, 550m in full-duplex.
+
+
+- **1000-BASE-LX** : Long-wavelength laser using fiber optic cables, more expensive but longer distance than 1000-BASE-SX.  
+In half-duplex, max length 316m in both multi-mode and single-mode.    
+In full-duplex, max length 550m in multi-mode and 5km in single-mode.  
+
+
+- **1000-BASE-CX** _[Rare]_ : 1Gbs Ethernet using shielded copper cable (STP) on very short distance (25m)
+
+
+- **1000-BASE-T** : 802.3ab standard, 1Gbs Ethernet over copper cable with Cat5e/6 cables over 100m.  
+It allows full-duplex using the 4 pairs of the UTP cable.
+
+
+- **10G-BASE-SR/SW** : 10Gbs Ethernet over short wavelength multi-mode fiber.  
+Max length 300m, used for LAN and MAN.
+
+
+- **10G-BASE-LR/LW** : 10Gbs Ethernet over long wavelength single-mode fiber.  
+Max length 10km, used for LAN, MAN and WAN.  
+
+
+- **10G-BASE-ER/EW** : 10Gbs Ethernet over extra-long wavelength single-mode fiber.  
+Max length 2km to 40km.
+
+
+- **10G-BASE-T** : 802.3an standard, 10Gbs Ethernet using Cat6/6a copper cables with RJ-45 connectors.  
+Max length 55m for Cat6 and 100m for Cat6a.
+
+
+- **40G-BASE-T** : 40Gbs Ethernet using Cat8 copper cables with max length 30m.
+
+
+
 ### Twisted-Pair Cables
 
-Cables with twisted pairs contain multiple pairs of smaller copper cables twisted together to prevent interference and sending opposite signals.  
+Twisted-pair cables contain multiple pairs of smaller copper cables twisted together to prevent interference and sending opposite signals.  
 Each pair is twisted with a different twist rate (distance between two twists).  
 Almost all twisted cables have 4 pairs of cables inside.
 
@@ -217,7 +336,7 @@ STP cables provide an extra protection against electro-magnetic interferences (E
 
 T568A and T568B are two different standards for connecting the wires inside the RJ-45 connector of an Ethernet cable.  
 They define the order in which the individual 8 wires are arranged and connected to the pins of the connector.  
-Both standard are widely used, and they are compatible with each other as long as both ends of the cable follow the same standard.
+Both standards are widely used, and they are compatible with each other as long as both ends of the cable follow the same standard.
 
 <p align="center">
 <img alt="T568A and T568B" src="../images/T568A_T568B.jpg" width="350">
@@ -236,6 +355,60 @@ They contain a wire covered by an insulated layer, covered by a metal layer, and
 Coaxial cables use the **BNC connector**.  
 
 Some common standards are **RG59** (low-cost, short-distance, for cable TV) and **RG6** (cable TV or modem).
+
+
+### Rollover cables
+
+A rollover cable (or console cable) is a specialized type of serial cable used to connect a computer or terminal to 
+the console port of networking equipment like routers, switches, and firewalls.   
+Network administrators use rollover cables to configure and manage the settings of networking devices directly without
+needing network connectivity.
+
+
+### Punchdown Blocks
+
+Punchdown blocks are a type of electrical connection used in telephony or to bring Ethernet cables to user's desks.  
+
+A RJ45 cable goes from the desk to the punchdown block in the closet, where individual 8 wires are punched down individually to the block.  
+On the other side of the block, another cable brings it to the desired switch.  
+This makes it much easier to setup, as only the part from the block to the switch needs to be updated when the user changes desk.
+
+The main punchdown block types are :
+- **66 block** : old analog phone
+- **110 block** : voice and data traffic, in data centers and network wiring closets
+- **Krone block** : european alternative to the 110 block
+- **BIX block**
+
+
+### Wired connectivity issues
+
+- **Attenuation** : the signal loses its strength, causing a max length for the cable
+
+
+- **Latency** : delay between ending and receiving the packets
+
+
+- **Jitter** : deviation from the average behavior  
+For ex, if some packets arrive in 10ms and others in 100ms, there is a big jitter causing issue in the communication.
+
+
+- **Crosstalk** : interference of the signal in a cable with the signal in another cable (for ex between pairs of an UTP)  
+For UTP, the crosstalk is avoided by design, as the number of twists for each pair is different.  
+Cables indicate their NEXT rating (Near-End Crosstalk).
+
+
+- **EMI** (Electro-Magnetic Interference) : disturbance of the signal from external sources, also avoided by twists in UTP
+
+
+- **Open/Short** : when there is no connectivity between both ends of a cable, it is called open.  
+When there is an unintended connectivity between cables, it is called a short.  
+Open and short cable issues can be checked with a cable tester.
+
+
+- **Duplex mismatch** : both connected devices must use the same duplex config (half or full)  
+Recent devices use full-duplex, and often can use automatic duplex negotiation to avoid mismatch.  
+This is usually a consideration for old devices : for ex, if we connect an old camera to a switch, the camera may
+support only half-duplex and a speed of 10Mbps, so we need to configure the port of the switch accordingly.
 
 
 ### Fiber Optic Cables
@@ -268,6 +441,27 @@ It contains a light source for transmission and a photo-diode semiconductor for 
 - **SFP** (Small Form-factor Pluggable) : used for 1 Gbps Ethernet
 - **SFP+** (Enhanced SFP) : used for 10 Gbps Ethernet, backward compatible with SFP slots
 - **QSFP** (Quad SFP) : for 40 and 100 Gbps Ethernet
+
+
+#### Bidirectional Wavelength Division Multiplexing (WDM)
+
+Bidirectional WDM is the support of multiple optical wavelengths sent simultaneously in a single optical fiber cable.  
+This allows several channels of communication within the same fiber by using different colors (wavelengths) of light.
+
+- **Course WDM** : up to 18 channels from 1310nm to 1550nm, up to 70km
+- **Dense WDM** : more than 80 channels, higher speed than Course WDM, channels are much closer (0.8nm against 20nm)
+
+The wavelengths used by fiber optic cables are not in the visible spectrum (purple 380nm to red 780nm).
+
+
+#### SONET (Synchronous Optical NETwork)
+
+SONET is a communication protocol to transmit data over fiber optic mostly used in the US.  
+In the rest of the world, an equivalent protocol called **SDH** (Synchronous Digital Hierarchy) is used instead.
+
+In SONET, standard transmission rates are called **Optical Carrier** (OC) :
+- OC-1 = 51.84Mbs
+- OC-3 = 3 x OC-1 = 155Mb
 
 
 ### Plenum space
@@ -310,10 +504,10 @@ It is used mostly for wireless networks where CSMA/CD is not possible.
 ## Layer 2, Switch and MAC Address
 
 
-### Media Access Control (MAC) Address
+### MAC Address (Media Access Control)
 
 The MAC address is also called physical address, Ethernet address, layer 2 address or hardware address.  
-It is a unique identifier assigned to each network interface cards (NIC) and uniquely identifies a machine on a local network.  
+It is a unique identifier assigned to each network interface cards (NIC) that uniquely identifies a machine on a local network.  
 It is made of 48 bits (6 bytes) and represented as a sequence of 12 hexa digits, for example _00:0c:29:17:1b:27_   
 The first 3 bytes of the MAC address represent the Organization Unique Identifier (OUI).   
 It can be displayed with `ifconfig` on Linux and `ipconfig` on Windows. 
@@ -331,6 +525,26 @@ Otherwise, it broadcasts the message on all ports except the receiving port.
 
 Some managed switches allow to configure port mirroring.  
 All dataframes sent to a given port of the switch will also be sent to another port, usually for monitoring purpose.
+
+
+### Spanning Tree Protocol (STP)
+
+STP was developed by DEC in 1983 and standardized in 1990 by the IEEE as the **IEEE 802.1d** standard.  
+In 1998, **RSTP** (Rapid STP) is developed to speed up the convergence from 1min to less than 10s as **IEEE 802.1w**.
+
+STP is a layer 2 network protocol used to build a loop-free logical topology on an Ethernet network.  
+It prevents bridge loops in a network that has redundant paths (physical loops).  
+It selects a root node and builds a spanning tree connecting all nodes with no loop, and all switch ports out of 
+this spanning tree are disabled.  
+Each port has a state in : Blocking / Listening / Learning / Forwarding / Disabled.  
+If the network changes (a segment fails or a new machine joins), the spanning tree is recalculated.  
+
+**Convergence** is the process to decide for each port if it should be blocking or forwarding.
+
+STP avoids **broadcast storms** where frames loop infinitely inside a network.
+
+Messages sent between switches for the STP protocol are called BPDUs (Bridge PDUs).  
+Blocked ports do not transmit frames, but still transmit BPDUs for the STP mechanism.  
 
 
 ### Virtual LAN (VLAN)
@@ -357,14 +571,143 @@ Both VLANs need to use these ports to reach other machines of the VLAN.
 Protocol **802.1q** is used to add a tag with the VLAN ID to each message going through the trunk port.  
 The receiving switch will remove the tag and send the message only to ports in the target VLAN.  
 
+Some recent switches also support another VLAN called the **Voice VLAN**.  
+It allows both voice and data traffic to come from the same switch port and be treated differently.  
+The data packets are tagged with the regular VLAN ID while the voice packets are tagged with the voice VLAN ID.  
+This allows QoS to prioritize voice traffic over data traffic.
 
-### Spanning Tree Protocol (STP)
 
-STP is a layer 2 network protocol used to build a loop-free logical topology on an Ethernet network.  
-It prevents bridge loops in a network that has redundant paths (physical loops).  
-It selects a root node and builds a spanning tree connecting all nodes with no loop, and all switch ports out of this spanning tree are disabled.  
-If the network changes (a segment fails or a new machine joins), the spanning tree is recalculated.  
-STP is defined by the **IEEE 802.1d** standard.
+### Switch Native VLAN
+
+Switches have access ports and trunk ports.  
+
+A message entering an access port belongs to a specific VLAN, and has no tag with a VLAN ID.    
+The switch will tag this message with the VLAN ID before sending it to a trunk port.
+
+A message entering a trunk port is expected to have a tag specifying its VLAN ID, according to 802.1Q standard.  
+The switch can only send this message to the ports on the same VLAN.
+
+The **native VLAN** is the VLAN represented by the absence of a VLAN tag (usually VLAN 1).  
+It should NEVER be used, as it is more vulnerable to **VLAN hopping** attacks.
+
+
+### VTP (VLAN Trunking Protocol)
+
+VTP is a protocol used between switches over trunk ports to manage the VLAN config across the network.  
+It provides consistent VLAN config across switches, tracking and monitoring of VLANs.  
+When a VLAN is added to a switch, VTP reports it to all other switches.  
+
+All switches must have the same **VTP domain name**, **VTP version** and **VTP password** to exchange VLAN config with each other.  
+One of the switches must be the **VTP server**.
+
+VTP is Cisco-proprietary, comparable IEE standards used by other vendors are :
+- **GVRP** (GARP VLAN Registration Protocol)
+- **MVRP** (Multiple VLAN Registration Protocol) more recent and replacing GVRP
+
+
+### Switching Modes
+
+Switching modes are techniques used to forward and process data packets within a network switch (or router).  
+
+- **Store-And-Forward** : the switch waits to receive the entire packet before it decides to forward it.  
+When an entire package is received, the CRC is calculated and checked against the FCS field in the Ethernet header.  
+If the CRC does not match, the packet is dropped.
+
+
+- **Cut-Through** : the switch sends every frame it receives right away before all the packet is received.  
+Only the first 6 bytes are checked to know the target MAC address.  
+It is much quicker than Store-And-Forward, but can send invalid frames because no CRC check is performed.
+
+
+### Switch Uplink Port 
+
+An uplink port is a specific port of a switch designated for connecting to an upstream network or a higher-level 
+network device, such as a core switch, router, or an upstream switch.  
+For example an access switch will use an uplink port to connect to a distribution switch.  
+It usually has a higher bandwidth than the normal downlink ports.  
+The uplink port is connected to a normal downlink port of the higher-level device with a straight-through cable.
+
+
+### Switch Port Protection
+
+- **STP** : STP disables automatically some ports when loops are detected between switches
+
+
+- **Port Security** : hardcode the allowed MAC addresses on a port (on breach drop the frame and block the port)
+
+
+- **BPDU Guard** : limit the ports that can receive BPDUs messages (sent by switches for STP).  
+This prevents a rogue switch to trigger a new STP discovery.  
+Ports blocked for BPDUs cannot be connected to a switch, only to an end device (PC, printer...).  
+Ports blocked for BPDUs are shutdown if they receive a BPDU.
+ 
+
+- **Root Guard** : in STP, the switch with the lowest switch ID (priority or MAC if same priority) is the root switch.  
+When a BPDU is received from a switch with a lower switch ID, the spanning tree is re-evaluated using it as the root.  
+The root guard prevents a switch port to become the STP root port.  
+It protects the STP topology against rogue switches. 
+
+
+- **MAC Flood Guard** : prevent MAC flood attacks by limiting the number of MAC addresses on a given port.
+
+
+- **DHCP Snooping** : specify which ports of the switch are allowed to respond to DHCP requests.  
+It prevents rogue DHCP servers on other switch ports.  
+The switch will build an IP/MAC mapping table from the DHCP messages it receives.
+
+
+- **Dynamic ARP Inspection (DAI)** : use the DHCP Snooping database to check the IP/MAC mapping of all incoming ARP packets.  
+ARP packets that do not match this mapping are dropped.  
+This prevents on-path attacks (Man in the Middle).  
+This requires the DHCP Snooping functionality to be enabled.
+
+
+
+### Traffic Shaping
+
+Traffic shaping is a congestion management method to regulate network data transfer by delaying the flow of less important packets.  
+It analyzes the application of each packet and sets a bandwidth to that application packets.  
+For example, it may prioritize VoIP traffic on the network.  
+It is a technique used to guarantee **QoS** (Quality of Service) operating at layers 2 and 3.
+
+
+### DiffServ (Differentiated Services)
+
+DiffServ is a technique for implementing QoS at the network layer (layer 3) by marking each packet entering the network.  
+DiffServ adds a 6-bits field called DSCP (DiffServ Code Point) in the IP header.  
+This code point is used to indicate the desired treatment of the packet within the network.
+
+
+### Port Bonding (or Link Aggregation)
+
+Port bonding is a method to use multiple connections simultaneously between 2 switches to increase the bandwidth, provide fault tolerance and load balancing.  
+It is defined by standard **IEEE 802.3ad** and uses **LACP** (Link Aggregation Control Protocol) for orchestration.
+
+
+### Switch Stacking and Switch Clustering
+
+**Cisco StackWise** is a technology of **switch stacking** allowing to turn mutiple physical switches in the same rack into one logical switch.  
+It uses a special stacking cable to connect switches to each other in a loop (so it still works if one switch goes down).  
+A single switch is the **master** used for management, other switches are **members** and receive updates from the master.  
+Switch stacking supports up to 9 switches, and they all share the same IP.
+
+**Switch clustering** is an alternative to switch stacking.  
+It connects cluster-capable switches together and manages them as a single entity.  
+Clustered switches communicate with the **CMP** (Cluster Management Protocol).  
+One switch is the cluster **commander** used for management, and the cluster has its IP.  
+Management is more complex because each switch is managed separately, but no limitation in the number of switches in a cluster.
+
+
+### Ethernet Jumbo frames
+
+Usual Ethernet frames accept a payload up to 1500 bytes.  
+Jumbo frames allow a payload up to 9216 bytes (usually set to 9000) for file transfer for example.
+
+
+### Pause Frames
+
+If a switch receives a lot of traffic and its receive buffer reaches a threshold, it sends a pause frame to the sender to stop it from sending more frames temporarily.  
+It is part of standard **IEEE 802.3x**.
 
 
 ## Layer 3, Router and IP address
@@ -373,6 +716,14 @@ STP is defined by the **IEEE 802.1d** standard.
 ### Routing Types
 
 Routers forward traffic to a next node based on the target IP of each packet.  
+Each router maintains a **routing table** that indicates how to reach each network.  
+
+Routers use the **Administrative Distance** (AD) to evaluate the best route to a network (metric between 0 and 255).  
+- AD = 0 for directly connected networks
+- AD = 1 for static routes
+- each routing protocol assigns an AD, for ex AD = 90 for EIGRP and AD = 120 for RIP
+- AD = 255 for forbidden routes
+
 To decide where to forward each packet, there are 3 possible types of routing :
 
 - **static routing** : every reachable network has an explicit routing rule.  
@@ -389,48 +740,223 @@ To decide where to forward each packet, there are 3 possible types of routing :
 
 ### Dynamic Routing Protocols
 
-- **RIPv2** (Routing Information Protocol 2) : interior distance vector protocol used on old networks
+Dynamic routing saves a lot of admin time, as there is no need for manual routes setup.  
+
+In networks with dynamic routing protocol configured, there are 2 types of packets sent by routers :
+- data packets (IPv4, IPv6...) for user data
+- route updates packets (RIP, EIGRP, OSPF...) to build and maintain routing tables on each router
+
+Routing protocols generate additional traffic on the network, due to inter-routers communication to reach convergence (agreement on best routes).  
+Routers should use only one routing protocol and stick to it, not enable them all, to avoid network overload.  
+
+**IGP** (Internal Gateway Protocol) are used within an AS (Autonomous System) that we control.  
+**EGP** (External Gateway Protocol) are used to connect multiple AS, for example on the Internet.  
+
+Routing Protocol can use different strategies :
+
+- **Distance Vector** : minimize the number of hops (routers) to a given network.  
+Each router knows only about the reachable networks on each of its ports, and how many hops away it is.  
+Each router shares its routing table with its connected neighbors.  
+RIP and IGRP are popular distance vector routing protocols.  
+Distance vector protocols use the **split horizon** technique to avoid routing loops : they do not advertise a route
+to the node from which this route was received.
 
 
-- **EIGRP** (Enhanced Interior Gateway Routing Protocol) : better than RIPv2, it used to be Cisco-proprietary, now it is still used and easy to setup.
+- **Link State** : minimize the bandwidth/delay to a given network.  
+Each router knows the entire topology of the network (so more traffic between routers).  
+Each router maintains 3 tables : direct neighbors, network topology and routing table.  
+It has a better knowledge of the network than distance vector protocols and converges quicker on network change.  
+It requires more memory on each router and more communication between routers (usually not an issue these days).  
+OSPF and IS-IS are popular link-state routing protocols.
+
+The main routing protocols are :
+
+- **RIP** (Routing Information Protocol) : oldest protocol in use, limited to small networks with up to 15 hops.  
+RIP only supports classful routing (the subnet mask is inferred from the network class).  
+Each router sends its table every 30sec, very slow to converge.
+
+
+- **RIPv2** : evolution of RIP that supports classless routing (it sends the network mask with each route).  
+It supports **VLSM** (Variable Length Subnet Mask) so several networks can use different subnet masks.  
+Each subnet uses a mask fitting its size, for example a WAN subnet has only 2 addresses so mask /30.  
+It supports MD5 authentication.  
+Each router also sends its routing table every 30sec (like RIP) but uses multicast (instead of broadcast).  
+It supports discontinuous subnets, for ex 172.16.10.0/24 and 172.16.20.0/24 (in the same B class network) on 2 different sides of the WAN.
+
+
+- **EIGRP** (Enhanced Interior Gateway Routing Protocol) : Enhanced version of the old CISCO protocol IGRP regarded as a hybrid protocol.  
+Like distance vector protocols, it sends to its neighbors the distance to all its neighbors.  
+Like link-state protocols, it syncs the routing table at startup and on any change (not every X sec).  
+It supports both IPv4 and IPv6.  
+It has efficient neighbors discovery, is easy to setup and it keeps track of more info than distance vector protocols.  
 
 
 - **OSPF** (Open Shortest Path First) : most popular interior gateway protocol and main alternative to EIGRP.  
-  It has always been open and is available on any router hardware in the market. 
+It has always been open and is available on any router hardware in the market.  
+It is a link-state protocol using bandwidth as a metric.  
+It supports IPv4 and IPv6, classless routing (VLSM) and has the fastest convergence among IGPs.  
+It is more difficult to setup than EIGRP, it requires a hierarchy of routers with a "Area 0" root.
+
+
+- **IS-IS** (Intermediate System to Intermediate System) : link state IGP similar to OSPF.  
+It is preferred by ISPs because it does not require a different DB for IPv4 and IPv6.
 
 
 - **BGP** (Border Gateway Protocol) : main routing protocol of the Internet.  
-  Unlike RIPv2, OSPF and EIGRP, BGP is an exterior gateway protocol to exchange routes between separate networks that we have no control over.  
-  It can be used by enterprises on the Internet edge connecting to the ISP to allow fail-over if an ISP is down (which is not possible with a static default route to the ISP).
-
-In networks with dynamic routing protocol configured, there are 2 types of packets sent by routers :
-- data packets (IP, IPv6) for user data
-- route updates packets (RIP, EIGRP, OSPF) to build and maintain routing tables on each router
+Unlike RIPv2, OSPF and EIGRP, BGP is an EGP to exchange routes between separate AS that we have no control over.  
+It can be used by enterprises on the Internet edge connecting to the ISP to allow fail-over if an ISP is down (which is not possible with a static default route to the ISP).
 
 
-### Private IP Address Ranges
+### Routers High Availability
+
+We can use **FHRP** (First Hop Redundancy Protocols) to configure multiple physical routers to appear as if they were a single router (with an IP and a MAC address).  
+
+The 2 main protocols in the FHRP family are :
+
+- **HSRP** (Hot Standby Router Protocol) : developed by Cicso and mainly used in Cisco networks.  
+It uses several routers in a standby group sharing the same IP and MAC, only the active router is in use and a router 
+from the standby group takes over if the active one goes down.  
+It uses a virtual MAC address and HSRP timers (hello/hold/standby/active) to monitor the health of the active router 
+and switch if needed.  
+
+
+- **VRRP** (Virtual Router Redundancy Protocol) : vendor-neutral open standard implementation of HSRP.
+
+
+### GRE Protocol (Generic Routing Encapsulation)
+
+The GRE protocol encapsulates data packets using one routing protocol inside packets of another protocol.  
+It uses a **GRE tunnel** between 2 routers that will encapsulate and decapsulate data packets.  
+For ex, it can encapsulate IPv6 packets inside IPv4 messages to cross an IPv4 only network.
+
+GRE does not encrypt the encapsulated message.  
+To use as a VPN, it is often used together with an encryption protocol like IPsec. 
+
+
+### IPsec
+
+IPsec is a suite of protocols used together to set up encrypted connections between devices on a public network.  
+IPsec is often used to setup a VPN, encrypting IP packets and ensuring the authenticity of the source.
+
+- **AH** (Authentication Header) : IPsec protocol adding a hash of the message for authenticity check (no encryption)
+- **ESP** (Encapsulating Security Payload) : encryption with a symmetric algorithm (SHA-2 for ex),
+checksum for data integrity, anti-replay service to protect against reception of a copy of a previous valid message.
+
+**ISAKMP** (Internet Security Association Key Management Protocol) is often used in conjunction to IPsec.  
+It secures the key exchange during the establishment of a client to server VPN connection. 
+
+### Network Classes
+
+- **Class A** : 1 byte for the network, 3 bytes for the host.  
+A class A network contains 2^24 - 2 = 16 777 214 hosts.  
+The binary address of a class A network always starts with `0`  
+There are 2^7 - 2 = 126 class A networks, from 1.x.x.x/8 to 126.x.x.x/8 (0 is for all routes and 127 for diagnostic). 
+
+
+- **Class B** : 2 bytes for the network, 2 bytes for the host.  
+A class B network contains 2^16 - 2 = 65 534 hosts.  
+The binary address of a class B network always starts with `10`
+There are 2^14 = 16 384 class B networks, from 128.0.x.x/16 to 191.255.x.x/16.
+
+
+- **Class C** : 3 bytes for the network, 1 byte for the host.  
+A class C network contains 2^8 - 2 = 254 hosts.  
+The binary address of a class C network always starts with `110`
+There are 2^21 = 2 097 152 class C networks, from 192.0.0.x/24 to 223.255.255.x/24.
+
+
+- **Class D** : special class for multicast addresses, first byte between 224 and 239.  
+
+
+- **Class E** : special class for scientific purpose, first byte between 240 and 255.
+
+
+### Private IP Address Ranges (RFC 1918)
 
 Private IP addresses are a set of reserved IP address ranges that are not routable on the public Internet.  
 They enable devices on a private network to communicate with each other without requiring a unique public IP addresses for each device.  
-Devices using a private IP address can communicate with the Internet by using a NAT.
+Devices using a private IP address can communicate with the Internet using a NAT.
 
 |     Network     |  Class  | # Addresses | Broadcast Address | Usage                    |
 |:---------------:|:-------:|:------------|:-----------------:|:-------------------------|
-|   10.0.0.0/8    |  A x 1  | 16M         |  10.255.255.255   | Large networks           | 
-|  172.16.0.0/12  | B x 16  | 1M          |  172.31.255.255   | Medium networks          | 
-| 192.168.0.0/16  | C x 256 | 65025       |  192.168.255.255  | Home and office networks |
+|   10.0.0.0/8    |  A x 1  | 16'777'214  |  10.255.255.255   | Large networks           | 
+|  172.16.0.0/12  | B x 16  | 1'048'544   |  172.31.255.255   | Medium networks          | 
+| 192.168.0.0/16  | C x 256 | 65024       |  192.168.255.255  | Home and office networks |
+
+
+### APIPA (Automatic Private Internet Protocol Addressing)
+
+APIPA is a mechanism that allows an OS to assign to itself an IP address when the DHCP server cannot be reached.  
+It uses the IP range **169.254.0.0/16** that is reserved for APIPA.  
+If a host has an IP in this range in a corporate network, it suggests an issue with the DHCP server.
 
 
 ### Subnets
 
 Subnetting is the division of one big network in multiple smaller networks.  
-For example, network 10.0.0.0/8 contains 2^24 addresses (-2 for network and broadcast addresses).  
+For example, IPv4 network 10.0.0.0/8 contains 2^24 addresses (-2 for network and broadcast addresses).  
 To create multiple subnets, we sacrifice N bits of the host section to create 2^N subnets.   
 Each subnet has 2^k-2 host addresses, where k is the number of 0 in the mask.
 
 If we need 12 subnets, we sacrifice 4 bits (2^4 = 16 is the min power of 2 bigger than 12).  
 The network masks of the subnets is 255.240.0.0.  
 The subnets are 10.0.0.0/12, 10.16.0.0/12, ..., 10.240.0.0/12.  
+
+
+### IPv6
+
+With the global use of Internet and the expansion of IoT, we are running out of 4-bytes IPv4 addresses.  
+To solve this issue, IPv6 was created as the successor of IPv4, with 16-bytes addresses.
+
+IPv6 supports unicast, multicast and anycast addresses (no broadcast in IPv6).
+
+IPv6 addresses are represented as 8 blocks of 2 bytes in hexa : `2001:0db8:3c4d:0012:0000:0000:0024:56ab`  
+Leading zeros can be removed, and successive blocks of zeroes can be replaced with `::` (only one in the address).  
+The above address can be simplified to : `2001:db8:3c4d:12::24:56ab`
+
+The first 6 bytes (3 blocks) represent the global routing prefix, assigned by the ISP or a regional Internet registry.  
+The next 2 bytes (1 block) is the subnet, decided by the network administrator.  
+The last 8 bytes (4 blocks) are the interface ID identifying the device on the network.
+
+#### IPv6 Host auto-config
+
+With IPv6, a host can assign to itself a unique IPv6 address using the network ID and the interface ID.
+
+The network ID is obtained by sending a multicast of type RS (Router Solicitation - ICMP 133) to the "all routers" multicast address `ff02:2`.  
+The router replies with a multicast of type RA (Router Advertisement - ICMP 134) containing the network ID to the "all nodes" multicast address `ff02:1`.    
+This replaces the DHCP mechanism in IPv4.
+
+The interface ID is derived from the physical MAC address of the device using the **EUI-64** format.  
+EUI-64 (Extended Unique Identifier) is a 8-bytes (64 bits) identifier constructed by :
+- taking the 6-bytes MAC address
+- insert the 2-bytes sequence `FFFE` in the middle of the MAC address
+- add 1 to the 7th bit of the first byte
+
+#### NDP (Neighbor Discovery Protocol)
+
+NDP replaces the ARP broadcast mechanism in IPv4.
+
+In IPv6, all machines have a **link-local IPv6 address** that is only used on a local link and not routable on the Internet.  
+It is generated by using the prefix `FE80::/64` and the EUI-64 of the machine (based on its MAC address).  
+This mechanism is called **SLAAC** (State-Less Address Auto-Configuration).  
+It is the equivalent of APIPA in IPv4.
+
+Hosts exchange their link-local IPv6 address (replacing the MAC address in ARP) with NDP :
+- **neighbor solicitation** (ICMP 135) : ask for link-local address and giving its own
+- **neighbor advertisement** (ICMP 136) : giving its link-local address
+
+#### Tunneling
+
+Tunneling is used to transport IPv6 traffic over an IPv4 only network, by encapsulating it inside an IPv4 message.  
+There are several tunnelling technologies : **GRE**, **6to4**, **ISATAP**, **Teredo** ...
+
+#### IPv6 Routing Protocols
+
+Routing protocols are updates of the ones used for IPv4 : 
+
+- **RIPng** (next-gen) : very similar to RIP, distance-vector protocol with 15 hops max
+- **EIGRPv6** : similar to EIGRP, advanced distance-vector protocol with link-state features, using multicast instead of broadcasts
+- **OSPFv3** (the v2 is actually the IPv4 one) : similar to OSPF, link-state protocol with hierarchy 
 
 
 ### NAT and PAT (Network / Port Address Translation)
@@ -500,16 +1026,70 @@ With a layer 3 switch, the switch itself can route traffic from a VLAN to the ot
 A layer 3 switch is more expensive than a layer 2 switch but is easier to setup than a switch and a router for multi-VLAN networks.
 
 
+### DMZ (Demilitarized Zone)  
+
+A DMZ, or **screen subnet**, is a subnet containing all publicly available servers (web, FTP, email relay...).
+
+It has 2 routers :
+- the **exterior router** between the DMZ and the outside world
+- the **interior router** between the DMZ and the internal network
+
 
 ## Wireless Networks
+
+### Wifi standards
+
+**IEEE 802.11** is the set of standards for wireless LAN commonly called Wi-Fi.
+
+
+| Wifi | Standard  |  Freq (GHz)  | Year |  MIMO                       | Max Throughput per stream | Max Throughput total |
+|:----:|:---------:|:------------:|------|-----------------------------|---------------------------|----------------------|
+| 2    |  802.11a  |  5           | 1999 | -                           | 54Mb/s                    | 54Mb/s               |  
+| 1    |  802.11b  |  2.4         | 1999 | -                           | 11Mb/s                    | 11Mb/s               | 
+| 3    |  802.11g  |  2.4         | 2003 | -                           | 54Mb/s                    | 54Mb/s               | 
+| 4    |  802.11n  |  5 / 2.4     | 2009 | 4 x MIMO                    | 150Mb/s                   | 600Mb/s              | 
+| 5    |  802.11ac |  5           | 2014 | 8 x MU-MIMO (download)      | 867Mb/s                   | 6.9Gb/s              |
+| 6    |  802.11ax |  5 / 2.4     | 2021 | 8 x MU-MIMO (bidirectional) | 1201Mb/s                  | 9.6Gb/s              |
+
+
+The latest Wifi standard is Wifi 6 (802.11ax) operating both in the 2.4 and 5 Ghz bands and allowing 1.2Gb/s throughput per channel.
+
+**MIMO** (Multiple Input Multiple Output) is a wireless technology allowing the use of several antennas on receiver side and transmitter side to increase the data speed.  
+- **SU-MIMO** (Single User MIMO) allows only 1 client device at a time to communicate with the router
+- **MU-MIMO** (Multiple User MIMO) allows several clients in parallel
+
+**Channel Bandwith** : Frequency width of the communication channel, usually ~20Mhz.  
+We can use **channel bonding** to use several non-overlapping channels to create a bigger bandwidth channel.  
+802.11n can use 2 channels to contiguous channels to create a 40Mhz channel.  
+802.11ac and 802.11ax extend it to 80Mhz, 160MHz and 80+80MHz (2 non-contiguous 80MHz channels).  
+
+
+### Wifi 2.4GHz and 5GHz Bands
+
+Old routers use Wifi in the 2.4GHz frequency band, which covers a large range (entire house).  
+It causes interferences with other devices also using the same frequencies, like microwaves, cordless phones, Bluetooth devices...  
+It only offers 11 channels, and only 3 non-overlapping channels.
+
+Most modern routers are dual-band, so they can transmit and receive both in the 2.4GHz and in the 5GHz bands.  
+The 5GHz band is twice quicker (frequencies are twice higher) but it has shorter range and does not go through walls.  
+No other device uses these frequencies, so it  usually doesn't cause interferences.  
+It contains 25 non-overlapping channels.
+
+A channel is a band of frequencies (usually around 20MHz wide) used for wireless communication.    
+2.4GHz routers have 11 channels, centered from 2412MHz (channel 1) to 2462MHz (channel 11).  
+When using the 2.4GHz, we should use a different band from our neighbor to minimize interferences.  
+The router can usually assign automatically the optimal channel.
+
+2.4GHz and 5GHz frequency bands are unlicensed by the FCC (Federal Communication Commission).  
+They are dedicated to public use, so manufacturers can use them on any product.
+- the 2.4 GHz band is the **ISM Band** (Industrial, Scientific and Medical)
+- the 5 GHz band is the **U-NII Band** (Unlicensed National Information Infrastructure)
 
 
 ### Wireless Service Sets
 
-**IEEE 802.11** is the set of standards for wireless LAN commonly called Wi-Fi.
-
 A **service set** is a group of wireless network devices communicating with each other on a same LAN using the same AP.  
-A service set as a unique identifier called the SSID.
+A service set has a unique identifier called the SSID.
 
 There are multiple types of service sets :
 
@@ -523,21 +1103,19 @@ There are multiple types of service sets :
 - **ESS** (Extended Service Set) : physical subnet containing multiple APs communicating with each other to allow authenticated users to roam between them (for example in a hotel or an airport). 
 
 
-### Types of Networks
+### AP isolation
 
-- **PAN** (Personal Area Network) : very small network, usually a single room (USB, Bluetooth devices, IR, NFC...)
+AP isolation (or client isolation) is a technique to prevent mobile devices connected to an AP from communicating directly with each other.  
+AP isolation is enabled or disabled in the settings of the wireless APs or router.  
+It is often used in public Wi-fi networks or company guest networks.
 
-- **LAN** (Local Area Network) : uses switches and routers, usually connected with Ethernet
 
-- **SAN** (Storage Area Network) : dedicated high-speed network of storage devices providing access to large amount of data and allowing sharing data as if it were a drive attached to a server.
+### WPS (Wifi Protected Setup)
 
-- **WLAN** (Wireless LAN) : LAN with wireless access points and devices connecting to it.
-
-- **CAN** (Campus Area Network) : network connecting some LANs together, covering several buildings.
-
-- **MAN** (Metropolitan Area Network) : covering an entire city.
-
-- **WAN** (Wide Area Network) : global network connecting multiple location in the world, like the Internet.
+WPS allows to join a Wifi network with a PIN of a button press instead of the full passphrase.  
+It is very unsecure and should be disabled.  
+The 8-digit PIN is checked in 2 halves of 4 digits, making it easy to brute-force.  
+It just takes a few minutes to crack on a modern computer if no lockout after X failed attempts.
 
 
 ### WLC (Wireless LAN Controller)
@@ -555,7 +1133,7 @@ To communicate with the APs, a WLC uses one of :
 
 ### Internet of Things (IoT)
 
-System of mechanical or digital divices that have a unique ID and the ability to transfer data over a network without the need for human intervention.  
+System of mechanical or digital devices that have a unique ID and the ability to transfer data over a network without the need for human intervention.  
 This includes smart homes, heart monitor implants, animal bio-chip transponders, car sensors, drones...  
 IoT devices are used increasingly in enterprises to generate data and monitor the business more efficiently.  
 Usually IoT devices send data to an **IoT Gateway** (or "IoT Hub") that will send the data for processing to the cloud.
@@ -584,21 +1162,85 @@ IoT technologies include :
 - **ANT+** : wireless sensor network technology mainly used for health and activity trackers
 
 
-### Wifi 2.4GHz and 5GHz Bands
+### Wireless Site Survey
 
-Old routers use Wifi in the 2.4GHz frequency band, which covers a large range (entire house).  
-It causes interferences with other devices also using the same frequencies, like microwaves, cordless phones, Bluetooth devices...  
-It only offers 11 channels, and only 3 non-overlapping channels.
+A wireless site survey is the process of planning and designing a wireless network.  
+Its goal is to provide a wireless solution delivering the required coverage, data rates, roaming capability and QoS.
 
-Most modern routers are dual-band, so they can transmit and receive both in the 2.4GHz and in the 5GHz bands.  
-The 5GHz band is twice quicker (frequencies are twice higher) but it has shorter range and does not go through walls.  
-No other device uses these frequencies, so it  usually doesn't cause interferences.  
-It contains 25 non-overlapping channels.
+- **Information gathering** : scope of the network, apps, areas, device types to support...
+- **Pre-deployment site survey** : use live APs to check optimal distance and find interference sources
+- **Post-deployment sute survey** : confirm all works well and plan adjustments if needed
 
-A channel is a band of frequencies (usually around 20MHz wide) used for wireless communication.    
-2.4GHz routers have 11 channels, centered from 2412MHz (channel 1) to 2462MHz (channel 11).  
-When using the 2.4GHz, we should use a different band from our neighbor to minimize interferences.  
-The router can usually assign automatically the optimal channel.
+
+### TKIP (Temporal Key Integrity Protocol)
+
+TKIP is an encryption protocol part of **IEEE 802.11i** for wireless LAN designed to improve the security in WEP.  
+It is used in WPA and did not need any hardware upgrade to run, as it uses the same logic as WEP with a longer and changing key.  
+It uses a per-packet 128 bits key, dynamically generated for each packet, preventing classic WEP attack.
+
+TKIP is considered deprecated and is replaced by AES in WPA2, which is more secure and approved for governmental use.
+
+
+### WPA2 Authentication and Authorization
+
+#### WPA2-PSK (pre-shared key)
+
+This is the solution for home or small company networks.  
+A secret phrase is used to access the network, all users must know it.  
+It is not scalable to many users.
+
+#### WPA2-Enterprise (or WPA2-802.1X)
+
+This solution requires a RADIUS server on the network.
+
+**EAP** (Extensible Authentication Protocol) allows more complex authentication mechanism for RADIUS.  
+EAP has multiple flavors depending on the vendor :
+
+- **PEAP** (Protected EAP) co-created by Microsoft/Cisco/RSA.  
+  It allows user/password or domain membership authentication.  
+  A certificate is used to identify the RADIUS server to the client
+- **EAP-FAST** is Cisco-proprietary and simplifies PEAP to not use certificates.
+- **EAP-TLS** uses certificates both to identify the RADIUS server and the clients (all clients need a certificate).
+
+
+## Cellular Standards
+
+Cellular standards define the technologies for communication using mobile phones.  
+Geographical areas are split into cells with antennas where cells meet.
+
+#### 2G
+
+**GSM** (Global System for Mobile) is the original 2G technology developed in 1991.  
+It was initially created in Europe and now represents 90% of the market.  
+GSM phones allow to switch the SIM card and use another GSM device.  
+GSM uses multiplexing, so multiple users can communicate with a tower with the same set of frequencies.
+
+**CDMA** (Code Division Multiple Access) is the competing technology for 2G, only used in the US.  
+Instead of multiplexing, it uses a code for each call and the receiver side filters based on that code.  
+The 2 main CDMA-based carriers are Verizon and Sprint.  
+
+#### 3G
+
+Introduced in 1998, 3G improves 2G by increasing speed and allowing to send voice and data at the same time (2Mbs).  
+It was used for GPS, mobile television, VoD, video calls...  
+It allowed communication via smartphone apps instead of only SMS/MMS available with 2G.
+
+#### 4G
+
+4G merged the 2 different standards GSM and CMDA into a common standard.  
+It supports up to 150Mbs download speed.  
+**LTE-A** (Long Term Evolution - Advanced) improves this download rate to 300Mbs.
+
+#### 5G
+
+5G was released in 2020 and provides significant performance improvement using higher frequencies.  
+With up to 10Gbs speed, 5G allows efficient use of IoT.  
+4G devices cannot connect to 5G networks.
+
+5G covers 3 frequency ranges :
+- **lowband** : 250Mbs, very long range
+- **midband** : 900Mbs, good range (mostly used today)
+- **highband** : several Gbs, very small range
 
 
 
@@ -609,6 +1251,32 @@ The router can usually assign automatically the optimal channel.
 - Configure routing in each router, either manually or dynamically (with RIPv2 for ex).
 - Configure the DHCP server to allow machines to dynamically receive an IP address if needed
 - Configure a NAT instance (dedicated NAT instance or router)
+
+
+## Networking Diagnostic Steps
+
+When a host cannot access a distant server through the network :
+- **ping the loopback address** : `ping 127.0.0.1`  
+If OK, then the IP stack is initialized, else need to reinstall TCP/IP
+- **ping the localhost IP address** : `ping <localhost IP given by ipconfig>`  
+If OK, the NIC (Network Interface Card) is working, else issue with the NIC
+- **ping the default gateway IP address** :`ping <gateway IP given by ipconfig>`  
+If OK, the NIC can communicate on the local network, else physical issue between host and router.
+- **ping the remote server IP address** : `ping <target server IP>`  
+If OK, IP communication works, else issue between router and remote server.  
+- **ping the remote server machine name** : `ping <target server name>`  
+If OK, then the network is correctly configured, else DNS issue converting the name to IP address
+
+
+## 7-steps Network Troubleshooting
+
+1 - Identify the problem  
+2 - Establish a theory of probable cause  
+3 - Test the theory  
+4 - Establish a plan of action and identify its potential effects  
+5 - Implement the plan or escalate  
+6 - Verify full system functionality  
+7 - Document findings, actions and outcome
 
 
 ## IDS / IPS (Intrusion Detection/Prevention System)
@@ -660,6 +1328,16 @@ It simplifies and centralizes the management of VPN connections, to allow access
 It is placed at the forefront of the network, next to the firewall.  
 It comes with dedicated software to support VPN connections.
 
+### Split Tunnelling
+
+Split tunnelling is a functionality of a VPN allowing to use the VPN only for a part of the traffic.  
+It allows access to the local network without going through the VPN.
+
+Split tunnelling can be specified :
+- by application : use the VPN, except for a list of apps
+- by URL : use the VPN except for a list of URLs
+- by inverse split tunnelling : use the VPN only for a list of apps and URLs
+
 
 ## RADIUS (Remote Access Dial-In User Service)
 
@@ -669,8 +1347,59 @@ It is part of the **802.1x** standard.
 RADIUS clients are networking devices that need to authenticate users (VPN concentrator, router, switch...).  
 A RADIUS server is a process running on a UNIX or Windows server that maintains user profiles in a central database.  
 
-RADIUS clients contact the RADIUS server using the RADIUS protocol everytime they need to authenticate a user.  
+RADIUS clients contact the RADIUS server using the RADIUS protocol everytime they need to authenticate a user.
+
+If users are already setup in Active Directory, we can enable **LDAP** and configure the RADIUS server to be a client using the LDAP server, so users are setup only in Active Directory
+
 All RADIUS servers have **AAA capabilities** (Authentication / Authorization / Accounting).
+
+
+## TACACS+ (Terminal Access Controller Access Control System Plus)
+
+TACACS+ is another AAA protocol used to control access to network devices and services.  
+It is the main alternative to RADIUS, and was developped by Cisco so is popular in Cisco networks.  
+It can perform authentication on behalf of APs, RAS servers (Remote Access Service), 802.1x enabled switches...
+
+TACACS+ uses TCP, while RADIUS uses UDP.  
+It separates authentication and authorization, offering more granular control on command-level authorization.  
+It is regarded as more stable and secure than RADIUS.
+
+
+## Kerberos
+
+Kerberos is an AAA protocol developed by the MIT offering **SSO** (Single Sign-On) to centralize authentication.  
+It is used a lot in enterprise environments, especially when using Microsoft Active Directory.
+
+Kerberos relies on a **KDC** (Key Distribution Center) that is trusted and shares a key with all services on the network.  
+The KDC has 2 roles :
+- **Authentication Service** : receive the user/password and return a **TGT** (Ticket Granting Ticket)
+- **Ticket Granting Service** : receive a TGT and return a ticket for a specific application
+
+The user/password are never sent to any app, instead we send the TGT provided by the KDC authentication service.
+
+
+## NAC (Network Access Control)
+
+NAC is an approach to computer security restricting unauthorized users and devices from gaining access to a network.  
+It defines a policy to secure access to the network by devices when they initially try to join the network.  
+A machine is not allowed to access the network until it is compliant (credentials, config, anti-virus, updates...).
+
+- **IEEE 802.1X** : standard protocol for NAC providing an authentication mechanism for devices to attach to a LAN/WLAN.
+  - the **supplicant** is the external machine trying to access the network
+  - the **authenticator** (switch or AP) is the link between clients and the network, communicating with the auth server.
+  - the **auth server** is the trusted server in the network that can respond to network access requests, it is a AAA server (RADIUS for example)
+
+
+- **Captive portals** : before being granted access to the network, clients first reach a page requesting to accept a policy or identify themselves.  
+These are used on wireless APs in cafes, hotels, airports...  
+They are implemented using HTTP, ICMP or DNS Redirect.
+
+
+## SIEM (System Information and Event Management)
+
+SIEM are software and services providing real-time view and analysis of the activity on networks or machines.  
+They can receive and monitor metrics and data from network hardware and applications.  
+They generate alerts and notifications on potential issues for continuous monitoring.
 
 
 ## VoIP (Voice over IP)
@@ -690,6 +1419,29 @@ Otherwise it is an **off-net call**, the IP packets are converted to a regular v
 A **VoIP gateway** is used to connect the internal VoIP network (with the PBX) with the outside PSTN.  
 
 
+## VDI and DaaS
+
+**VDI** (Virtual Desktop Infrastructure) is the use of virtual machines to provide and manage virtual desktops.  
+Virtual desktops are hosted on a centralized server and deployed on request.  
+They can be accessed from any location using a dedicated software-based gateway.  
+VDIs are managed internally by a company using them.  
+**Persistent VDIs** are customizable with apps/files/settings saved on restart (similar to physical desktops).  
+**Non-persistent VDIs** do not save changes so all desktops are the same at startup. 
+
+**DaaS** (Desktop as a Service) is a virtualization technique similar to VDI but provided by an external vendor.  
+With DaaS, all desktops are entirely on the cloud, for example AWS WorkSpace.
+
+
+## VNC (Virtual Network Computing)
+
+VNC is a graphical desktop sharing technology allowing to remotely control a computer, similar to RDP.  
+VNC is platform independent (RDP has clients for MacOS and Linux but can only control a Windows machine).  
+
+VNC uses the **RFB** (Remote FrameBuffer) protocol framework.  
+RFB defines how the graphical representation of the desktop must be sent to the VNC client, and how the user input from
+the client should be sent back to the remote server. 
+
+
 ## Hypervisor
 
 An hypervisor is a software for the creation and management of virtual machines running an OS.  
@@ -704,8 +1456,246 @@ There are 2 types of hypervisor :
 With the hypervisor, we can create virtual machines, virtual hard disks, virtual switches...
 
 
+## Network Storage
+
+Network storage is useful to store large amount of data independently of a machine.  
+For example a VM can be created in network storage, so in case of hypervisor failure it can be restarted from another hypervisor.
+
+### NAS (Network-Attached Storage)
+
+NAS is a **file-level** data storage server providing data access to its files to machines in its network.  
+It provides file access via network file-sharing protocols like NFS, exposing a shared network drive.  
+NAS servers do not have a keyboard or a display, they are managed via a browser over the network.  
+A NAS server contains one or more hard-disk drives, often arranged into logical redundant storage (RAID).
+
+A NAS server is commonly used in homes or small businesses to have a central redundant storage device shared by multiple machines.
+
+### SAN (Storage Area Network)
+
+A SAN is a specialized high-speed network that provides **block-level** access to storage.  
+It is composed of interconnected hosts, switches and storage devices.  
+It presents storage devices to a host so the storage appears as a local drive (not a shared network drive like NAS).  
+
+A SAN can use multiple protocols :
+- iSCSI (Internet Small Computer System Interface) : encapsulates SCSI commands within IP packets over the network
+- FC (Fiber Channel) : higher speed but requires a dedicated FC network (not IP compatible)
 
 
+## WAN (Wide Area Network)
+
+A WAN connects networks across locations.  
+Lease providers lend some cables and network infrastructure to communicate across offices or countries.
+
+Transmission methods can be :
+- **copper cables** : low cost, mid-range bandwidth of 10Gbs (Cat6A)
+- **fiber optics** : high cost, high bandwidth
+- **satellite** : low/mid cost, low bandwidth
+- **WISP** (Wireless Internet Service Provider) : low/mid cost, mid-range bandwidth with interferences  
+  renting towers in cities, pointing dishes to a given point and beaming a laser to that point.
 
 
+### MPLS (Multi-Process Label Switching)
+
+MPLS is a routing technique in telecommunication networks that directs data from one node to the next based on short path labels rather than long network addresses.  
+It is one of the most popular WAN protocols.
+
+MPLS can encapsulate packets of various protocols (Ethernet, ATM, DSL...).  
+MPLS only uses the label in the MPLS header, no need to examine packets or to use routing tables.  
+MPLS is regarded as a level 2.5 protocol.  
+
+<p align="center">
+<img alt="MPLS" src="../images/mpls.png">
+</p>
+
+An MPLS server changes the label to the next label before sending the packet to the next MPLS server.  
+LER (Label Edge Router) are the entrance/exit of the MPLS domain.  
+LSR (Label Switch Router) are servers inside the domain routing packets.
+
+
+### DSL (Digital Subscriber Line)
+
+DSL is a WAN technology providing Internet access via the telephone line.  
+It uses a higher frequency than voice (10kHz VS 300Hz for voice) so faster and can be used at the same time as voice.  
+
+DSL requires good quality phone lines and proximity to a central office to work well.  
+DSL uses a modem connected to the phone wall jack.  
+The modem sends its data to a **DSLAM** (DSL Access Multiplier) acting as a central hub.  
+
+- **SDSL** (Symetric DSL) has the same download and upload bandwidths.  
+- **ADSL** (Asymetric DSL) has more download bandwidth than upload.  
+- **VDSL** (Very high speed DSL) offers higher speeds than DSL : 52Mbs download and 16Mbs upload  
+- **RADSL** (Rate Adaptive DSL) can adjust its transmission speed based on the line condition
+
+
+### WAN Types
+
+- **Dedicated Lease Line** : connect 2 sides via a connection not shared with other customers (for ex T1, T3, E1, E3)
+- **Circuit-switched connection** : a dedicated connection is made only when needed (the PSTN is the most well-known circuit-switched WAN)
+- **Packet-switched connection** : most common WAN type today, shared bandwidth between customers, use SLA to guarantee bandwidth (MPLS, Frame Relay, 4G/5G...)
+
+
+## Compliance and Operations
+
+**MTTR** (Mean Time To Recovery) : how long does it take a system to be back up after a failure ?
+
+**MTBF** (Mean Time Before Failure) : how long does it take before a system fails ?
+
+**SLA** (Service Level Agreement) : Commitment for uptime and connectivity
+
+
+## Device Hardening
+
+Hardening is the action to take some common sense security measures to protect a device :  
+- change credentials
+- password policy
+- upgrade firmwares
+- patch/update libraries and softwares
+- use secure protocols
+- disable unused ports
+- use key rotation
+- kill unnecessary services (ie. Telnet)
+- ...
+
+For example on a Windows server, we can go to "Services" and stop/disable all Remote Desktop services.
+
+
+### Honeypot and Honeynet
+
+Those are decoy servers and networks with intentional security flaws to attract attacks.  
+They keep attackers away from the real routers and servers, and allow to analyze the attacks (types, IPs, ...)
+
+
+### Data Loss Prevention (DLP)
+
+DLP is a strategy to prevent sensitive data to leak outside the corporate network.  
+It includes content inspection and contextual analysis of emails, DMs, data at rest on the cloud... 
+
+
+### Defense in Depth
+
+Defense in Depth is a strategy leveraging multiple security measures to protect the organization's assets.  
+If one line of defense is compromised, others are in place as backup.
+
+It includes security at multiple levels :
+- **physical** : locks, ID cards, security guards...
+- **technical** : firewalls, passwords, encryption...
+- **administrative** : least privilege, role-based policy...
+
+
+## UPS (Uninterruptible Power Supply)
+
+A UPS is a device with a battery attached that can supply power to devices in case of a power outage.  
+
+The **UPS runtime** is the amount of time the UPS can supply power at a given power level.  
+The **UPS capacity** is the max amount of power the UPS can supply at a given time.  
+
+Some UPS can perform **automated graceful shutdown** when they detect a power outage.  
+They can shutdown servers in a pre-determined order to avoid data loss and maintain data integrity.
+
+
+## NetFlow
+
+NetFlow is a feature on Cisco routers and L3-switches to collect and analyze IP network traffic data.  
+NetFlow-enabled routers collect IP statistics and later export them as NetFlow records to a **NetFlow collector**.  
+The NetFlow collector stores and pre-processes flow data received from NetFlow exporters.
+
+The network admins can use an analysis application to analyze NetFlow data for intrusion detection, traffic profiling...
+
+
+### MDF and IDF
+
+The MDF (Main Distribution Frame) is the primary hub or demarcation point between the internal network and the public Internet.  
+It is located in the data center, and all the traffic of the company goes through it.
+
+The IDFs (Intermediate Distribution Frame) are auxiliaries to the MDF and are directly connected to the MDF.  
+There may be one IDF per floor, and each workstation of that floor is connected to it.
+
+
+## 3-Planes Network Architecture
+
+- **Data Plane** : carries user traffic (also called forwarding plane)
+- **Control Plane** : carries signaling traffic from and to routers, allowing to build routing tables 
+- **Management Plane** : for router administration
+
+## Cisco 3-Tiers Data Center Network Model
+
+- **Core layer** : backbone of the network, biggest and fastest routers
+- **Distribution layer** : middle layer implementing security / access control / redundancy
+- **Access layer** : access switches connected to end devices (computers, printers, servers...)
+
+## 2-Tiers Spine/Leaf Data Center Network Model
+
+This model is used for smaller data center for simplicity and cost reduction.
+
+- **Spine layer** : set of core switches interconnected in a mesh topology
+- **Leaf layer** : access switches, each connected to every core switch
+
+
+## SDN (Software-Defined Networking)
+
+SDN is an approach to network management that allows to dynamicly and programmatically configure the networking devices.  
+The control plane is no longer managed on each device individually, but centralized through a **SDN controller** that
+controls the config of all other devices.  
+SDN adds an **application plane** above the control plane : applications can tell the SDN controller their requirements
+via an API.
+
+
+## SCADA System (Supervisory Control and Data Acquisition)
+
+SCADA is a control system architecture for industrial networks.  
+It manages computers, machines, GUI for machine data supervision, sensors, data acquisition servers...
+
+
+## BOOTP (Bootstrap Protocol)
+
+BOOTP is the ancestor of DHCP.  
+It is a protocol to assign dynamically an IP address over the network.  
+To assign an IP address, BOOTP looks for the entry with a given MAC address in a reference database.  
+BOOTP required manual assignment of an IP for each MAC address in the reference database.
+
+
+## Multicast IPv4 Traffic
+
+Multicast traffic uses specific multicast IP addresses, from 224.0.0.0 to 239.255.255.255.   
+A multicast source (video camera, streaming source...) can send traffic to a multicast address.
+
+Clients can register to a multicast group using **IGMP** (Internet Group Management Protocol).  
+IGMP lets routers know which interface has multicast receivers, and allows clients to join a multicast group.  
+IGMP is encapsulated directly in an IP message (no transport layer) just like ICMP.  
+
+The routing of multicast traffic uses **PIM** (Protocol-Independent Multicast).  
+PIM is a protocol that helps routers determine the most efficient path to deliver multicast traffic to members of a multicast group.
+
+
+## CATV (Cable TV / Community Antenna TV)
+
+CATV is a service that delivers television programming to subscribers' homes via coaxial cables.  
+It uses fiber optic on provider's end and coaxial cable on customer's end.  
+The customer uses a coaxial cable to plug either a TV or a cable modem (DOCSIS modem) to the cable service.  
+
+Most ISPs offer cable television, Internet access and phone services over the same CATV lines.  
+
+
+## T-Carrier
+
+T-Carrier system are used by ISPs to provide Internet to homes and companies.  
+It is old and getting replaced by faster technologies like fiber optics, but still used in some countries.  
+
+The most popular T-carrier line types are :
+- **T1** : 1.544Mbs debit and 24 channels
+- **T3** : combination of 28 T1 lines, 44Mbs and 24x28 channels
+
+
+### Useful CLI Tools
+
+- **ping** : check if a machine is responding
+- **ipconfig** : check IP related info (IP address, MAC address, default gateway...)
+- **arp** : view and edit the ARP table (IP/MAC mapping)
+- **nslookup / dig** : query DNS records (get domain name IP, reverse DNS, MX server...)
+- **traceroute / pathping** : check the path in the network to a given device
+- **route** : edit the route table (by default, all traffic goes to the default gateway)
+- **iptables** : firewall-like command on Linux, can show the number of received/sent packets or block access to a given IP
+- **netstat** : show open connections to and from a server 
+- **tcpdump** : packet sniffer in terminal for Linux (similar to WireShark but without GUI)
+- **nmap** : discover devices and open ports on a network
 
