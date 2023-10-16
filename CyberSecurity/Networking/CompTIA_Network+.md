@@ -46,37 +46,57 @@ It is a concise version of the OSI model with only 4 layers.
 
 ## Protocols
 
-|  Protocol  |   Port(s)   |                 Name                  | Layer | Role                                                                                                                                                                                                                                                |
-|:----------:|:-----------:|:-------------------------------------:|:-----:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|    STP     |      -      |        Spanning Tree Protocol         |   2   | Build a loop-free logical topology of an Ethernet network to decide switch ports to set to active                                                                                                                                                   |
-|     IP     |      -      |           Internet Protocol           |   3   | Use an IP address (IPv4 or IPv6) for the source and destination of each packet to decide the best route through the networks.                                                                                                                       |
-|    ICMP    |      -      |   Internet Control Message Protocol   |   3   | Transmission error control, sent by a host when a transmission error occurred.<br/>An ICMP packet is wrapped in an IP packet (it has an IP header).                                                                                                 |
-|    TCP     |      -      |     Transmission Control Protocol     |   4   | Connection oriented reliable transport protocol that guarantees reception.<br/> It waits for a reception ACK of each segment and resends them if no ACK is received.<br/>It is reliable but has an overhead due to the connection and ACK mechanism. |
-|    UDP     |      -      |        User Datagram Protocol         |   4   | Connection-less transport protocol with no ACK and no guarantee of reception.<br/>It is less reliable than TCP but has no overhead (used for streaming, video games...).                                                                            |
-|    HTTP    |     80      |     Hyper Text Transfer Protocol      |   7   | Client/server communication between web browsers and web servers on the Internet.                                                                                                                                                                   |
-|   HTTPS    |     443     |              HTTP Secure              |   7   | HTTP variant with SSL/TLS encryption of the communication between the browser and the server.                                                                                                                                                       |
-|    DNS     |     53      |          Domain Name System           |   7   | Get the IP for a given hostname.<br/>It uses UDP for its transport layer so DNS servers do not need to keep connections.                                                                                                                            |
-|   Telnet   |     23      |           Teletype Network            |   7   | Open a virtual terminal TCP connection to a remote machine.<br/>Developed in 1969 and deprecated for security reasons, replaced by SSH.                                                                                                             |
-|    SSH     |     22      |             Secure Shell              |   7   | Open a secure channel to a remote host over an unsecure network.<br/>The traffic is encrypted, and SSH supports authentication with a password or with public/private keys.                                                                         |
-|    FTP     |   20 / 21   |        File Transfer Protocol         |   7   | Transfer files from a server to a client on a network.<br/>Port 20 is used for data transfer (upload or download).<br/>Port 21 is used for control (commands and responses).                                                                        |
-|    TFTP    |     69      |              Trivial FTP              |   7   | Simpler version of FTP with no authentication, no connection and basic error handling.<br/>Convenient for simple file transfer with no security concern.                                                                                            |
-|    SFTP    |     22      |                SSH FTP                |   7   | Secure variant of FTP using SSH for encryption (so the traffic goes to SSH port 22)                                                                                                                                                                 |
-|    FTPS    |  989 / 990  |           FTP over SSL/TLS            |   7   | Secure variant of FTP using a SSL/TLS encryption layer above normal FTP.<br/>Port 989 is used for data transfer.<br/>Port 990 is used for control.                                                                                                  |
-|    DHCP    |   67 / 68   |  Dynamic Host Configuration Protocol  |   7   | Automatically assign an available IP to machines joining a network.<br/>Port 67 is used by the DHCP server.<br/>Port 68 is used by DHCP clients.                                                                                                    |
-|    SMTP    |  25 / 587   |     Simple Mail Transfer Protocol     |   7   | Send emails to a mail server.<br/>The secure version using TLS encryption uses port 587.                                                                                                                                                            |
-|    IMAP    |  143 / 993  |   Internet Message Access Protocol    |   7   | Used by a mail client to retrieve messages from a mail server, replacing POP3.<br/>The secure version using SSL uses port 993.                                                                                                                      |
-|    POP3    |  110 / 995  |         Post Office Protocol          |   7   | Alternative to IMAP to retrieve messages from a mail server.<br/>The secure version using SSL uses port 995.                                                                                                                                        |
-|    RDP     |    3389     |        Remote Desktop Protocol        |   7   | Microsoft-proprietary protocol to provide a GUI to connect to a remote machine.</br>Client and server exist for Linux and MacOS as well.                                                                                                            |
-|    NTP     |     123     |         Network Time Protocol         |   7   | Use UDP for clock synchronization between machines over a network.                                                                                                                                                                                  |
-|    SIP     | 5060 / 5061 |      Session Initiation Protocol      |   7   | Voice + messaging + video real-time sessions.                                                                                                                                                                                                       |
-|    LDAP    |  389 / 636  | Lightweight Directory Access Protocol |   7   | Access and maintain distributed directory information services.<br/>The secure version LDAPS with SSL encryption uses port 636.                                                                                                                     |
-|    SNMP    |  161 / 162  |  Simple Network Management Protocol   |   7   | Collect and organize info about managed devices on the network (watchdog of the network).                                                                                                                                                           |
-|   Syslog   | 514 / 6514  |        System Logging Protocol        |   7   | Centralize, persist and manage logs of networking devices in a central place                                                                                                                                                                        |
-|   MySQL    |    3306     |            MySQL Database             |   7   | MySQL database                                                                                                                                                                                                                                      |
-| SQL Server |    1433     |          SQL Server database          |   7   | Microsoft SQL server database                                                                                                                                                                                                                       |
-|   SQLnet   |    1521     |            Oracle database            |   7   | Oracle database                                                                                                                                                                                                                                     |
-|  NetBIOS   |     139     |   Network Basic Input/Output System   |   7   | Old protocol for Windows-based networks for file and printer sharing.                                                                                                                                                                               |
-|    SMB     |     445     |         Server Message Block          |   7   | Protocol used for file and printer sharing in modern Windows networks (better security and encryption than NetBIOS)                                                                                                                                 |
+|   Protocol   |   Port(s)   |  TCP / UDP  |                 Name                     | Layer | Role                                                                                                                                                                                                                                                |
+|:------------:|:-----------:|:-----------:|:----------------------------------------:|:-----:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|      STP     |      -      |      -      |        Spanning Tree Protocol            |   2   | Build a loop-free logical topology of an Ethernet network to decide switch ports to set to active                                                                                                                                                   |
+|       IP     |      -      |      -      |            Internet Protocol             |   3   | Use an IP address (IPv4 or IPv6) for the source and destination of each packet to decide the best route through the networks.                                                                                                                       |
+|      ICMP    |      -      |      -      |    Internet Control Message Protocol     |   3   | Transmission error control, sent by a host when a transmission error occurred.<br/>An ICMP packet is wrapped in an IP packet (it has an IP header).                                                                                                 |
+|      TCP     |      -      |      -      |     Transmission Control Protocol        |   4   | Connection oriented reliable transport protocol that guarantees reception.<br/> It waits for a reception ACK of each segment and resends them if no ACK is received.<br/>It is reliable but has an overhead due to the connection and ACK mechanism. |
+|      UDP     |      -      |      -      |        User Datagram Protocol            |   4   | Connection-less transport protocol with no ACK and no guarantee of reception.<br/>It is less reliable than TCP but has no overhead (used for streaming, video games...).                                                                            |
+|      FTP     |   20 / 21   |     TCP     |        File Transfer Protocol            |   7   | Transfer files from a server to a client on a network.<br/>Port 20 is used for data transfer (upload or download).<br/>Port 21 is used for control (commands and responses).                                                                        |
+|      SSH     |     22      |  TCP / UDP  |             Secure Shell                 |   7   | Open a secure channel to a remote host over an unsecure network.<br/>The traffic is encrypted, and SSH supports authentication with a password or with public/private keys.                                                                         |
+|      SFTP    |     22      |     TCP     |                SSH FTP                   |   7   | Secure variant of FTP using SSH for encryption (so the traffic goes to SSH port 22)                                                                                                                                                                 |
+|     Telnet   |     23      |  TCP / UDP  |           Teletype Network               |   7   | Open a virtual terminal TCP or UDP connection to a remote machine.<br/>Developed in 1969 and deprecated for security reasons, replaced by SSH.                                                                                                      |
+|      SMTP    |     25      |     TCP     |     Simple Mail Transfer Protocol        |   7   | Send emails to a mail server.<br/>The secure version using TLS encryption uses port 587.                                                                                                                                                            |
+|      DNS     |     53      |  TCP / UDP  |          Domain Name System              |   7   | Get the IP for a given hostname.<br/>It uses UDP for its transport layer so DNS servers do not need to keep connections.                                                                                                                            |
+|      DHCP    |   67 / 68   |     TCP     |  Dynamic Host Configuration Protocol     |   7   | Automatically assign an available IP to machines joining a network.<br/>Port 67 is used by the DHCP server.<br/>Port 68 is used by DHCP clients.                                                                                                    |
+|      TFTP    |     69      |     UDP     |              Trivial FTP                 |   7   | Simpler version of FTP over UDP with no authentication, no connection and basic error handling.<br/>Convenient for simple file transfer with no security concern.                                                                                   |
+|      HTTP    |     80      |     TCP     |     Hyper Text Transfer Protocol         |   7   | Client/server communication between web browsers and web servers on the Internet.                                                                                                                                                                   |
+|    Kerberos  |     88      |  TCP / UDP  |            Kerberos                      |   7   | Network authentication using a ticketing system inside a Windows domain (both UDP and TCP)                                                                                                                                                          |
+|      POP3    |     110     |     TCP     |         Post Office Protocol             |   7   | Alternative to IMAP to retrieve messages from a mail server.<br/>The secure version using SSL uses port 995.                                                                                                                                        |
+|      NNTP    |     119     |     TCP     |    Network News Transfer Protocol        |   7   | Protocol to read and post Usenet news articles between news servers, largely replaced by web forums.                                                                          |
+|      NTP     |     123     |     UDP     |         Network Time Protocol            |   7   | Use UDP for clock synchronization between machines over a network.                                                                                                                                                                                  |
+|      RPC     |     135     |  TCP / UDP  |         Remote Procedure Call            |   7   | Protocol allowing a program to execute code or call functions on another remote computer or server, as if they were local procedures or functions.<br/>It uses both UDP and TCP.                                                                    |
+|    NetBIOS   |   137-139   |  TCP / UDP  |   Network Basic Input/Output System      |   7   | Old protocol for Windows-based networks for file and printer sharing.                                                                                                                                                                               |
+|      IMAP    |     143     |     TCP     |   Internet Message Access Protocol       |   7   | Used by a mail client to retrieve messages from a mail server, replacing POP3.<br/>The secure version using SSL uses port 993.                                                                                                                      |
+|      SNMP    |  161 / 162  |     UDP     |  Simple Network Management Protocol      |   7   | Collect and organize info about managed devices on the network (watchdog of the network) using UDP.<br/>SNMP uses port 161 and SNMP traps use port 162.                                                                                             |
+|      LDAP    |     389     |  TCP / UDP  | Lightweight Directory Access Protocol    |   7   | Access and maintain distributed directory information services.<br/>The secure version LDAPS with SSL encryption uses port 636.                                                                                                                     |
+|     HTTPS    |     443     |     TCP     |              HTTP Secure                 |   7   | HTTP variant with SSL/TLS encryption of the communication between the browser and the server.                                                                                                                                                       |
+|      SMB     |     445     |     TCP     |         Server Message Block             |   7   | Protocol used for file and printer sharing in modern Windows networks (better security and encryption than NetBIOS)                                                                                                                                 |
+|     Syslog   |     514     |     UDP     |        System Logging Protocol           |   7   | Centralize, persist and manage logs of networking devices in a central place                                                                                                                                                                        |
+|    SMTP-SSL  |     587     |     TCP     |         SMTP over SSL/TLS                |   7   | Secure version of SMTP using SSL/TLS encryption.                                                                                                                                                          |
+|    LDAP-SSL  |     636     |  TCP / UDP  |        LDAP over SSL/TLS                 |   7   | Secure version of LDAP using SSL/TLS encryption.                    |
+|     iSCSI    |     860     |  TCP / UDP  | Internet Small Computer System Interface |   7   | Protocol linking data storage facilities over IP.                     |
+|      FTPS    |  989 / 990  |     TCP     |           FTP over SSL/TLS               |   7   | Secure variant of FTP using a SSL/TLS encryption layer above normal FTP.<br/>Port 989 is used for data transfer.<br/>Port 990 is used for control.                                                                                                  |
+|    IMAP-SSL  |     993     |     TCP     |           IMAP over SSL/TLS              |   7   | Secure version of IMAP using SSL/TLS for encryption.                                                                                                                                              |
+|    POP3-SSL  |     995     |     TCP     |           POP3 over SSL/TLS              |   7   | Secure version of POP3 using SSL/TLS encryption.                                                    |
+|   SQL Server |    1433     |     TCP     |          SQL Server database             |   7   | Microsoft SQL server database                                                                                                                                                                                                                       |
+|     SQLnet   |    1521     |     TCP     |            Oracle database               |   7   | Oracle database                                                                                                                                                                                                                                     |
+|     L2TP     |    1701     |     UDP     |       Layer 2 Tunnel Protocol            |   7   | Underlying VPN protocol with no inherent security                                                                                                                                                                                                    |
+|     PPTP     |    1723     |  TCP / UDP  |    Point to Point Tunnel Protocol        |   7   | Underlying VPN protocol with built-in security                                                                                                                                                                                                    |
+|     Radius   | 1812 / 1813 |     UDP     |    Remote Auth Dial-In User Service      |   7   | Protocol allowing authentication and authorization (1812) and accounting (1813).<br/>An alternative set of ports for RADIUS are 1645 / 1646.                                                                                                                                                                     |
+|     FCIP     |    3225     |  TCP / UDP  |           Fiber Channel IP               |   7   | Protocol to encapsulate Fiber Channel frames inside TCP/IP packets                                                                                                                                                                                   |
+| iSCSI Target |    3260     |     TCP     |        Target of iSCSI message           |   7   | Listening port for iSCSI targeted devices when linking data storage facilities over IP.     |
+|   MySQL      |    3306     |     TCP     |            MySQL Database                |   7   | MySQL database                                                                                                                                                                                                                                      |
+|    RDP       |    3389     |  TCP / UDP  |        Remote Desktop Protocol           |   7   | Microsoft-proprietary protocol to provide a GUI to connect to a remote machine.</br>Client and server exist for Linux and MacOS as well.                                                                                                            |
+|  Diameter    |    3868     |     TCP     |               Diameter                   |   7   | More advanced AAA protocol that is a replacement for RADIUS.                                                                                                                                                                      |
+|    SIP       | 5060 / 5061 |     TCP     |      Session Initiation Protocol         |   7   | Voice + messaging + video real-time sessions.                                                                                                                                                                                                       |
+| Syslog-SSL   |    6514     |     TCP     |        Syslog over SSL/TLS               |   7   | Secure version of Syslog using SSL/TLS encryption, and TCP instead of UDP.           |
+
+Ports can take values from 0 to 65535, and are split in 3 groups :
+- **well-known ports** : 0 to 1023, assigned to very common protocols by the IANA (for ex 23 for Telnet)
+- **registered ports** : 1024 to 49151, registered to IANA for proprietary protocols (for ex 3389 for RDP)
+- **dynamic ports** : 49152 to 65535, used freely with no registration for outbound ports when reaching out to a server
 
 
 ### Syslog
@@ -1028,7 +1048,8 @@ A layer 3 switch is more expensive than a layer 2 switch but is easier to setup 
 
 ### DMZ (Demilitarized Zone)  
 
-A DMZ, or **screen subnet**, is a subnet containing all publicly available servers (web, FTP, email relay...).
+A DMZ, or **screen subnet**, is a subnet containing all publicly available servers (web, FTP, email relay...).  
+The DMZ separates the internal network from the Internet.
 
 It has 2 routers :
 - the **exterior router** between the DMZ and the outside world
@@ -1303,14 +1324,16 @@ There are **host-based IDS and IPS** (HIDS and HIPS) that monitor and analyze th
 
 A **forward proxy server** is a device that sends queries on behalf of its client machines.  
 Instead of sending their traffic to the Internet, clients send the traffic to the proxy server.  
+**Hide.me** and **ProxySite** are 2 popular proxy services.
 
 Proxy servers have multiple benefits :
 - **anonymity** : the IP of the client is no longer in the queries on the Internet, only the proxy knows it
 - **content filtering** : can prevent employees or children to access specific sites
 - **speed** : the frequently accessed resources can be cached to speed up retrieval
+- **bypass geographic restrictions** : queries are run from the location of the proxy
 - **activity logging** : allows to keep track of what websites were visited
 
-A proxy server does not encrypt the data sent to the Internet, this is done by a VPN.
+A proxy server does not encrypt the data sent to the Internet (unlike a VPN).
 
 A **reverse proxy server** intercepts traffic coming into the network.  
 It forwards the traffic from the Internet to specific servers inside the network.  
@@ -1543,28 +1566,6 @@ The modem sends its data to a **DSLAM** (DSL Access Multiplier) acting as a cent
 **SLA** (Service Level Agreement) : Commitment for uptime and connectivity
 
 
-## Device Hardening
-
-Hardening is the action to take some common sense security measures to protect a device :  
-- change credentials
-- password policy
-- upgrade firmwares
-- patch/update libraries and softwares
-- use secure protocols
-- disable unused ports
-- use key rotation
-- kill unnecessary services (ie. Telnet)
-- ...
-
-For example on a Windows server, we can go to "Services" and stop/disable all Remote Desktop services.
-
-
-### Honeypot and Honeynet
-
-Those are decoy servers and networks with intentional security flaws to attract attacks.  
-They keep attackers away from the real routers and servers, and allow to analyze the attacks (types, IPs, ...)
-
-
 ### Data Loss Prevention (DLP)
 
 DLP is a strategy to prevent sensitive data to leak outside the corporate network.  
@@ -1579,7 +1580,7 @@ If one line of defense is compromised, others are in place as backup.
 It includes security at multiple levels :
 - **physical** : locks, ID cards, security guards...
 - **technical** : firewalls, passwords, encryption...
-- **administrative** : least privilege, role-based policy...
+- **administrative** : least privilege, role-based policy, security awareness trainings...
 
 
 ## UPS (Uninterruptible Power Supply)
@@ -1689,13 +1690,27 @@ The most popular T-carrier line types are :
 ### Useful CLI Tools
 
 - **ping** : check if a machine is responding
+
 - **ipconfig** : check IP related info (IP address, MAC address, default gateway...)
+
 - **arp** : view and edit the ARP table (IP/MAC mapping)
+
 - **nslookup / dig** : query DNS records (get domain name IP, reverse DNS, MX server...)
+
 - **traceroute / pathping** : check the path in the network to a given device
+
 - **route** : edit the route table (by default, all traffic goes to the default gateway)
+
 - **iptables** : firewall-like command on Linux, can show the number of received/sent packets or block access to a given IP
+
 - **netstat** : show open connections to and from a server 
+
 - **tcpdump** : packet sniffer in terminal for Linux (similar to WireShark but without GUI)
+
 - **nmap** : discover devices and open ports on a network
+
+- **curl** : send a query to an URL and receive the response, support many protocols (HTTP, HTTPS, FTP, SFTP, SCP...)
+```commandline
+curl --data "<QUERY BODY>" <QUERY_URL>
+```
 

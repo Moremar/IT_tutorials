@@ -3,9 +3,10 @@
 
 ## NMAP (Network Mapper)
 
-NMAP is a network scanner used to discover machines on a network, scan them for open ports and detect the version of programs running on these ports.
+NMAP is a network scanner used to discover machines on a network.  
+NMAP can scan them for open ports and detect the version of programs running on these ports.
 
-NMAP default port scan sends packets to the target machines on every port, which can be intrusive.  
+NMAP's default port scan sends packets to the target machines on every port, which can be intrusive.  
 It may be detected by the IDS of the target, and further requests may be blocked by their firewall.  
 NMAP comes with various options to customize the type of scan, with different stealth levels.
 
@@ -49,6 +50,14 @@ nmap 192.168.0.123 -D 192.168.0.1,192.168.0.3   # use decoys to spoof the source
                                      # should use live decoys that do not look suspicious to the target
 nmap 192.168.0.123 -g 53             # use a specific source port, should use trusted port numbers like 53 (DNS), 20 (FTP), 67 (DHCP) or 88 (Kerberos)
 ```
+
+## WireShark
+
+WireShark is an open-source network packet analyzer offering a GUI to capture, analyze and load network packets.  
+
+WireShark was first released in 1998 under the name "Ethereal" and renamed to "WireShark" in 2006.  
+Many people contributed to it to add support for more protocols.  
+In 2023, it moved to the WireShark Foundation non-profit corporation that promotes network education and hosts SharkFest (WireShark developer and user conferences). 
 
 
 ## Hashcat
@@ -125,6 +134,87 @@ options set CUSTOMER Google
 run
 ```
 
+## Havij
+
+Havij is an automated SQL Injection tool that helps penetration testers to find and exploit SQL Injection vulnerabilities on a web page.  
+It is developed by ITSecTeam, an Iranian security organization.  
+The name Havij means "carrot" in Persian language.
+
+
+## BlackEye
+
+BlackEye is an application on KaliLinux to create a fake login page for popular websites (Facebook, LinkedIn, Paypal...).  
+It generates a URL to send to the victim that looks like the original login page.  
+When accessed, info about the victim (IP and browser) get displayed in the KaliLinux console running BlackEye.  
+When the victim enters his username and password, they are displayed to the console, and the victim is redirected to the real site.
+
+
+## Brave / Ghostery
+
+**Brave** is a Chromium-based web browser focusing on privacy.  
+It blocks fingerprinting, ads and ad-trackers by default.
+
+**Ghostery** is a privacy suite offering ads and trackers blocker, a search engine and a web browser.  
+It can be installed as a plugin on most popular browsers (Chrome, Firefox, Edge, Safari, Opera).
+
+
+## Tor browser
+
+Tor is a web browser transferring the incoming traffic through a network of computers to provide anonymity and untraceability.  
+Requests sent to Tor go to 3 Tor relays before being sent to the target website.  
+The communication is encrypted between all Tor relays.  
+
+Files downloaded with Tor should NEVER be open while online as they can reveal the user's real IP.  
+
+Tor is not useful to download torrents, since they tend to ignore proxy settings and make direct transfer, use a VPN instead.
+
+Since Tor provides good anonymity, it is used by many cyber-criminals, and Tor users can be flagged as "extremists" 
+and "persons of interest" by the NSA, which cannot distinguish good and bad Tor users.  
+Many Websites (Nike, Expedia, ...) block all connections from Tor machines.  
+
+The main attack on Tor is called the "end-to-end correlation attack" : it consists in monitoring the requests entering 
+the Tor network and the requests getting out of the Tor network, and try to correlate them to deduce the user that sent the request.  
+This can be made harder when using HTTPS (so the request is encrypted even before and after the Tor network) but it is 
+still possible to correlate the timing between entering and exiting requests in the Tor network.
+
+Users of Tor can access the darkweb (websites that are not referenced by search engines).  
+Accessing the darkweb is legal, but a lot of the services offered on darkweb sites are illegal.  
+All transactions on the darkweb are settled in bitcoin.
+
+We can use a VPN to connect to Tor, it hides to the ISP that we access Tor, and it prevents the Tor network entry point
+to see our real IP (but the VPN provider knows it).
+
+
+## Holehe
+
+Holehe is a Python script testing the registration of an email address against over 120 services (Amazon, GitHub...).  
+The target email address is not alerted (no mail sent to the address to reset a password for example).  
+
+It is a useful tool for **OSINT** (Open-Source INTelligence) to gather information on people.  
+It can be integrated with Maltego for automatic social networks reconnaissance in GUI.
+
+
+## ProtonMail
+
+ProtonMail is an email service provider focused on privacy and security based in Switzerland.  
+The free version offers 1 address (xxx@protonmail.com) and 500Mb of storage.  
+The paid version allows to use a custom domain and get rid of the ProtonMail signature.
+
+
+## CCleaner and BleachBit
+
+CCleaner and BleachBit are two cleaner programs for Windows.  
+They can help to remove useless files, clear caches, remove cookies and free up disk space.
+
+
+## NordVPN / TunnelBear / CyberGhost
+
+NordVPN, TunnelBear and CyberGhost are 3 popular VPN services that offer secure and private internet connections.
+
+NordVPN offers strong security features and commitment to user privacy.  
+TunnelBear has less features but has a more intuitive GUI that makes it a good choice for beginners.  
+CyberGhost is an intermediate solution balancing a good range of feature with an intuitive GUI. 
+
 
 ## Burp Suite
 
@@ -142,3 +232,14 @@ Altoro Mutual is a fake banking website with intentional security flaws.
 It is developed by IBM to demonstrate the efficiency of their security products.  
 
 The application code is open source and available on GitHub : [https://github.com/HCL-TECH-SOFTWARE/AltoroJ](https://github.com/HCL-TECH-SOFTWARE/AltoroJ)
+
+
+## The WayBack Machine
+
+The WayBack Machine is a website that takes snapshot of websites and allow to see a website as it used to be in the past.  
+This can be used to see the content of previous versions of websites.
+
+## ICANN Lookup
+
+ICANN Lookup is a website giving public info on registered domain names.  
+This info can be hidden by the domain name registrar (like GoDaddy) when requested.  
