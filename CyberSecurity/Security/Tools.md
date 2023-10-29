@@ -51,6 +51,21 @@ nmap 192.168.0.123 -D 192.168.0.1,192.168.0.3   # use decoys to spoof the source
 nmap 192.168.0.123 -g 53             # use a specific source port, should use trusted port numbers like 53 (DNS), 20 (FTP), 67 (DHCP) or 88 (Kerberos)
 ```
 
+## Nessus
+
+Nessus is a commercial vulnerability scanning tool.  
+It identifies vulnerabilities on a network, classifies them and assigns a severity to each of them.  
+It also keeps track of past vulnerabilities and reports.
+
+Nessus lets us create **scan policies**, that are definitions to describe the vulnerability tests to run.  
+We can provide some credentials to a Nessus policy to perform a credentials scan (and detect vulnerabilities when logged in).  
+Nessus offers many **plugins** that are all potential vulnerabilities to check for.  
+
+To start a scan, we must specify which scan policy to apply, and the targets of the scan.  
+Once completed, the scan generates a report of all detected vulnerabilities for each target server.  
+It provides details on each vulnerability, like the description, the severity, the CWE, the tools that can exploit it...
+
+
 ## WireShark
 
 WireShark is an open-source network packet analyzer offering a GUI to capture, analyze and load network packets.  
@@ -86,6 +101,28 @@ Note : to get the hash for a given string, we can use an online hash tool or the
 ```commandline
 Get-FileHash movie.mp4 | format-List                              # SHA256 hash (default)
 Get-FileHash movie.mp4 -Algorithm MD5 | format-List               # MD5 hash
+```
+
+
+## John the Ripper
+
+John the Ripper is another password cracking tool, offering similar functionalities as HashCat.  
+It comes with a free community edition.
+
+John the Ripper is pre-installed on KaliLinux, and accessible with the `john` command.  
+
+For example, to crack the password of a ZIP or RAR archive, we can run :
+```commandline
+zip2john Test.zip > hash.txt        // create a file with the target hash
+john --format=zip hash.txt          // find the password of the ZIP
+```
+
+John the Ripper can also crack the password from Linux users.  
+The password hashes are stored under `/etc/shadow` and can be cracked with :
+```commandline
+useradd -r user2        // create a user
+passwd user2            // set a password for user2
+john /etc/shadow        // crack the password for user2
 ```
 
 

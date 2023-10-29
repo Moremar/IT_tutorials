@@ -58,6 +58,7 @@ It is a concise version of the OSI model with only 4 layers.
 |      SFTP    |     22      |     TCP     |                SSH FTP                   |   7   | Secure variant of FTP using SSH for encryption (so the traffic goes to SSH port 22)                                                                                                                                                                 |
 |     Telnet   |     23      |  TCP / UDP  |           Teletype Network               |   7   | Open a virtual terminal TCP or UDP connection to a remote machine.<br/>Developed in 1969 and deprecated for security reasons, replaced by SSH.                                                                                                      |
 |      SMTP    |     25      |     TCP     |     Simple Mail Transfer Protocol        |   7   | Send emails to a mail server.<br/>The secure version using TLS encryption uses port 587.                                                                                                                                                            |
+|     TACACS+  |     49      |     TCP     | Terminal Access Controller<br/> Access Control System + | 7 | Cisco-proprietary alternative to RADIUS for an AAA Server controlling access to a network.<br/>It uses TCP while RADIUS uses UDP.              |
 |      DNS     |     53      |  TCP / UDP  |          Domain Name System              |   7   | Get the IP for a given hostname.<br/>It uses UDP for its transport layer so DNS servers do not need to keep connections.                                                                                                                            |
 |      DHCP    |   67 / 68   |     TCP     |  Dynamic Host Configuration Protocol     |   7   | Automatically assign an available IP to machines joining a network.<br/>Port 67 is used by the DHCP server.<br/>Port 68 is used by DHCP clients.                                                                                                    |
 |      TFTP    |     69      |     UDP     |              Trivial FTP                 |   7   | Simpler version of FTP over UDP with no authentication, no connection and basic error handling.<br/>Convenient for simple file transfer with no security concern.                                                                                   |
@@ -91,7 +92,8 @@ It is a concise version of the OSI model with only 4 layers.
 |    RDP       |    3389     |  TCP / UDP  |        Remote Desktop Protocol           |   7   | Microsoft-proprietary protocol to provide a GUI to connect to a remote machine.</br>Client and server exist for Linux and MacOS as well.                                                                                                            |
 |  Diameter    |    3868     |     TCP     |               Diameter                   |   7   | More advanced AAA protocol that is a replacement for RADIUS.                                                                                                                                                                      |
 |    SIP       | 5060 / 5061 |     TCP     |      Session Initiation Protocol         |   7   | Voice + messaging + video real-time sessions.                                                                                                                                                                                                       |
-| Syslog-SSL   |    6514     |     TCP     |        Syslog over SSL/TLS               |   7   | Secure version of Syslog using SSL/TLS encryption, and TCP instead of UDP.           |
+|    VNC       |    5900     |     TCP     |      Virtual Network Computing           |   7   | Protocol to provide a GUI to connect to a remote machine (cross-platform equivalent of RDP)                                                                |
+| Syslog-SSL   |    6514     |     TCP     |         Syslog over SSL/TLS              |   7   | Secure version of Syslog using SSL/TLS encryption, and TCP instead of UDP.           |
 
 Ports can take values from 0 to 65535, and are split in 3 groups :
 - **well-known ports** : 0 to 1023, assigned to very common protocols by the IANA (for ex 23 for Telnet)
@@ -120,6 +122,11 @@ They can be remembered with the sentence : _Every Awesome Cisco Engineer Will Ne
 | 5   |    Notice     | Expected but significant message |
 | 6   | Informational | An informative message           |
 | 7   |     Debug     | Debug-level message              |
+
+Modern implementations of Syslog called **Syslog-ng** improve the original design :
+- TCP can be used instead of UDP in congested networks  
+- TLS is used for in-transit encryption
+- MD5 or SHA-1 is used for authentication and integrity
 
 
 ### DHCP
@@ -198,6 +205,9 @@ specific condition is met or a threshold is breached.
 **SNMPv2** introduced new types of data to query, allowed multi-OIDs queries and support for both UDP and TCP, but still sends in clear text.  
 **SNMPv3** adds security with encryption, authentication and message integrity check.
 
+The SNMP messages exchanged between the SNMP server and the SNMP agents should be on a separate **out-of-bound network**.  
+Keeping the management packets separated from the data network improves security and prevent users to see this traffic.
+
 
 ### SSL (Secure Socket Layer) and TLS (Transport Layer Security)
 
@@ -205,6 +215,12 @@ SSL and TLS are cryptographic protocols allowing authentication and encryption f
 SSL2 (1995) and SSL3 (1996) were replaced by TLS in 1999 to address security issues with SSL.  
 
 Both use certificates that are not protocol-dependent, so they can be used both with SSL and TLS.
+
+
+### LDAP (Lightweight Directory Access Protocol)
+
+LDAP is a database used to centralize information about clients and objects on the network.  
+LDAP is cross-platform, and Microsoft created a proprietary version of it called **AD** (Active Directory).
 
 
 ## Types of Networks
@@ -1217,11 +1233,13 @@ This solution requires a RADIUS server on the network.
 **EAP** (Extensible Authentication Protocol) allows more complex authentication mechanism for RADIUS.  
 EAP has multiple flavors depending on the vendor :
 
+- **EAP-MD5** uses a simple password for one-way authentication
 - **PEAP** (Protected EAP) co-created by Microsoft/Cisco/RSA.  
   It allows user/password or domain membership authentication.  
   A certificate is used to identify the RADIUS server to the client
 - **EAP-FAST** is Cisco-proprietary and simplifies PEAP to not use certificates.
 - **EAP-TLS** uses certificates both to identify the RADIUS server and the clients (all clients need a certificate).
+- **EAP-TTLS** uses a certificate to identify the server and a password to identify the client
 
 
 ## Cellular Standards
@@ -1343,11 +1361,21 @@ A reverse proxy can be equipped with WAF capabilities to inspect incoming traffi
 **Nginx** is a popular open-source reverse proxy.
 
 
-## VPN Concentrator
+## VPN and VPN Concentrator
 
-A VPN Concentrator is a specialized networking hardware device that aggregates multiple VPN connections from remote clients.  
-It simplifies and centralizes the management of VPN connections, to allow access from remote users or branch offices to the main network.
+A VPN allows users to create a tunnel over an untrusted network to connect remotely and securely to the corporate network.  
+This type of VPN is called **Client-to-Site VPN** or **Remote-Access VPN**.  
+A VPN can also be used to connect a satellite office to the main office, this is a **Site-to-Site VPN** to avoid purchasing a dedicated lease line.  
 
+On both sides of the VPN, the traffic is encrypted with an encryption key and decrypted at reception.  
+This is done by the VPN client (on end-user machines) and by the VPN concentrator on the corporate network side.
+
+VPN rely on 2 protocols to operate :
+- **L2TP** (Layer 2 Tunnelling Protocol)
+- **PPTP** (Point-to-Point Tunnelling Protocol) 
+
+A **VPN Concentrator** is a specialized networking hardware device that aggregates multiple VPN connections from remote clients.  
+It simplifies and centralizes the management of VPN connections, to allow access from remote users or branch offices to the main network.  
 It is placed at the forefront of the network, next to the firewall.  
 It comes with dedicated software to support VPN connections.
 
@@ -1361,18 +1389,21 @@ Split tunnelling can be specified :
 - by URL : use the VPN except for a list of URLs
 - by inverse split tunnelling : use the VPN only for a list of apps and URLs
 
+Split tunnelling can be a risk to organizations, as it creates an alternative path from the internal network to the internet.
+
 
 ## RADIUS (Remote Access Dial-In User Service)
 
 RADIUS is a client-server networking protocol to centralize user access authorization.  
-It is part of the **802.1x** standard.  
+It is part of the **802.1x** framework standard.  
 
 RADIUS clients are networking devices that need to authenticate users (VPN concentrator, router, switch...).  
 A RADIUS server is a process running on a UNIX or Windows server that maintains user profiles in a central database.  
 
 RADIUS clients contact the RADIUS server using the RADIUS protocol everytime they need to authenticate a user.
 
-If users are already setup in Active Directory, we can enable **LDAP** and configure the RADIUS server to be a client using the LDAP server, so users are setup only in Active Directory
+If users are already setup in Active Directory, we can enable **LDAP** and configure the RADIUS server to be a client
+using the LDAP server, so users are setup only in Active Directory.
 
 All RADIUS servers have **AAA capabilities** (Authentication / Authorization / Accounting).
 
@@ -1380,7 +1411,7 @@ All RADIUS servers have **AAA capabilities** (Authentication / Authorization / A
 ## TACACS+ (Terminal Access Controller Access Control System Plus)
 
 TACACS+ is another AAA protocol used to control access to network devices and services.  
-It is the main alternative to RADIUS, and was developped by Cisco so is popular in Cisco networks.  
+It is the main alternative to RADIUS, and was developed by Cisco so it is popular in Cisco networks.  
 It can perform authentication on behalf of APs, RAS servers (Remote Access Service), 802.1x enabled switches...
 
 TACACS+ uses TCP, while RADIUS uses UDP.  
@@ -1409,7 +1440,7 @@ A machine is not allowed to access the network until it is compliant (credential
 
 - **IEEE 802.1X** : standard protocol for NAC providing an authentication mechanism for devices to attach to a LAN/WLAN.
   - the **supplicant** is the external machine trying to access the network
-  - the **authenticator** (switch or AP) is the link between clients and the network, communicating with the auth server.
+  - the **authenticator** (switch, AP, VPN concentrator) is the link between clients and the network, communicating with the auth server.
   - the **auth server** is the trusted server in the network that can respond to network access requests, it is a AAA server (RADIUS for example)
 
 
@@ -1422,7 +1453,18 @@ They are implemented using HTTP, ICMP or DNS Redirect.
 
 SIEM are software and services providing real-time view and analysis of the activity on networks or machines.  
 They can receive and monitor metrics and data from network hardware and applications.  
+SIEM helps correlate events that occurred on a monitored network.  
 They generate alerts and notifications on potential issues for continuous monitoring.
+
+Popular SIEM solutions are :
+- **Splunk** : big data information gathering and analysis tool, installed locally or as a cloud-based solution
+- **ELK** (Elastic Stack) : collection of open-source SIEM tools for storage, search and analysis
+  - **Elasticsearch** : search engine for query and analytics
+  - **Logstash** : log collection and normalization
+  - **Kibana** : dashboard for data visualization
+  - **Beats** : endpoint collection agents 
+- **ArcSight** : SIEM log management and analytics software for compliance reporting (HIPPA, SOX, ...) 
+- **Graylog** : open-source SIEM with enterprise edition focused on compliance, IT operations and Devops 
 
 
 ## VoIP (Voice over IP)
@@ -1580,7 +1622,7 @@ If one line of defense is compromised, others are in place as backup.
 It includes security at multiple levels :
 - **physical** : locks, ID cards, security guards...
 - **technical** : firewalls, passwords, encryption...
-- **administrative** : least privilege, role-based policy, security awareness trainings...
+- **administrative** : least privilege, role-based policy, security awareness trainings, mandatory vacation...
 
 
 ## UPS (Uninterruptible Power Supply)
