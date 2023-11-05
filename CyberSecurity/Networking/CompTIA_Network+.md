@@ -209,12 +209,27 @@ The SNMP messages exchanged between the SNMP server and the SNMP agents should b
 Keeping the management packets separated from the data network improves security and prevent users to see this traffic.
 
 
+## SSH (Secure Shell)
+
+SSH is a protocol to create a channel between 2 computers or network devices and enable one device to control the other device.  
+It was originally used in Unix, but it is now used in Windows as well as a text-based remote control method (Windows servers, routers, switches...).  
+SSH2 fixes issues with SSH1, and uses Diffie-Hellman for key exchange.
+
+
 ### SSL (Secure Socket Layer) and TLS (Transport Layer Security)
 
 SSL and TLS are cryptographic protocols allowing authentication and encryption for traffic between a web server and HTTPS clients.  
 SSL2 (1995) and SSL3 (1996) were replaced by TLS in 1999 to address security issues with SSL.  
 
 Both use certificates that are not protocol-dependent, so they can be used both with SSL and TLS.
+
+SSL and TLS are also used for instant messaging, email, VoIP, and many other services.  
+In every case, a TLS tunnel is established using PKI to secure the communication.
+
+A common attack against TLS is the **downgrade attack** where the attacker forces the use of an older TLS version.  
+If the attacker's browser doest not support TLS 1.3, it will negotiate with the server to use an older TLS version.  
+This older TLS version can have known vulnerabilities that the attacker will exploit.  
+To defend against it, we can configure the server to not accept downgrade.
 
 
 ### LDAP (Lightweight Directory Access Protocol)
@@ -869,18 +884,6 @@ GRE does not encrypt the encapsulated message.
 To use as a VPN, it is often used together with an encryption protocol like IPsec. 
 
 
-### IPsec
-
-IPsec is a suite of protocols used together to set up encrypted connections between devices on a public network.  
-IPsec is often used to setup a VPN, encrypting IP packets and ensuring the authenticity of the source.
-
-- **AH** (Authentication Header) : IPsec protocol adding a hash of the message for authenticity check (no encryption)
-- **ESP** (Encapsulating Security Payload) : encryption with a symmetric algorithm (SHA-2 for ex),
-checksum for data integrity, anti-replay service to protect against reception of a copy of a previous valid message.
-
-**ISAKMP** (Internet Security Association Key Management Protocol) is often used in conjunction to IPsec.  
-It secures the key exchange during the establishment of a client to server VPN connection. 
-
 ### Network Classes
 
 - **Class A** : 1 byte for the network, 3 bytes for the host.  
@@ -1371,13 +1374,39 @@ On both sides of the VPN, the traffic is encrypted with an encryption key and de
 This is done by the VPN client (on end-user machines) and by the VPN concentrator on the corporate network side.
 
 VPN rely on 2 protocols to operate :
-- **L2TP** (Layer 2 Tunnelling Protocol)
-- **PPTP** (Point-to-Point Tunnelling Protocol) 
+- **PPTP** (Point-to-Point Tunnelling Protocol) : protocol encapsulating PPP packets and sending data as encrypted traffic.  
+  It can use CHAP-based authentication, which is vulnerable to attacks, we must configure a different authentication protocol
+  like EAP-TLS (relying on PKI and digital certificates).  
+- **L2TP** (Layer 2 Tunnelling Protocol) : Connection between 2 or more devices that are not on the same private network.  
+  It provides no encryption and no confidentiality by itself.  
+  The security is usually provided by IPsec.
 
-A **VPN Concentrator** is a specialized networking hardware device that aggregates multiple VPN connections from remote clients.  
-It simplifies and centralizes the management of VPN connections, to allow access from remote users or branch offices to the main network.  
-It is placed at the forefront of the network, next to the firewall.  
-It comes with dedicated software to support VPN connections.
+
+### IPsec
+
+IPsec is a suite of TCP/IP protocols used together to set up encrypted connections between devices on a public network.  
+IPsec provides confidentiality (encryption), integrity (hashing) and authentication (key exchange).  
+IPsec is often used to setup a VPN, encrypting IP packets and ensuring the authenticity of the source.
+
+The method used by IPsec to exchange keys is called **IKE** (Internet Key Exchange).  
+It creates a tunnel by encrypting the connection between authenticated peers.
+
+A **SA** (Security Association) is the establishment of secure connections and shared security information using
+certificates or cryptographic keys.
+
+- **AH** (Authentication Header) : IPsec protocol adding a hash of the message for authenticity check (no encryption)
+- **ESP** (Encapsulating Security Payload) : encryption with a symmetric algorithm (SHA-2 for ex),
+checksum for data integrity, anti-replay service to protect against reception of a copy of a previous valid message.
+
+**ISAKMP** (Internet Security Association Key Management Protocol) is often used in conjunction to IPsec.  
+It secures the key exchange during the establishment of a client to server VPN connection.
+
+IPsec has 2 possible modes :
+- **transport mode** : encryption of the payload of an IP packet but not the header.  
+  It shows the source and target in clear, so it should only be used within a private network.  
+- **tunnel mode** : the entire IP packet is encrypted (header + payload).  
+  It is commonly used for transmission over an untrusted network like the Internet.
+
 
 ### Split Tunnelling
 
@@ -1390,6 +1419,13 @@ Split tunnelling can be specified :
 - by inverse split tunnelling : use the VPN only for a list of apps and URLs
 
 Split tunnelling can be a risk to organizations, as it creates an alternative path from the internal network to the internet.
+
+### VPN Concentrator
+
+A VPN Concentrator is a specialized networking hardware device that aggregates multiple VPN connections from remote clients.  
+It simplifies and centralizes the management of VPN connections, to allow access from remote users or branch offices to the main network.  
+It is placed at the forefront of the network, next to the firewall.  
+It comes with dedicated software to support VPN connections.
 
 
 ## RADIUS (Remote Access Dial-In User Service)
@@ -1625,9 +1661,20 @@ It includes security at multiple levels :
 - **administrative** : least privilege, role-based policy, security awareness trainings, mandatory vacation...
 
 
-## UPS (Uninterruptible Power Supply)
+### Power Supply Redundancy and UPS (Uninterruptible Power Supply)
+
+User computers usually have a single power supply connector, but servers have 2 to allow redundancy in case one fails.  
+
+Potential issues with power sources include :
+- **surge** : unexpected increase in the amount of voltage provided
+- **spike** : short transient in voltage due to short circuit, power outage, lightning strike...
+- **sag** : unexpected decrease in the amount of voltage (opposite of a surge)
+- **brownout** : voltage drops low enough to cause the lights to dim and computers to shut off (opposite of a spike)
+- **blackout** : total loss of power for a prolonged period of time
 
 A UPS is a device with a battery attached that can supply power to devices in case of a power outage.  
+It combines the functionality of a surge protector and a battery backup, usually providing power for up to 30min.  
+Beyond 30min, we should use a backup generator to generate power in case of outage of the regular electric grid power.  
 
 The **UPS runtime** is the amount of time the UPS can supply power at a given power level.  
 The **UPS capacity** is the max amount of power the UPS can supply at a given time.  
@@ -1731,28 +1778,49 @@ The most popular T-carrier line types are :
 
 ### Useful CLI Tools
 
-- **ping** : check if a machine is responding
+- **PowerShell** : task automation and configuration management tool for Windows, with a shell and its scripting language
 
-- **ipconfig** : check IP related info (IP address, MAC address, default gateway...)
+- **ping / hping** : check if a machine is up and responding to ICMP requests (hping offers more control over the packet crafting) 
+
+- **ipconfig** : check network configuration of the connected network devices (IP address, MAC address, default gateway...)
 
 - **arp** : view and edit the ARP table (IP/MAC mapping)
 
 - **nslookup / dig** : query DNS records (get domain name IP, reverse DNS, MX server...)
 
-- **traceroute / pathping** : check the path in the network to a given device
+- **traceroute / pathping** : check the path in the network to a given device (tracert on Windows)
 
-- **route** : edit the route table (by default, all traffic goes to the default gateway)
+- **route** : edit the route table on a host or server (by default, all traffic goes to the default gateway)
 
 - **iptables** : firewall-like command on Linux, can show the number of received/sent packets or block access to a given IP
 
-- **netstat** : show open connections to and from a server 
+- **netstat** : show open connections to and from a server (`-ano` to list open connections and identify backdoors)
+
+- **netcat** : read from and write to network connections using TCP or UDP, used by applications and scripts.   
+  Netcat can be used for banner grabbing by sending a request to a web server.  
+  It can also be used to create a shell connection and remotely control a machine.
 
 - **tcpdump** : packet sniffer in terminal for Linux (similar to WireShark but without GUI)
 
+- **tcpreplay** : utility to edit and replay previously captured network traffic
+
 - **nmap** : discover devices and open ports on a network
 
-- **curl** : send a query to an URL and receive the response, support many protocols (HTTP, HTTPS, FTP, SFTP, SCP...)
+- **curl** : send a query to an URL and receive the response, support many protocols (HTTP, HTTPS, FTP, SFTP, SCP, IMAP, POP3...)
 ```commandline
 curl --data "<QUERY BODY>" <QUERY_URL>
 ```
 
+- **head / tail** : Linux command to output the first/last 10 lines of a file
+
+- **cat** : Linux command to output the entire content of a file
+
+- **grep** : Linux command to select only the lines in a file matching a specific pattern
+
+- **chmod** : Linux command to hange the access permissions of a file (user/group/others for read/write/execute)
+
+- **logger** : Linux command providing an easy way to log data under the /var/log/syslog file
+
+- **dd** : command-line utility to create a bit-by-bit copy of a disk image
+
+- **memdump** : command-line utility to dump the system memory to the standard output stream
