@@ -66,7 +66,7 @@ It is a concise version of the OSI model with only 4 layers.
 |    Kerberos  |     88      |  TCP / UDP  |            Kerberos                      |   7   | Network authentication using a ticketing system inside a Windows domain (both UDP and TCP)                                                                                                                                                          |
 |      POP3    |     110     |     TCP     |         Post Office Protocol             |   7   | Alternative to IMAP to retrieve messages from a mail server.<br/>The secure version using SSL uses port 995.                                                                                                                                        |
 |      NNTP    |     119     |     TCP     |    Network News Transfer Protocol        |   7   | Protocol to read and post Usenet news articles between news servers, largely replaced by web forums.                                                                          |
-|      NTP     |     123     |     UDP     |         Network Time Protocol            |   7   | Use UDP for clock synchronization between machines over a network.                                                                                                                                                                                  |
+|      NTP     |     123     |     UDP     |         Network Time Protocol            |   7   | Use UDP for clock synchronization between machines over a network.<br/>In 2015, NTPsec was developed to add security to NTP.                                                                                                                                                                                  |
 |      RPC     |     135     |  TCP / UDP  |         Remote Procedure Call            |   7   | Protocol allowing a program to execute code or call functions on another remote computer or server, as if they were local procedures or functions.<br/>It uses both UDP and TCP.                                                                    |
 |    NetBIOS   |   137-139   |  TCP / UDP  |   Network Basic Input/Output System      |   7   | Old protocol for Windows-based networks for file and printer sharing.                                                                                                                                                                               |
 |      IMAP    |     143     |     TCP     |   Internet Message Access Protocol       |   7   | Used by a mail client to retrieve messages from a mail server, replacing POP3.<br/>The secure version using SSL uses port 993.                                                                                                                      |
@@ -74,6 +74,7 @@ It is a concise version of the OSI model with only 4 layers.
 |      LDAP    |     389     |  TCP / UDP  | Lightweight Directory Access Protocol    |   7   | Access and maintain distributed directory information services.<br/>The secure version LDAPS with SSL encryption uses port 636.                                                                                                                     |
 |     HTTPS    |     443     |     TCP     |              HTTP Secure                 |   7   | HTTP variant with SSL/TLS encryption of the communication between the browser and the server.                                                                                                                                                       |
 |      SMB     |     445     |     TCP     |         Server Message Block             |   7   | Protocol used for file and printer sharing in modern Windows networks (better security and encryption than NetBIOS)                                                                                                                                 |
+|    SMTP-SSL  |     465     |     TCP     |         SMTP over SSL/TLS                |   7   | Original port used for SMTP over SSL, was deprecated and replaced by port 587, but port 465 is still widely used.                                           |
 |     Syslog   |     514     |     UDP     |        System Logging Protocol           |   7   | Centralize, persist and manage logs of networking devices in a central place                                                                                                                                                                        |
 |    SMTP-SSL  |     587     |     TCP     |         SMTP over SSL/TLS                |   7   | Secure version of SMTP using SSL/TLS encryption.                                                                                                                                                          |
 |    LDAP-SSL  |     636     |  TCP / UDP  |        LDAP over SSL/TLS                 |   7   | Secure version of LDAP using SSL/TLS encryption.                    |
@@ -85,7 +86,7 @@ It is a concise version of the OSI model with only 4 layers.
 |     SQLnet   |    1521     |     TCP     |            Oracle database               |   7   | Oracle database                                                                                                                                                                                                                                     |
 |     L2TP     |    1701     |     UDP     |       Layer 2 Tunnel Protocol            |   7   | Underlying VPN protocol with no inherent security                                                                                                                                                                                                    |
 |     PPTP     |    1723     |  TCP / UDP  |    Point to Point Tunnel Protocol        |   7   | Underlying VPN protocol with built-in security                                                                                                                                                                                                    |
-|     Radius   | 1812 / 1813 |     UDP     |    Remote Auth Dial-In User Service      |   7   | Protocol allowing authentication and authorization (1812) and accounting (1813).<br/>An alternative set of ports for RADIUS are 1645 / 1646.                                                                                                                                                                     |
+|    RADIUS    | 1812 / 1813 |     UDP     |    Remote Authentication<br/>   Dial-In User Service      |   7   | Protocol allowing authentication and authorization (1812) and accounting (1813).<br/>An alternative set of ports for RADIUS are 1645 / 1646.                                                                                                                                                                     |
 |     FCIP     |    3225     |  TCP / UDP  |           Fiber Channel IP               |   7   | Protocol to encapsulate Fiber Channel frames inside TCP/IP packets                                                                                                                                                                                   |
 | iSCSI Target |    3260     |     TCP     |        Target of iSCSI message           |   7   | Listening port for iSCSI targeted devices when linking data storage facilities over IP.     |
 |   MySQL      |    3306     |     TCP     |            MySQL Database                |   7   | MySQL database                                                                                                                                                                                                                                      |
@@ -159,6 +160,9 @@ The DNS server will ask the top-level DNS server, that will provide the IP of th
 The DNS server will ask the authoritative DNS server, that will provide the IP of `www.mysite.com`.  
 The DNS server will cache this IP address and return it to the browser.
 
+**DNSSEC** (Domain Name System Security Extensions) is a suite of extensions adding security to the DNS.  
+DNSSEC addresses vulnerabilities in the DNS and provides a means to authenticate the origin and integrity of DNS data.
+
 #### Types of DNS Records
 
 - **A / AAAA** : convert a domain name into an IPv4 or IPv6 address
@@ -184,7 +188,7 @@ nslookup facebook.com 8.8.8.8        # use a custom DNS server (8.8.8.8 is Googl
 ### SNMP
 
 SNMP is used to collect information and metrics about all devices in a network.  
-It is heavily used by network engineers to monitor the networking equipment (switches, routers, firewalls, AP...).  
+It is heavily used by network engineers to monitor the networking equipment (switches, routers, firewalls, APs...).  
 
 SNMP follows a client/server application model : 
 - the **SNMP Manager** (server) is a software component gathering data by sending queries to SNMP agents
@@ -209,7 +213,7 @@ The SNMP messages exchanged between the SNMP server and the SNMP agents should b
 Keeping the management packets separated from the data network improves security and prevent users to see this traffic.
 
 
-## SSH (Secure Shell)
+### SSH (Secure Shell)
 
 SSH is a protocol to create a channel between 2 computers or network devices and enable one device to control the other device.  
 It was originally used in Unix, but it is now used in Windows as well as a text-based remote control method (Windows servers, routers, switches...).  
@@ -226,17 +230,24 @@ Both use certificates that are not protocol-dependent, so they can be used both 
 SSL and TLS are also used for instant messaging, email, VoIP, and many other services.  
 In every case, a TLS tunnel is established using PKI to secure the communication.
 
-A common attack against TLS is the **downgrade attack** where the attacker forces the use of an older TLS version.  
+A common attack against TLS is the **downgrade attack**.  
+The attacker forces the use of an older TLS version that has security flaws that can be exploited.  
 If the attacker's browser doest not support TLS 1.3, it will negotiate with the server to use an older TLS version.  
 This older TLS version can have known vulnerabilities that the attacker will exploit.  
 To defend against it, we can configure the server to not accept downgrade.
+
+**SSL stripping** is an attack combining an on-path attack and a downgrade attack.  
+The attacker is in the middle of the traffic between the victim and a web server (proxy, rogue Wifi AP...).  
+It communicates with the victim in clear traffic (HTTP) and with the web server in encrypted traffic (HTTPS).  
+The attacker controls all the communication and can modify messages or steal data.  
+To the victim, it is transparent except HTTP is used instead of HTTPS.
 
 
 ### LDAP (Lightweight Directory Access Protocol)
 
 LDAP is a database used to centralize information about clients and objects on the network.  
-LDAP is cross-platform, and Microsoft created a proprietary version of it called **AD** (Active Directory).
-
+LDAP is cross-platform, and Microsoft created a proprietary version of it called **AD** (Active Directory).  
+LDAP is a lightweight implementation of the **X.500 standards** defining a framework for directory services.
 
 ## Types of Networks
 
@@ -320,7 +331,7 @@ Rarely used due to the existence of faster fiber-optic standards.
 
   
 - **100-BASE-TX** : 100Mbs Ethernet (Fast Ethernet) using UTP (sometimes STP) with Cat 5/5e cables.  
-Max length 100m, allow full duplex. 
+Max length 100m, allow full duplex.  
 It is the most common Ethernet standard in today's networks.
 
 
@@ -436,7 +447,7 @@ The main punchdown block types are :
 - **Attenuation** : the signal loses its strength, causing a max length for the cable
 
 
-- **Latency** : delay between ending and receiving the packets
+- **Latency** : delay between sending and receiving the packets
 
 
 - **Jitter** : deviation from the average behavior  
@@ -561,7 +572,7 @@ The MAC address is also called physical address, Ethernet address, layer 2 addre
 It is a unique identifier assigned to each network interface cards (NIC) that uniquely identifies a machine on a local network.  
 It is made of 48 bits (6 bytes) and represented as a sequence of 12 hexa digits, for example _00:0c:29:17:1b:27_   
 The first 3 bytes of the MAC address represent the Organization Unique Identifier (OUI).   
-It can be displayed with `ifconfig` on Linux and `ipconfig` on Windows. 
+The MAC address can be displayed with `ifconfig` on Linux and `ipconfig` on Windows. 
 
 
 ### Switch
@@ -894,13 +905,13 @@ There are 2^7 - 2 = 126 class A networks, from 1.x.x.x/8 to 126.x.x.x/8 (0 is fo
 
 - **Class B** : 2 bytes for the network, 2 bytes for the host.  
 A class B network contains 2^16 - 2 = 65 534 hosts.  
-The binary address of a class B network always starts with `10`
+The binary address of a class B network always starts with `10`  
 There are 2^14 = 16 384 class B networks, from 128.0.x.x/16 to 191.255.x.x/16.
 
 
 - **Class C** : 3 bytes for the network, 1 byte for the host.  
 A class C network contains 2^8 - 2 = 254 hosts.  
-The binary address of a class C network always starts with `110`
+The binary address of a class C network always starts with `110`  
 There are 2^21 = 2 097 152 class C networks, from 192.0.0.x/24 to 223.255.255.x/24.
 
 
@@ -916,11 +927,11 @@ Private IP addresses are a set of reserved IP address ranges that are not routab
 They enable devices on a private network to communicate with each other without requiring a unique public IP addresses for each device.  
 Devices using a private IP address can communicate with the Internet using a NAT.
 
-|     Network     |  Class  | # Addresses | Broadcast Address | Usage                    |
-|:---------------:|:-------:|:------------|:-----------------:|:-------------------------|
-|   10.0.0.0/8    |  A x 1  | 16'777'214  |  10.255.255.255   | Large networks           | 
-|  172.16.0.0/12  | B x 16  | 1'048'544   |  172.31.255.255   | Medium networks          | 
-| 192.168.0.0/16  | C x 256 | 65024       |  192.168.255.255  | Home and office networks |
+|     Network     |  Class  | # Addresses | Last Broadcast Address | Usage                    |
+|:---------------:|:-------:|:------------|:----------------------:|:-------------------------|
+|   10.0.0.0/8    |  A x 1  | 16'777'214  |  10.255.255.255        | Large networks           | 
+|  172.16.0.0/12  | B x 16  | 1'048'544   |  172.31.255.255        | Medium networks          | 
+| 192.168.0.0/16  | C x 256 | 65024       |  192.168.255.255       | Home and office networks |
 
 
 ### APIPA (Automatic Private Internet Protocol Addressing)
@@ -1233,13 +1244,28 @@ It is not scalable to many users.
 
 This solution requires a RADIUS server on the network.
 
-**EAP** (Extensible Authentication Protocol) allows more complex authentication mechanism for RADIUS.  
+**PAP** (Password Authentication Protocol) is the oldest and less secure authentication protocol.  
+The client sends its credentials again and again in clear text to the server until it gets a response.  
+The server responds with an authentication success or failure.
+
+**CHAP** (Challenge Handshake Authentication Protocol) is an upgrade of PAP.  
+It still uses a username and a password, but the client does not send the password to the server.  
+Instead, it sends the username and a MD5 hash of the password and an OTP (One-Time Password) provided by the server.  
+Therefore, it is safe against replay attacks.  
+However, it still sends the username and hash in clear, and the server needs to store the password (not a hash).
+
+**MS-CHAP** is the Microsoft implementation of CHAP that adds security features.  
+It is used in PPP VPN implementations to secure the authentication process between the client and the server.  
+It supports mutual authentication, its latest version is MS-CHAP v2.  
+It is much better than CHAP but less secure than EAP.
+
+**EAP** (Extensible Authentication Protocol) is a framework allowing more complex authentication mechanism for RADIUS.  
 EAP has multiple flavors depending on the vendor :
 
-- **EAP-MD5** uses a simple password for one-way authentication
+- **EAP-MD5** uses a simple password for one-way authentication (similar to CHAP)
 - **PEAP** (Protected EAP) co-created by Microsoft/Cisco/RSA.  
   It allows user/password or domain membership authentication.  
-  A certificate is used to identify the RADIUS server to the client
+  A certificate is used to identify the RADIUS server to the client.
 - **EAP-FAST** is Cisco-proprietary and simplifies PEAP to not use certificates.
 - **EAP-TLS** uses certificates both to identify the RADIUS server and the clients (all clients need a certificate).
 - **EAP-TTLS** uses a certificate to identify the server and a password to identify the client
@@ -1489,7 +1515,7 @@ They are implemented using HTTP, ICMP or DNS Redirect.
 
 SIEM are software and services providing real-time view and analysis of the activity on networks or machines.  
 They can receive and monitor metrics and data from network hardware and applications.  
-SIEM helps correlate events that occurred on a monitored network.  
+SIEM help correlate events that occurred on a monitored network.  
 They generate alerts and notifications on potential issues for continuous monitoring.
 
 Popular SIEM solutions are :
@@ -1499,7 +1525,7 @@ Popular SIEM solutions are :
   - **Logstash** : log collection and normalization
   - **Kibana** : dashboard for data visualization
   - **Beats** : endpoint collection agents 
-- **ArcSight** : SIEM log management and analytics software for compliance reporting (HIPPA, SOX, ...) 
+- **ArcSight** : SIEM log management and analytics software for compliance reporting (HIPAA, SOX, ...) 
 - **Graylog** : open-source SIEM with enterprise edition focused on compliance, IT operations and Devops 
 
 
@@ -1518,6 +1544,19 @@ VoIP service providers perform routing of outgoing and incoming calls.
 If the recipient also uses VoIP, the call stays entirely on the IP network, it is an **on-net call**.  
 Otherwise it is an **off-net call**, the IP packets are converted to a regular voice call and sent to the **PSTN** (Public Switched Telephone Network).  
 A **VoIP gateway** is used to connect the internal VoIP network (with the PBX) with the outside PSTN.  
+
+
+## RTP (Real-time Transport Protocol)
+
+RTP is a protocol used for transmitting real-time data, such as audio and video, over networks.  
+RTP is commonly utilized in communication and entertainment systems that require low-latency delivery of multimedia content.  
+This includes Voice over Internet Protocol (VoIP) calls, video conferencing, and streaming applications.  
+
+RTP is often used in conjunction with **RTCP** (Real-time Transport Control Protocol).  
+RTCP provides control information about the ongoing session, such as feedback on the quality of the transmission.  
+
+**SRTP** and **SRTCP** are the secure version of RTP and RTCP.  
+They provide confidentiality, integrity, and replay protection for the transmitted information.
 
 
 ## VDI and DaaS
@@ -1622,8 +1661,8 @@ DSL requires good quality phone lines and proximity to a central office to work 
 DSL uses a modem connected to the phone wall jack.  
 The modem sends its data to a **DSLAM** (DSL Access Multiplier) acting as a central hub.  
 
-- **SDSL** (Symetric DSL) has the same download and upload bandwidths.  
-- **ADSL** (Asymetric DSL) has more download bandwidth than upload.  
+- **SDSL** (Symmetric DSL) has the same download and upload bandwidths.  
+- **ADSL** (Asymmetric DSL) has more download bandwidth than upload.  
 - **VDSL** (Very high speed DSL) offers higher speeds than DSL : 52Mbs download and 16Mbs upload  
 - **RADSL** (Rate Adaptive DSL) can adjust its transmission speed based on the line condition
 
@@ -1682,14 +1721,19 @@ The **UPS capacity** is the max amount of power the UPS can supply at a given ti
 Some UPS can perform **automated graceful shutdown** when they detect a power outage.  
 They can shutdown servers in a pre-determined order to avoid data loss and maintain data integrity.
 
+A **PDU** (Power Distribution Unit) is a device used in electrical and data centers to distribute electric power to
+multiple devices such as servers, networking equipment, and other connected devices. 
 
-## NetFlow
+
+## NetFlow / sFlow / IPFIX
 
 NetFlow is a feature on Cisco routers and L3-switches to collect and analyze IP network traffic data.  
 NetFlow-enabled routers collect IP statistics and later export them as NetFlow records to a **NetFlow collector**.  
 The NetFlow collector stores and pre-processes flow data received from NetFlow exporters.
 
 The network admins can use an analysis application to analyze NetFlow data for intrusion detection, traffic profiling...
+
+IPFIX (IP Flow Information Export) and sFlow (Sample Flow) are standards based on NetFlow and designed to be vendor-neutral.
 
 
 ### MDF and IDF
@@ -1723,11 +1767,18 @@ This model is used for smaller data center for simplicity and cost reduction.
 
 ## SDN (Software-Defined Networking)
 
-SDN is an approach to network management that allows to dynamicly and programmatically configure the networking devices.  
+SDN is an approach to network management that allows network administrators to manage network resources through
+software applications, abstracting the underlying hardware. 
+
 The control plane is no longer managed on each device individually, but centralized through a **SDN controller** that
 controls the config of all other devices.  
 SDN adds an **application plane** above the control plane : applications can tell the SDN controller their requirements
 via an API.
+
+**SDV** (Software Defined Visibility) is the concept of using software-defined networking (SDN) principles to enhance
+and manage network visibility.  
+This is important in large network environments to monitoring and analyzing network traffic for security, performance
+optimization, and troubleshooting.
 
 
 ## SCADA System (Supervisory Control and Data Acquisition)
@@ -1780,7 +1831,7 @@ The most popular T-carrier line types are :
 
 - **PowerShell** : task automation and configuration management tool for Windows, with a shell and its scripting language
 
-- **ping / hping** : check if a machine is up and responding to ICMP requests (hping offers more control over the packet crafting) 
+- **ping / hping** : check if a machine is up and responding to ICMP requests (hping offers more control over the packet crafting and target port) 
 
 - **ipconfig** : check network configuration of the connected network devices (IP address, MAC address, default gateway...)
 
@@ -1816,6 +1867,8 @@ curl --data "<QUERY BODY>" <QUERY_URL>
 - **cat** : Linux command to output the entire content of a file
 
 - **grep** : Linux command to select only the lines in a file matching a specific pattern
+
+- **pdfinfo** : Linux command to read the metadata of a PDF document
 
 - **chmod** : Linux command to hange the access permissions of a file (user/group/others for read/write/execute)
 

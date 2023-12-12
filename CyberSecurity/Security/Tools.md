@@ -4,6 +4,14 @@
 ## Networking Tools
 
 
+### NetSpot
+
+NetSpot is a software tool for wireless network assessment, scanning and survey.  
+It can analyze Wi-fi coverage and performance.  
+It runs on Windows and MacOS.  
+It is used to analyze radio signal leaks, map channel use, optimize wireless AP locations...
+
+
 ### WireShark
 
 WireShark is an open-source network packet analyzer offering a GUI to capture, analyze and load network packets.  
@@ -252,6 +260,7 @@ It provides details on each vulnerability, like the description, the severity, t
 ### sn1per
 
 sn1per is an automated scanner used during a penetration test to enumerate and scan vulnerabilities on the network.  
+It combines in a single tools several reconnaissance and exploit tools (Nmap, Metasploit, theHarvester...).  
 It is an alternative to Nessus.
 
 
@@ -295,7 +304,7 @@ It is developed by ITSecTeam, an Iranian security organization.
 The name Havij means "carrot" in Persian language.
 
 
-## BlackEye
+### BlackEye
 
 BlackEye is an application on Kali Linux to create a fake login page for popular websites (Facebook, LinkedIn, Paypal...).  
 It generates a URL to send to the victim that looks like the original login page.  
@@ -320,7 +329,7 @@ Cain and Abel is a password recovery tool for Windows that can :
 
 ### Hashcat
 
-Hashcat is a password recovery and cracking tool.  
+Hashcat is an offline password recovery and cracking tool.  
 It is free and accessible online as a zip folder.
 
 It takes as input a target hash, a hashing method and a list of passwords, and it tries to find one password in the
@@ -369,6 +378,50 @@ passwd user2            // set a password for user2
 john /etc/shadow        // crack the password for user2
 ```
 
+### Crunch
+
+Crunch is a utility that generates a custom word list to provide to a password cracker.  
+We can specify the password min and max size and the allowed characters, and Crunch generates all possibilities.  
+Crunch is available by default in Kali Linux.
+
+```commandline
+// generate the pins.txt file containing all possible PIN numbers of 4 to 6 digits
+crunch 4 6 0123456789 -o pins.txt
+```
+
+
+### CeWL (Custom Word List)
+
+CeWL is another custom word list generator that uses the content of a website to create its word list.  
+It is a Ruby app that spiders a given URL up to a specific depth to capture the words for its list.  
+Its generated file can then be used with password crackers like **John the Ripper** or **Wfuzz**.
+
+```commandline
+// generate a word list and an emails list from a website with depth 2 and min word length 5
+cewl -d 2 -m 5 -w passwords.txt http://10.10.131.23 --email --email_file emails.txt
+```
+
+
+### Hydra
+
+Hydra is an open-source password brute-forcing tool for online brute-force attacks.  
+It is designed to operate via network protocols like SSH, RDP, HTTP and HTML forms.  
+It is sending the login attempt one-by-one to the target and checks the response for success.
+
+Unlike Hashcat or John the Ripper, it is not an offline password cracking tool.  
+It does not check passwords against a target hash, but against a target network system (so it can be detected).
+
+```commandline
+// try all passwords in a word list to access the target IP in SSH with a given user (login)
+// -f to stop when a valid password is found
+// -v for verbose logging
+hydra -l testuser -P rockyou.txt -f -v <TARGET_IP> ssh
+
+// try all passwords in a word list to access the target IP on a given HTML form
+// no user is needed to access, only a password
+// we specify the login PHP page, the field to use for the password, and the message on error (separated with ":")
+hydra -l '' -P pins.txt -f -v 10.10.131.34 http-post-form "/login.php:pin=^PASS^:Access Denied" -s 8000
+```
 
 ### Aircrack-ng
 
@@ -435,6 +488,12 @@ WinHex allows users to view, edit, and analyze binary data on various types of s
 It offers a wide range of features for examining and manipulating data at a low level.
 
 
+### DNSpy
+
+DNSpy is an open-source tool designed for the analysis and editing of .NET assemblies.  
+It is commonly used for reverse engineering, debugging, and modifying .NET applications. 
+
+
 
 ## Educational Tools
 
@@ -449,7 +508,7 @@ It explains and gives examples of most common web security issues, especially th
 
 OWASP Juice Shop is a fake e-commerce web application designed with intentional security flaws.  
 It can be deployed locally in a container, and its aim is to teach web vulnerabilities.  
-It contains a score dashboard with a lot of challenges to break the websites.
+It contains a score dashboard with a lot of challenges to break the website.
 
 
 ### Altoro Mutual

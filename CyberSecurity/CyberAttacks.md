@@ -28,16 +28,16 @@ He was sentenced to 20 months in federal prison and a $5000 fine.
 <img alt="WikiLeaks" src="./images/wikileaks.jpg" width=400  style="border:1px solid black">
 </p>
 
-In 2006, the Australian Julian Assange founded the Wikileaks website, where journalists can publish news leaks.  
+In 2006, the Australian Julian Assange founded the WikiLeaks website, where journalists can publish news leaks.  
 WikiLeaks works using a dropbox where whistleblowers can drop leaked documents anonymously.  
 These documents are checked for authenticity, and published on the WikiLeaks website.
 
-WikiLeaks is technically not breaking any US law, but many governemnt officials tried to shut it down.  
+WikiLeaks is technically not breaking any US law, but many government officials tried to shut it down.  
 Many financial organizations (Visa, Paypal, Western Union) stopped funding WikiLeaks.  
 It is now funded by donation in bitcoins.
 
-Wikileaks has released millions of documents, exposing serious violations of human rights and civil liberties.  
-In 2007, WIkileaks released the **Collateral Murder** showing a US helicopter crew shooting civilians and 2 Iraqi Reuters journalists.  
+WikiLeaks has released millions of documents, exposing serious violations of human rights and civil liberties.  
+In 2007, WikiLeaks released the **Collateral Murder** showing a US helicopter crew shooting civilians and 2 Iraqi Reuters journalists.  
 In 2010, it released the **Iraq and Afghan War Logs** revealing US operations and human rights violation during the Iraq and Afghanistan conflicts.  
 It also published documents exposing surveillance by the CIA or the NSA.
 
@@ -111,7 +111,8 @@ It was launched in 2011 by the American Ross Ulbricht (born in 1984) under the p
 All transactions on Silk Road were settled in Bitcoin to protect users identity.
 
 Silk Road operated as a hidden service on the dark web on the Tor network.  
-It was originally designed to sell some mushrooms, but many sellers quickly used Silk Road to offer all kinds of illegal products (drug, weapons, fake IDs, credentials...).
+It was originally designed to sell some mushrooms, but many sellers quickly used Silk Road to offer all kinds of illegal products
+(drugs, weapons, fake IDs, credentials...).
 
 Ross Ulbricht was arrested by the FBI in a library in San Francisco in 2013.  
 His identity was discovered because the FBI investigated the first references of Silk Road on the dark web, and found his early promotion posts.   
@@ -145,8 +146,8 @@ Snowden also revealed that 38 embassies have been targeted by US spying operatio
 
 On June 9th, The Guardian published a video where Snowden confesses to be the source of the leaks, becoming the most wanted man on the planet.  
 On June 21st, US authorities charged Snowden with espionage and theft of government property.  
-On June 23rd, Snowden arrived in Moscow, accompanied by the Wikileaks journalist Sarah Harrison.  
-They were planning to go to Ecuador, the country that offered asylum to Julian Assange (Wikileaks founder), but the US government revoked Snowden's passport.  
+On June 23rd, Snowden arrived in Moscow, accompanied by the WikiLeaks journalist Sarah Harrison.  
+They were planning to go to Ecuador, the country that offered asylum to Julian Assange (WikiLeaks founder), but the US government revoked Snowden's passport.  
 They stayed in the airport transit lounge for 40 days, before Snowden was granted the right of asylum in Russia and received a 1-year visa.  
 His visa was renewed multiple times, and he was granted the Russian citizenship from Vladimir Putin in 2022.
 
@@ -312,6 +313,17 @@ They possibly worked for IS, or were using IS as a cover to collect data for the
 The Ministry of Foreign Affairs took over the investigation, and there were no later official update. 
 
 
+## October 2015 : Patreon Hack
+
+Patreon is a monetization platform providing business tools for content creators to run a subscription service and sell digital products.  
+It helps creators and artists earn a recurring income by providing rewards and perks to its subscribers.
+
+In October 2015, some hackers have published almost 15GB of password data, donation records, and source code.
+
+Patreon was using a debug version of the application with the Werkzeug Debugger publicly available.  
+This debugger opens a terminal when an exception is thrown, offering a RCE (Remote Code Execution) to the hackers.
+
+
 ## May 2017 : WannaCry
 
 <p align="center">
@@ -381,13 +393,13 @@ When announced to the public the Equifax stock dropped by 40%, and took 2 years 
 
 On May 6th 2021, Colonial Pipeline was infected by a ransomware that forced the US energy company to shut down its entire fuel distribution pipeline.
 
-Hackers gained access to the Colonial Pipeline network using a VPN account that was no longer in use but still active.
+Hackers gained access to the Colonial Pipeline network using a VPN account that was no longer in use but still active.  
 The password was used on another website that got compromised and leaked to the dark web.  
 The account had no MFA, so the password was all the hackers needed to gain access.
 
 They stole 100Gb of data before locking computers with a ransomware.  
 Colonial Pipeline paid the requested ransom of 75 bitcoins (nearly $5M) on May 7th.  
-Most of the ransom was recovered later by the US governement.
+Most of the ransom was recovered later by the US government.
 
 On May 12th, Colonial Pipeline was able to restart pipeline operations.  
 After several days, the delivery supply chain was back to normal.

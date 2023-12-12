@@ -22,21 +22,25 @@ Hacking aims at breaking it, making the DAD Triad :
 - **Attack** : data extraction, data corruption, malware injection
 - **Avoid detection** : ICMP tunnels, delete logs, erase command history
 
+We call **pivot** the ability of an attacker to move from machine to machine in a target network.
+
 
 ### Attack frameworks
 
 - **Cyber Kill Chain** : linear framework in 7 steps :  
-  - Reconnaissance
-  - Weaponization
-  - Delivery
-  - Exploitation
-  - Installation
-  - Command and Control
-  - Actions
+  - Reconnaissance : Gather Intel
+  - Weaponization : Build a deliverable payload including an exploit with a backdoor
+  - Delivery : Deliver the executable to the target
+  - Exploitation : Execute the code on the target's device
+  - Installation : Malware is installed on the OS
+  - Command and Control : A C2 channel is created for remote access
+  - Actions : Attackers can remotely carry out any action
 
-- **MITR pre-ATT&CK and ATT&CK matrices** : free framework using matrices showing different tactics for reconnaissance and attack
+- **MITRE pre-ATT&CK and ATT&CK matrices** : Adversarial Tactics, Techniques and Common Knowledge  
+  Free framework using matrices showing different tactics for reconnaissance and attack.  
+  It lists a lot of categories of attacks, with documentation, prevention techniques and external references.  
 
-- **Diamond model** : model using relations between 4 core features :
+- **Diamond model of intrusion analysis** : model using relations between 4 core features :
   - Victim
   - Capacity
   - Adversary
@@ -54,14 +58,14 @@ It gets executed when the infected program is run or the infected file is opened
 Main types of viruses :
 - **boot-sector** : stored in first sector of hard drive and loaded in memory at boot (before OS startup)
 - **macro** : virus code embedded inside another document started at document open (Word, Excel, Powerpoint)
-- **program** : infects an executable or application and load the virus when the program runs
+- **program** : infects an executable or application and executes when the program runs
 - **multi-partite** : combination of boot-sector and program virus, it is attached to a system file and recreated at boot
 - **encrypted** : virus encrypting its content to avoid detection by signature-based antivirus
 - **polymorphic** : virus altering its content to avoid detection by signature-based antivirus
 - **metamorphic** : advanced version of polymorphic virus rewriting itself entirely before propagation
 - **stealth** : category of viruses hiding themselves to avoid detection
 - **armored** : virus with mechanism to make detection by antivirus harder
-- **hoax** : virus that propagates by making user believe they need to install it to cleanup their machine
+- **hoax** : virus that propagates by making users believe they need to install it to cleanup their machine
 
 ### Worm
 
@@ -100,6 +104,9 @@ It can monitor web usage for targeting ads, or use a keylogger to steal credenti
 A ransomware is a software encrypting data on the victim's machine and selling the decryption key against a ransom (usually in crypto-money).  
 **Doxing** is a special ransomware type, where the victim should pay a ransom, or their stolen info will be disclosed to the public (customer data, salaries, secret documents...).
 
+The **FBI MoneyPak ransomware** (also known as **Reveton virus** or **police virus**) was a ransomware released in 2012.  
+It locked the files on the victim's machine, pretended to be from the FBI and requested the payment of a fine to unlock the files.
+
 ### Rootkit
 
 A rootkit is a malware hiding its presence and providing unauthorized access to a computer.  
@@ -115,6 +122,12 @@ A rootkit can act at multiple levels :
 
 Rootkits make use of **DLL injection** and/or **driver manipulation**.
 
+Driver manipulation can also be performed by **shimming**.  
+A shim is a small library which transparently intercepts an API, changes the parameters passed, handles the operation itself,
+or redirects the operation elsewhere.  
+Shims can also be used for running programs on different software platforms than they were developed for.
+
+
 ### Spam
 
 Spam is the abuse of electronic messaging systems to send unsolicited emails, usually containing ads.  
@@ -129,7 +142,7 @@ Malwares can be delivered to the victim in multiple ways :
 - **VBA macro** triggered when a Word/Excel document is open
 
 Many modern malwares are fileless : they either attach to an existing executable, or store their file in a 
-temporary directory and them remove the files.  
+temporary directory and then remove the files.  
 This makes it harder for antivirus to detect them by signature.
 
 ## Attack Types
@@ -147,15 +160,24 @@ A buffer overflow is the allocation of memory exceeding the size of the buffer u
 It is used by attackers to override the return pointer in the execution stack.  
 For example, they can redirect to a malicious code that runs a shell, so they have a remote code execution.
 
+Buffer Overflow can be avoided by the use of ASLR (Address Space Layout Randomization) in most OSes.  
+ASLR is a technique to use random addresses for the stack, library code, heap and program code during execution.  
+This makes it much harder for an attacker to guess the address of the next instruction.
+
 #### SQL injection
 
 SQL injection is the execution of custom SQL commands by using un-sanitized user input in SQL query.  
 It is one of the most common attacks on websites and is part of the OWASP 10.  
+SQL injections allows **stacked queries** by ending the intended query and running a new one in the same execution call.  
+
+SQL injections can offer a RCE (Remote Code Execution) if the database server has a way to execute code.  
+For example on Microsoft SQL Server, we can stack a `xp_cmdshell` procedure to execute shell commands within SQL Server.
 
 **Havij** is a tool that can detect SQL injection vulnerabilities of a website.
 
 **SQLmap** is another penetration tool that detects SQL injections in web applications.  
 It can infer the DB version and exploit the SQL injection vulnerabilities to list databases, tables, columns and rows.
+
 
 #### Cross-Site scripting (XSS)
 
@@ -227,6 +249,12 @@ and pretending to both of them to be the other machine.
 Credentials stuffing happens after some user/passwords leak from a website.  
 An attacker can use these credentials on other websites and services to access accounts of people using the same password.
 
+### Password Spraying
+
+A brute-force password attack tries to find a user password using all combinations or a list from a dictionary.  
+Password spraying instead just tries one or 2 popular passwords on all user accounts.  
+It avoids account lockout, and is more efficient to detect weak passwords if we know many usernames.
+
 ### Broken Authentication
 
 Broken authentication is a generic type of attacks exploiting a vulnerability in the application design.  
@@ -247,6 +275,15 @@ It is often using fake URLs in phishing emails redirecting to fake login pages :
 A botnet is a group of computers (bots) controlled remotely by the attacker.  
 The attacker issues commands to the C&C server (Control and Command), that gives instructions to the bots.  
 A victim machine becomes a bot usually after installing a trojan horse.
+
+A famous botnet is the **Mirai botnet** that infects IoT devices running the ARC processor.  
+It is able to infects IoT devices that are using the default credentials.  
+The Mirai botnet code is open-source, so cyber-criminals can copy it and enrich it.
+
+The **Zeus botnet** discovered in 2007 was a botnet targeting Windows machine.  
+It controlled more than 3 millions machines infected with the Zeus trojan called **Zbot**.  
+The Zeus trojan was installed by drive-by download or phishing emails.
+
 
 ### DoS / DDoS (Distributed Denial of Service)
 
@@ -513,15 +550,16 @@ Many third-party anti-malware suites also offer a software host-based firewall, 
 
 ### Antivirus
 
-An antivirus is a software protecting a computer from malwares.  
+An antivirus is a software protecting a computer from malware.  
 The most popular antivirus solutions are **Kaspersky**, **BitDefender**, **Avast**, **Norton**, **McAfee**...  
 
-Malwares can be identified by 2 main methods :
+Malware can be identified by 2 main methods :
  - **by signature** : trying to match a malware signature (unique binary pattern for a known malware)
  - **by heuristic method** : sandbox testing of a file and determine if it is a virus from its behavior (risk of false positive)
             
 An antivirus can scan the system on demand or on a schedule.  
 Some polymorphic viruses change their code, making it hard to detect their signature.
+
 
 ### EPP (Endpoint Protection Platform)
 
@@ -536,6 +574,7 @@ Leaders are the solutions offered by Microsoft, CrowdStrike and Symantec.
 An EDR is a software agent collecting system data and logs for analysis to provide threat detection.  
 It can work together with an EPP to find existing threats on the host.  
 
+
 ### UEBA (User and Entity Behavior Analytics)
 
 UEBA is an approach that focuses on monitoring and analyzing the behavior of users and entities (devices, applications,
@@ -543,6 +582,7 @@ and systems) within an organization's network to detect and respond to security 
 It is often used together with SIEM solutions to enhance threat detection and incident response capabilities.  
 It makes use of ML and AI.  
 Leader UEBA solutions are **Microsoft Advanced Threat Analytics** and **Splunk User Behavior Analytics**.
+
 
 ### UTM (Unified Threat Management)
 
@@ -563,11 +603,21 @@ Unlike an EPP, a UTM system protect an entire network, not a specific machine.
 Those are decoy servers and networks with intentional security flaws to attract attacks.  
 They keep attackers away from the real routers and servers, and allow to analyze the attacks (types, IPs, ...)
 
+**Kippo** and **Google Hack Honeypot** are some popular honeypot solutions.
+
+
+### FIM (File Integrity Monitoring)
+
+A FIM is an application monitoring that some files are not modified, and sending an alert when they are modified.  
+This can be used to ensure that the system files are never modified.
+
+ON Windows, the **SFC** (System File Checker) is a FIM utility allowing to scan and restore corrupted system files.
+
 
 ## Cloud Security
 
 
-### SECaaS (Security As A Service)
+### SECaaS (Security as a Service)
 
 SECaaS encompasses a wide range of security services hosted in the cloud and delivered to users over the internet.  
 They can include anti-malware, firewall, IDS/IPS, identity and access management (IAM), email security, encryption...  
@@ -576,7 +626,7 @@ SECaaS follows a subscription model, so clients pay a monthly fee and do not nee
 ### CASB (Cloud Access Security Broker)
 
 A CASB is an enterprise management solution designed to mediate access to cloud services by users across all devices.  
-CASB offer visibility on how cloud services are used within the organization.
+A CASB offers visibility on how cloud services are used within the organization.
 
 It can provide many functionalities :
 - SSO (single sign-on) for cloud services
@@ -699,8 +749,9 @@ The 2 main models for FIM to perform authentication and authorization are :
 - **Trusted 3rd Party** : all organizations place their trust in a single 3rd party
   - **SAML** (Security Assertion Markup Language) : Attestation model built upon XML to share federated identity management information.  
   It is a standardization of the SSO process.
-  - **OpenID** : Open standard and decentralized protocol to authenticate users in a FIM system.  
-  Users log to an Identity Provider (for ex Google) and use that account to authenticate on cooperative websites.
+  - **OpenID and OAuth** : Open standard and decentralized protocol to authenticate users in a FIM system.  
+  Users log to an Identity Provider (for ex Google) and use that account to authenticate on cooperative websites.  
+  OpenID handles the authentication, and OAuth handles the authorization.
 
 
 ### Access Control
@@ -800,7 +851,7 @@ These TOS include Windows 8+, MacOS 10.6+, FreeBSD, Red Hat Enterprise Server...
 - Settings > Network & Internet > Wifi > Use random hardware address (if supported by the network adapter)
 
 
-### CWE / CVE / NVD
+### CWE / CVE / NVD / STIX / TAXII
 
 **CWE** (Common Weakness Enumeration) is a community-developed list of software and hardware weakness types that can 
 lead to vulnerabilities in computer systems and software applications.  
@@ -812,7 +863,15 @@ Hackers use these CVEs to craft exploits that use the vulnerability to attack a 
 Keeping softwares patched prevents all these attacks.
 
 **NVD** (National Vulnerability Database) is a publicly accessible database listing CVEs and their remediation.  
-It feeds from the CVE database and exposes a better navigation for the vulnerabilities.
+It feeds from the CVE database and exposes a better navigation for the vulnerabilities.  
+It also gives a quantitative score to all vulnerabilities with the **CVSS** (Common Vulnerability Scoring System).
+
+**STIX** (Structured Threat Information eXpression) is a standardized language that uses a JSON-based lexicon to express
+and share threat intelligence information in a readable and consistent format.    
+STIX includes motivations, abilities, capabilities, and response information.
+
+**TAXII** (Trusted Automated eXchange of Intelligence Information) is the format through which threat intelligence data is transmitted.  
+TAXII is a transport protocol that supports transferring STIX insights over HTTPS.
 
 
 ## Supply Chain Management
@@ -917,7 +976,10 @@ WPA3 was launched in 2018 to strengthen WPA2.
 The main improvement is the removal of the PSK (Pre-Shared Key) exchange used for encryption of all messages.  
 It was replaced by SAE (Simultaneous Authentication of Equals) where the client and the AP use public/private keys
 to agree on a one-time session key.  
-Thanks to SAE, WPA3 provides **forward secrecy** : past sessions are protected even if a future key is compromised.
+
+Thanks to SAE, WPA3 provides **forward secrecy** : past sessions are protected even if a future key is compromised.  
+Instead of all using the same PSK (like with WPA2), each client uses a different session key. 
+
 WPA3 is supported by Wifi 6 compatible routers.
 
 
@@ -974,6 +1036,25 @@ When a disk is formatted, the chosen FS governs which devices can read or write 
 FAT32 and exFAT are a good choice when compatibility between OS is needed (flash drives, memory cards...). 
 
 
+## Hard Drive Sanitization
+
+Hard drive sanitization is the process of making the data inside the drive impossible to recover.  
+Simply deleting the files is not enough, it can be recovered by a forensic software.
+
+Self-encrypting drives can be sanitized by **Cryptographic Erase** (CE).  
+It erases the encryption key used by the drive, so the data is no longer accessible even to forensic analysts.
+For non self-encrypting drives, they can be encrypted with VeraCrypt for example, and the key destroyed.
+
+**Secure erase** (SE) is used to sanitize flash-based devices (such as SSDs or USB devices) when CE is not available. 
+
+**Wiping** (also called **zero-fill**) the drive is another sanitization technic that fills the drive with zeroes.  
+This is a slow process, and it does not work with defective drives.  
+A popular tool for drive wiping is **DBAN** (Darik's Boot and Nuke).
+
+**Physical destruction** of the drive makes the drive itself unusable.  
+It can be done by mechanical shredding, incineration, or degaussing magnetic hard drives.
+
+
 ## Facilities Security
 
 ### Fire Suppression
@@ -992,7 +1073,7 @@ There are multiple types of fire extinguisher :
 - **ABC extinguisher** : use dry-chemicals to extinguish fires of type A, B or C.  
 It is corrosive, so should be avoided on computers.
 - **BC extinguisher** : use CO2 to put off B and C fires.  
-It is safe to use on computers, but must be careful as it removes the O2 of the room so prevent humans to breathe.
+It is safe to use on computers, but must be careful as it removes the O2 of the room and prevents humans to breathe.
 - **Yellow extinguisher** : put off class D metal fires
 
 #### Water Sprinkler
@@ -1030,7 +1111,7 @@ Too much humidity can cause condensation of water and corrosion of the component
 ### Faraday Cage
 
 A Faraday cage is a form of shielding installed around an entire room that prevents electromagnetic energy and radio frequencies from entering or leaving the room.  
-It can be used for example for forensic to turn on a phone and ensure no remote command is sent to it to delete its content.  
+It can be used for example for forensics to turn on a phone and ensure no remote command is sent to it to delete its content.  
 
 ### TEMPEST
 
@@ -1135,9 +1216,9 @@ There are 4 strategies to address a risk :
 
 **Quantitative risk analysis** uses numerical and monetary values to calculate risk.  
 It uses functions to generate a magnitude of impact representing the damage of a risk :
-- **Single Loss Expectancy** : Cost associated with every single threat that can occur
-- **Annualized Rate of Occurrence** : Number of times per year the threat will be realized
-- **Annualized Loss Expectancy** : Expected cost of a threat over a year
+- **Single Loss Expectancy (SLE)** : Cost associated with every single threat that can occur
+- **Annualized Rate of Occurrence (ARO)** : Number of times per year the threat will be realized
+- **Annualized Loss Expectancy (ALE)** : Expected cost of a threat over a year
 
 **Active assessments** use intrusive techniques like scanning, hands-on testing and probing the network.  
 They can possibly cause the crash or shutdown of some services or machines when an issue is found.  
@@ -1148,7 +1229,7 @@ They never make any direct contact with the target system.
 ### Types of security controls
 
 Security controls can be classified by control type :
-- **Physical** : guard, security camera, lock, security card, alarms ...
+- **Physical** : guard, CCTV camera, PTZ camera (pan-tilt-zoom), lock, security card, alarms ...
 - **Technical** : password, encryption, ACLs, MFA ...
 - **Administrative** : policies and procedures, least-privilege, mandatory vacation, user trainings...
 
@@ -1248,7 +1329,7 @@ For example, it can teardown a VM suspected to contain a malware and create a ne
 
 ## Redundancy and Disaster Prevention
 
-### RAID
+### RAID (Redundant Array of Independent Disks)
 
 RAID is a technology to ensure data redundancy by using multiple disks.
 
@@ -1309,6 +1390,18 @@ BIA uses metrics expressing the system availability :
 - **MTBF** (Mean Time Between Failure) : average time between failures of a device
 
 
+### Key Escrow
+
+Key escrow is a disaster recovery mechanism for the safekeeping of encryption keys.  
+The encryption keys are stored in a repository on a 3rd party, and can be accessed by authorized parties if needed.  
+
+It can be used in multiple situations :
+- a company wants to encrypt data but does not want to manage encryption keys
+- a company needs to access data encrypted with the key of an employee who left
+- law enforcement needs to access encrypted data for an investigation
+
+
+
 ## Policies and Procedures
 
 **Policies** define the role of security in an organization and establish the desired end state of the security program.  
@@ -1344,12 +1437,19 @@ Data lifecycle should be specified in the organization policies : how long data 
 Some regulations require the storage of some types of data for a given period of time .
 
 **PII** (Personally Identifiable Information) are data that can identify specific people.  
-They can be employee of customer data (full name, driver license number, social security numbers, DoB, email...).
+They can be employee or customer data (full name, driver license number, social security numbers, DoB, email...).
+
+**SPI** (Sensitive Personal Information) are data about people's origin, opinions or nature.  
+SPI include credentials to services, precise geo-localization, genetic data, email content...
+
+**PHI** (Protected Health Information) is any medical information that can identify an individual, regulated by HIPAA.  
+PHI include information about medical/physical/mental health-related conditions, test results, prescriptions, 
+appointments, patient forms, medical bills...
 
 Multiple regulations defining what are PII and how the must be manipulated :
 - **Privacy Act of 1974** : affect US government computer systems collecting, storing using and sharing PII  
 - **HIPAA** (Health Insurance Portability and Accountability Act) : affect healthcare providers, insurance companies, medical data clearing houses...  
-- **SOX** (Sarbanes-Oxley) : affect publicly traded US corporations and require some accounting methods and financial reporting requirements
+- **SOX** (Sarbanes-Oxley) : affect publicly traded US corporations and include some accounting methods and financial reporting requirements
 - **GLBA** (Gramm-Leach-Bliley Act) : affect banks, mortgage companies, loan offices, credit card providers...
 - **FISMA** (Federal Information Security Management Act) : require federal agencies to develop, document and implement an information security program to protect their data
 - **PCI-DSS** (Payment Card Industry - Data Security Standard) : contractual obligation for organization manipulating client credit card numbers
@@ -1376,31 +1476,51 @@ Multiple regulations defining what are PII and how the must be manipulated :
 - **SLA** (Service level agreement) : agreement defining the ability to support and respond to problems within an agreed timeframe
 - **ISA** (Interconnection Security Agreement) : define technical requirements each organization must meet when connecting 2 networks
 - **BPA** (Business Partnership Agreement) : define the conditions of a business relationship
+- **Rules of Engagement** : define how the action will be taken (for example no social engineering for penetration testers)
 
 ### Frameworks
 
 Some enterprise IT security architecture frameworks exist to help with the creation of policies, standards, guidelines and procedures.
 
-- **SABSA** (Sherwood Applied Business Security Architecture) : risk-driven architecture considering the how/where/who/when/why the problem.
+- **SABSA** (Sherwood Applied Business Security Architecture) : risk-driven architecture considering the how/where/who/when/why of the problem.
+
 - **COBIT** (Control Objectives for Information and Related Technology) : security control dividing IT into 4 domains :
   - Plan and Organize
   - Acquire and Implement
   - Deliver and Support
   - Monitor and Evaluate
+
 - **NIST SP 800-53** : security control framework developed by the Dept of Commerce
+
 - **ITIL** (IT Infrastructure Library) : de-facto standard for IT service management
 
-- **CIS** (Center for Internet Security) : secure configuration guidelines for hardening, and sets of cyber-security best practices.
-- **RMF** (Risk Management Framework) : process developed for the federal government, integrating security and risk management in the system development life cycle.
-- **CSF** (Cyber Security Framework) : set of industry standards and best practices created by NIST to help manage cybersecurity risks.  
-  CSF defines 5 categories of functions : Identify / Protect / Detect / Respond / Recover
-- **ISO 27001** : international standard detailing the requirement to establish, implement and maintain an ISMS (information security management system)
-- **ISO 27002** : international standard detailing some best practice recommendations for people implementing an ISMS
-- **ISO 27701** : international standard extending ISO 27001 to enhance the existing ISMS with additional privacy requirements
-- **ISO 31000** : international standard for enterprise risk management to replace all existing standard / methodologies / paradigms across industries
-- **SOC** (System and Organization Control) : suite of reports of internal controls over an information system produced during an audit (completing another framework with an audit method)
-- **Cloud Security Alliance's Cloud Control Matrix** : framework providing fondamental security principles to guide cloud vendors
-- **Cloud Security Alliance's Reference Architecture** : methodology enabling security architects to assess their cloud IT solution security
+- **CIS CSC** (Center for Internet Security - Critical Security Controls) : secure configuration guidelines for hardening,
+  and sets of cyber-security best practices.  
+  It helps improve cyber-defense by detailing 20 key actions (the critical security controls) and has different categories
+  for different sizes of organizations
+
+- **NIST** (National Institute of Standards and Technology) has 2 frameworks :
+  - **RMF** (Risk Management Framework) : mandatory for US federal agencies and organizations handling federal data,
+    integrating security and risk management in the system development life cycle.  
+    It follows 6 steps : Categorize / Select / Implement / Assess / Authorize / Monitor
+  - **CSF** (Cyber Security Framework) : commercial implementation, offering a set of industry standards and best practices
+    created by NIST to help manage cybersecurity risks.  
+    CSF defines 5 categories of functions : Identify / Protect / Detect / Respond / Recover
+
+- **ISO IEC framework** (International Organization for Standardization - International Electrotechnical Commission)
+  - **ISO 27001** : international standard detailing the requirement to establish, implement and maintain an ISMS
+    (Information Security Management System)
+  - **ISO 27002** : international standard detailing some best practice recommendations for people implementing an ISMS
+  - **ISO 27701** : international standard extending ISO 27001 to enhance the existing ISMS with additional privacy requirements
+  - **ISO 31000** : international standard for enterprise risk management to replace all existing standard / methodologies / paradigms
+    across industries
+
+- **SOC** (System and Organization Control) : suite of reports of internal controls over an information system produced during an audit
+  (completing another framework with an audit method)
+
+- **CSA** (Cloud Security Alliance) : Security in cloud computing
+  - **Cloud Control Matrix** : framework providing fundamental security principles to guide cloud vendors
+  - **Reference Architecture** : methodology enabling security architects to assess their cloud IT solution security
 
 
 ## Incident Response and Forensics
@@ -1416,6 +1536,22 @@ Each company has its own way to conduct it, but it usually follows the same step
 - **Eradication** : remove the threat or attack
 - **Recovery** : restore data and re-enable servers and networks taken off during the incident
 - **Lessons Learned** : document the incident response and decide on how to improve the security posture
+
+
+### SOC (Security Operations Center)
+
+A SOC is a team of cyber-security professionals within an organization responsible for monitoring the network and its systems.  
+The primary goal of a SOC is to detect, respond to, mitigate, and prevent cyber-security incidents.  
+It serves as a hub for cyber-security activities and plays a critical role in maintaining the security posture of the organization.
+
+
+### NIST SP 800-61 (National Institute of Standards and Technology - Special Publication 800-61)
+
+NIST SP 800-61, titled "Computer Security Incident Handling Guide," is a publication by the NIST (NIST) in the United States.  
+It provides guidance on establishing and maintaining an effective incident handling capability for organizations.
+
+It covers all phases of the incident management program, from preparation before the incident to the knowledge sharing once resolved.
+
 
 ### CSIRT (Computer Security Incident Response Team)
 
@@ -1441,13 +1577,24 @@ There are multiple sources of data that can be used to conduct the incident resp
 - log files (network, system, application, security, web, DNS ...)
 - Syslog / R-Syslog / Syslog-NG
 - nxlog : cross-platform open-source tool similar to syslog-ng
-- journalctl : Linux command-line utility to query and display logs from journald, the systemd logging service
+- journalctl : Linux command-line utility to query and display logs from journald, the systemd logging service (for example all sudo commands)
 - netflow : Cisco-proprietary network protocol collecting network traffic
 - sflow : open-source version of netflow
+
+### EXIF (Exchangeable Image File Format)
+
+EXIF is a standard for saving metadata to an image file.  
+When a photo is taken with a digital camera, EXIF defines how metadata are embedded inside the image.  
+This can include the camera model, the lens details, the date and time of image capture, the geolocation...
+
+**Exiftool** is a free and open-source program for reading, writing and manipulating images metadata.  
+It can be used to display all metadata embedded in an image.
 
 ### Forensic procedures
 
 Forensic procedures are always written, to ensure they are effective and compliant with regulations.
+
+The **RFC 3227** (Guideline for Evidence Collection and Archiving) gives a good set of best practices for forensics.
 
 #### Identification
 
@@ -1463,6 +1610,7 @@ A forensic disk is usually created to serve as evidence, and allow the main serv
 Data collection must take into account the **order of volatility** :
 - L1/L2/L3/GPU caches and CPU register
 - RAM, ARP tables, cache
+- Swap files (temporary files on disk used as virtual memory)
 - HDD, SDD
 - remote logging
 
@@ -1477,3 +1625,12 @@ Create a report documenting the methods and tools used during the investigation.
 Present detailed findings and conclusions based on the analysis.
 
 Many forensic tools can generate a timeline, showing in a graphical format what file was edited at what time, like **EnCase** or **Autopsy**.
+
+
+## Others
+
+### PDS (Protected Distribution System)
+
+A PDS is a physically secure cabled network.  
+It includes safeguards (acoustic, electric, electromagnetic, and physical) to permit its use for the transmission of
+unencrypted information through an area of lesser classification or control.

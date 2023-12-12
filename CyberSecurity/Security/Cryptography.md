@@ -20,7 +20,7 @@ It was invented in 1833 by Samuel Morse for the first telegraphs when all we cou
 A pause is added between letters, and a longer pause between words.
 
 <p align="center">
-<img alt="Morse Code" src="./images/morse_code.jpg" width=400  style="border:1px solid black">
+<img alt="Morse Code" src="../images/morse_code.jpg" width=400  style="border:1px solid black">
 </p>
 
 The SOS distress signal `... --- ...` was chosen in Morse for its transmission simplicity.  
@@ -106,6 +106,13 @@ In real life, we use a **digital signature**, which is a hash of the message enc
 This encrypted hash is added to the message, and the (message, hash) pair is encrypted with the recipient's public key.  
 The recipient can decrypt it and check that the hash matches the hash calculated from the received message.  
 This confirms that the message was not altered in transit, since only the sender could have encrypted the hash with his private key.
+
+There are multiple possible modes for encryption :
+- **ECB** (Electronic CodeBook) : only use the plaintext and the key for encryption, so 2 similar blocks in plaintext are encoded the same way
+- **CBC** (Cypher Block Chaining) : perform a XOR of the plaintext with the previous encrypted ciphertext
+- **CTR** (Counter) : instead of encrypting the plaintext, encrypt a counter and XOR the result with 8-bit of the plaintext, then increment the counter
+- **GCM** (Galois/Counter Mode) : combine CTR with the Galois authentication
+
 
 ### Scytale (404 BC)
 
@@ -227,7 +234,7 @@ Enigma is the encryption machine that was used by the Germans during WW2 to send
 It looks like a typewriter, when a key is pressed on the keyboard, a light appears on the corresponding encrypted letter.  
 
 The Enigma machine contains 3 rotors, each with 26 possible positions and letters in a fixed order.  
-When a key is pressed, the rotor 1 encrypt it into an output letter that is passed to rotor 2, that also encrypts it
+When a key is pressed, the rotor 1 encrypts it into an output letter that is passed to rotor 2, that also encrypts it
 and passes it to rotor 3, that encrypts it as well and returns its result.  
 After a letter is encrypted, rotor 1 will turn by 1 position.  
 When rotor 1 did a full rotation, rotor 2 turns by one position.  
@@ -273,7 +280,7 @@ To decrypt :
  | 17 22 |  |  4 |   | 17 |   | 19 |    so  message = 18 4 2 17 4 19 = SECRET  
 ```
 
-### DES (Date Encryption Standard)
+### DES (Data Encryption Standard)
 
 DES is a symmetric-key encryption algorithm developed at IBM in the early 1970s, and published in 1977.  
 It breaks the input into 64-bit blocks, and uses transposition and substitution to create the ciphertext.  
@@ -331,7 +338,7 @@ It relies on the difficulty to factorize the product of 2 big prime numbers.
 ### ECC (Elliptic Curve Cryptography)
 
 ECC is an asymmetric public/private key algorithm used a lot in mobile devices.  
-It is based on the algebraic structure of elliptic curves upon over finite fields.  
+It is based on the algebraic structure of elliptic curves over finite fields.  
 ECC provides better security than an equivalent size RSA key (a 256-bit ECC key is as secure as a RSA 2048-bit key).  
 
 ### PGP (Pretty Good Privacy) and GPG (GNU Privacy Guard)
@@ -367,6 +374,12 @@ We can also use **salting** by adding a prefix to the password to avoid rainbow 
 MD5 is a hashing function created in 1991 giving a 128-bit hash for a message.  
 It is no longer secure, since a vulnerability was discovered in 1996 to create hash collisions easily.
 
+### RIPEMD (RIPE Message Digest)
+
+RIPEMD is a family of cryptographic hash functions (RIPEMD, RIPEMD-128, RIPEMD-160, RIPEMD-256).  
+The most popular is **RIPEMD-160** generating a 160-bit hash output.  
+It is less popular than MD5 and SHA, but is used for Bitcoin and other crypto-currencies. 
+
 ### SHA (Secure Hash Algorithm)
 
 SHA is a suite of hashing functions replacing MD5 for hash calculation.  
@@ -384,7 +397,7 @@ SHA is a suite of hashing functions replacing MD5 for hash calculation.
 PKI is an entire system of hardware, software, policies, procedures and people based on the asymmetric encryption.  
 
 A browser uses the PKI when connecting in SSL/TLS to any website using HTTPS.  
-It requests to a Certificate Authority the public key of the target website.  
+It requests to a CA (Certificate Authority) the public key of the target website.  
 It then chooses a random secret key, encrypts it with the website's public key and sends it to the website.  
 The website receives it, decrypts it with its secret key, and now both the browser and the server know the secret key.  
 From then, they can open a secure tunnel using SSL or TLS and continue their exchange with symmetric encryption.
@@ -392,14 +405,14 @@ From then, they can open a secure tunnel using SSL or TLS and continue their exc
 ### Certificate Authority
 
 PKI requires an external trusted 3rd-party to provide the website public key.  
-Certificate authorities issue digital certificates.  
+Certificate Authorities (CA) issue digital certificates.  
 A digital certificate is a digitally signed document binding a public key with a user's identity (person or server).
 
 Standard **X.509** is used for digital certificates in PKI.  
 It contains the user's information and the certificate authority's information.
 
 Digital certificates must be purchased at certificate authorities.  
-By default, they include only one domain (like www.example.com) but we can buy a **wildcard certificate** to include all subdomains.
+By default, they include only one domain (like www.example.com) but we can buy a **wildcard certificate** to include all subdomains.  
 
 Digital certificates can be **single-sided** (only the server has a certificate) or **dual-sided** (both client and server need a certificate).
 
@@ -407,12 +420,18 @@ Certificates must be encoded under the **X.690** standard before they can be use
 - **BER** (Basic Encoding Rule) : original ruleset for the encoding of data, allowing multiple encoding types
 - **CER** (Canonical Encoding Rule) : restricted version of BER allowing a single encoding type
 - **DER** (Distinguished Encoding Rule) : more restrictive than CER, used in practice for X.509 certificates
+  - **PEM** (Privacy Enhanced Mail) is a Base64 encoded DER certificate to represent the binary as readable ASCII
+  - **PKCS #12** (Public Key Cryptography Standards #12) is a binary file bundling multiple certificates or keys (.pf2 or .p12)
 
 To obtain a certificate, we must first request it to a **RA** (Registration Authority).  
-The RA will verify user information, and forward them to the **CA** (Cartificate Authority) that generates the certificate.    
+The RA will verify user information, and forward them to the **CA** (Certificate Authority) that generates the certificate.  
 The CA maintains the **CRL** (Certificate Revocation List) of all certificates revoked because they got compromised.  
+Clients can query the CRL using **OCSP** (Online Certificate Status Protocol).  
 Some popular root CAs are **Verisign** and **Digisign**.  
 
-The **Web of Trust** is a decentralized trust model addressing the issues of public key authentication in a CA-based PKI system.  
 Instead of paying a CA to issue a certificate, we can create a **self-signed certificate** for our web server.  
-Browsers would show an error asking to confirm if we trust this insecure certificate (good for development phase).
+Private CAs can be setup using **Windows Certificate Services** (Windows) or **OpenCA** (Linux).  
+Browsers need to be updated to trust this private CA, otherwise they would show a popup saying it is an insecure website.
+
+The **Web of Trust** is a decentralized trust model addressing the issues of public key authentication in a CA-based PKI system.  
+An example of Web of Trust is PGP (Pretty Good Privacy) and its open-source implementation GPG (GNU PGP Guard).  
