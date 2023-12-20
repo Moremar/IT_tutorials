@@ -153,10 +153,11 @@ A **DHCP relay** can be setup to allow the DHCP server broadcasts to cross a rou
 
 DNS is responsible for the resolution of domain names into IP addresses.  
 
-When a browser needs to access _www.mysite.com_, it queries the DNS server to know the corresponding IP address.    
-If the DNS server does not have it configured or in cache, it will ask the **root DNS server**.  
-The root DNS server replies with the IP of the **top-level DNS server** in charge of the `com` domain.  
-The DNS server will ask the top-level DNS server, that will provide the IP of the **authoritative DNS server** in charge of `mysite.com`.  
+When a browser needs to access _www.mysite.com_, it first checks the machine's local cache.  
+If the local cache does not have the corresponding IP address, it queries the **recursive DNS server** (from the ISP).    
+If the recursive DNS server does not have it configured or in cache, it will ask the **root DNS server**.  
+The root DNS server replies with the IP of the **top-level domain DNS server** in charge of the `com` domain.  
+The DNS server will ask the top-level domain DNS server, that will provide the IP of the **authoritative DNS server** in charge of `mysite.com`.  
 The DNS server will ask the authoritative DNS server, that will provide the IP of `www.mysite.com`.  
 The DNS server will cache this IP address and return it to the browser.
 
@@ -172,10 +173,11 @@ DNSSEC addresses vulnerabilities in the DNS and provides a means to authenticate
 - **MX** (Mail Exchange) : IP of the mail server responsible for receiving emails on behalf of a domain
 - **SOA** (Start of Authority) : administrative info about the zone (name, TTL, administrator...)
 
-#### nslookup
+#### nslookup / dig
 
 `nslookup` is a command-line tool used to query a DNS server for DNS records.  
-It is the main tool to troubleshoot DNS related issues and verifying the DNS configuration.
+It was the main tool to troubleshoot DNS related issues and verifying the DNS configuration.  
+It is now replaced by `dig` that provides more info.
 
 ```commandline
 nslookup facebook.com                # query the IPv4 and IPv6 addresses for a domain name
@@ -183,7 +185,20 @@ nslookup 142.250.196.132             # reverse lookup, query the domain name for
 nslookup -type=MX facebook.com       # query the hostname of the mail server for a domain name
 nslookup -type=SOA facebook.com      # query the SOA data for a domain name (name server, admin email, TTL...)
 nslookup facebook.com 8.8.8.8        # use a custom DNS server (8.8.8.8 is Google's public DNS server) 
+
+dig facebook.com                     # query the IPV4 for a domain name
+dig facebook.com @8.8.8.8            # query the IPV4 for a domain name using a specific DNS server
 ```
+
+#### whois
+
+`whois` is a command-line tool to query who a domain is registered to.  
+It gives information about the creation date, registrar, admin organization...
+
+```commandline
+whois google.com
+```
+
 
 ### SNMP
 
@@ -210,12 +225,12 @@ specific condition is met or a threshold is breached.
 **SNMPv3** adds security with encryption, authentication and message integrity check.
 
 The SNMP messages exchanged between the SNMP server and the SNMP agents should be on a separate **out-of-bound network**.  
-Keeping the management packets separated from the data network improves security and prevent users to see this traffic.
+Keeping the management packets separated from the data network improves security and prevents users to see this traffic.
 
 
 ### SSH (Secure Shell)
 
-SSH is a protocol to create a channel between 2 computers or network devices and enable one device to control the other device.  
+SSH is a protocol to create a secure channel between 2 computers or network devices and enable one device to control the other device.  
 It was originally used in Unix, but it is now used in Windows as well as a text-based remote control method (Windows servers, routers, switches...).  
 SSH2 fixes issues with SSH1, and uses Diffie-Hellman for key exchange.
 
@@ -271,7 +286,7 @@ LDAP is a lightweight implementation of the **X.500 standards** defining a frame
 TCP guarantees reception and integrity of messages by establishing a connection and sending segments until it gets a reception ACK, called a PAR (Positive Acknowledgment with Retransmission).  
 The connection is established by 3 segments exchanged between the client and the server, sending to each other their sequence ID :
 - The client sends a SYN segment including its sequence ID seq=X
-- The server sends a ACK-SYN segment including its sequence ID : seq=Y, ack=X+1
+- The server sends a SYN/ACK segment including its sequence ID : seq=Y, ack=X+1
 - The client sends a ACK : ack=Y+1
 
 
@@ -318,12 +333,12 @@ First available cable standard, called "Thick Ethernet".
 
 - **10-BASE-2** _[Deprecated]_ : 10Mbs Ethernet, max length of 125m using RG-58 coaxial cables.   
 Physical bus topology with BNC connectors with 50 Ohm terminators.  
-RG-58 cables are thiner than RG-8 cables so 10-BASE-2 is called "Thin Ethernet".
+RG-58 cables are thinner than RG-8 cables so 10-BASE-2 is called "Thin Ethernet".
 
 
 - **10-BASE-T** : LAN standard for 10Mbs Ethernet using UTP cables (sometimes STP).  
 Max length 100m, use RJ-45 connectors with Cat 3/4/5 cables.  
-Physical start topology, support full-duplex, up to 1024 machines in the network.
+Physical star topology, support full-duplex, up to 1024 machines in the network.
 
 
 - **10-BASE-FL** _[Rare]_ : 10Mbs Ethernet over fiber-optic cables, max length 2km.  
@@ -953,6 +968,19 @@ The network masks of the subnets is 255.240.0.0.
 The subnets are 10.0.0.0/12, 10.16.0.0/12, ..., 10.240.0.0/12.  
 
 
+## Multicast IPv4 Traffic
+
+Multicast traffic uses specific multicast IP addresses, from 224.0.0.0 to 239.255.255.255.   
+A multicast source (video camera, streaming source...) can send traffic to a multicast address.
+
+Clients can register to a multicast group using **IGMP** (Internet Group Management Protocol).  
+IGMP lets routers know which interface has multicast receivers, and allows clients to join a multicast group.  
+IGMP is encapsulated directly in an IP message (no transport layer) just like ICMP.  
+
+The routing of multicast traffic uses **PIM** (Protocol-Independent Multicast).  
+PIM is a protocol that helps routers determine the most efficient path to deliver multicast traffic to members of a multicast group.
+
+
 ### IPv6
 
 With the global use of Internet and the expansion of IoT, we are running out of 4-bytes IPv4 addresses.  
@@ -1390,7 +1418,7 @@ A reverse proxy can be equipped with WAF capabilities to inspect incoming traffi
 **Nginx** is a popular open-source reverse proxy.
 
 
-## VPN and VPN Concentrator
+## VPN (Virtual Private Network)
 
 A VPN allows users to create a tunnel over an untrusted network to connect remotely and securely to the corporate network.  
 This type of VPN is called **Client-to-Site VPN** or **Remote-Access VPN**.  
@@ -1399,16 +1427,30 @@ A VPN can also be used to connect a satellite office to the main office, this is
 On both sides of the VPN, the traffic is encrypted with an encryption key and decrypted at reception.  
 This is done by the VPN client (on end-user machines) and by the VPN concentrator on the corporate network side.
 
-VPN rely on 2 protocols to operate :
-- **PPTP** (Point-to-Point Tunnelling Protocol) : protocol encapsulating PPP packets and sending data as encrypted traffic.  
-  It can use CHAP-based authentication, which is vulnerable to attacks, we must configure a different authentication protocol
-  like EAP-TLS (relying on PKI and digital certificates).  
-- **L2TP** (Layer 2 Tunnelling Protocol) : Connection between 2 or more devices that are not on the same private network.  
+
+### VPN Concentrator
+
+A VPN Concentrator is a specialized networking hardware device that aggregates multiple VPN connections from remote clients.  
+It simplifies and centralizes the management of VPN connections, to allow access from remote users or branch offices to the main network.  
+It is placed at the forefront of the network, next to the firewall.  
+It comes with dedicated software to support VPN connections.
+
+
+### VPN Protocols
+
+#### PPTP (Point-to-Point Tunnelling Protocol)
+
+**PPTP** is a protocol encapsulating PPP packets and sending data as encrypted traffic.  
+It can use CHAP-based authentication, which is vulnerable to attacks, we must configure a different authentication protocol 
+like EAP-TLS (relying on PKI and digital certificates).
+
+#### L2TP (Layer 2 Tunnelling Protocol)
+
+**L2TP**  : Connection between 2 or more devices that are not on the same private network.  
   It provides no encryption and no confidentiality by itself.  
   The security is usually provided by IPsec.
 
-
-### IPsec
+#### IPsec
 
 IPsec is a suite of TCP/IP protocols used together to set up encrypted connections between devices on a public network.  
 IPsec provides confidentiality (encryption), integrity (hashing) and authentication (key exchange).  
@@ -1421,16 +1463,17 @@ A **SA** (Security Association) is the establishment of secure connections and s
 certificates or cryptographic keys.
 
 - **AH** (Authentication Header) : IPsec protocol adding a hash of the message for authenticity check (no encryption)
-- **ESP** (Encapsulating Security Payload) : encryption with a symmetric algorithm (SHA-2 for ex),
+- **ESP** (Encapsulating Security Payload) : encryption with a symmetric algorithm (DES or AES for ex),
 checksum for data integrity, anti-replay service to protect against reception of a copy of a previous valid message.
 
 **ISAKMP** (Internet Security Association Key Management Protocol) is often used in conjunction to IPsec.  
 It secures the key exchange during the establishment of a client to server VPN connection.
 
 IPsec has 2 possible modes :
-- **transport mode** : encryption of the payload of an IP packet but not the header.  
-  It shows the source and target in clear, so it should only be used within a private network.  
-- **tunnel mode** : the entire IP packet is encrypted (header + payload).  
+- **transport mode** : encryption of the payload of an IP packet but not the IP header.  
+  The ESP header goes after the original IP header.  
+  The message shows the source and target in clear, so it should only be used within a private network.  
+- **tunnel mode** : the original IP packet is encrypted (header + payload) and a new IP header is used.  
   It is commonly used for transmission over an untrusted network like the Internet.
 
 
@@ -1445,13 +1488,6 @@ Split tunnelling can be specified :
 - by inverse split tunnelling : use the VPN only for a list of apps and URLs
 
 Split tunnelling can be a risk to organizations, as it creates an alternative path from the internal network to the internet.
-
-### VPN Concentrator
-
-A VPN Concentrator is a specialized networking hardware device that aggregates multiple VPN connections from remote clients.  
-It simplifies and centralizes the management of VPN connections, to allow access from remote users or branch offices to the main network.  
-It is placed at the forefront of the network, next to the firewall.  
-It comes with dedicated software to support VPN connections.
 
 
 ## RADIUS (Remote Access Dial-In User Service)
@@ -1634,6 +1670,13 @@ Transmission methods can be :
   renting towers in cities, pointing dishes to a given point and beaming a laser to that point.
 
 
+### WAN Types
+
+- **Dedicated Lease Line** : connect 2 sides via a connection not shared with other customers (for ex T1, T3, E1, E3)
+- **Circuit-switched connection** : a dedicated connection is made only when needed (the PSTN is the most well-known circuit-switched WAN)
+- **Packet-switched connection** : most common WAN type today, shared bandwidth between customers, use SLA to guarantee bandwidth (MPLS, Frame Relay, 4G/5G...)
+
+
 ### MPLS (Multi-Process Label Switching)
 
 MPLS is a routing technique in telecommunication networks that directs data from one node to the next based on short path labels rather than long network addresses.  
@@ -1667,11 +1710,14 @@ The modem sends its data to a **DSLAM** (DSL Access Multiplier) acting as a cent
 - **RADSL** (Rate Adaptive DSL) can adjust its transmission speed based on the line condition
 
 
-### WAN Types
+### T-Carrier
 
-- **Dedicated Lease Line** : connect 2 sides via a connection not shared with other customers (for ex T1, T3, E1, E3)
-- **Circuit-switched connection** : a dedicated connection is made only when needed (the PSTN is the most well-known circuit-switched WAN)
-- **Packet-switched connection** : most common WAN type today, shared bandwidth between customers, use SLA to guarantee bandwidth (MPLS, Frame Relay, 4G/5G...)
+T-Carrier system are used by ISPs to provide Internet to homes and companies.  
+It is old and getting replaced by faster technologies like fiber optics, but still used in some countries.  
+
+The most popular T-carrier line types are :
+- **T1** : 1.544Mbs debit and 24 channels
+- **T3** : combination of 28 T1 lines, 44Mbs and 24x28 channels
 
 
 ## Compliance and Operations
@@ -1712,8 +1758,8 @@ Potential issues with power sources include :
 - **blackout** : total loss of power for a prolonged period of time
 
 A UPS is a device with a battery attached that can supply power to devices in case of a power outage.  
-It combines the functionality of a surge protector and a battery backup, usually providing power for up to 30min.  
-Beyond 30min, we should use a backup generator to generate power in case of outage of the regular electric grid power.  
+It combines the functionality of a surge protector and a battery backup, usually providing power for 30min to an hour.  
+Beyond that, we should use a backup generator to generate power in case of outage of the regular electric grid power.  
 
 The **UPS runtime** is the amount of time the UPS can supply power at a given power level.  
 The **UPS capacity** is the max amount of power the UPS can supply at a given time.  
@@ -1735,6 +1781,11 @@ The network admins can use an analysis application to analyze NetFlow data for i
 
 IPFIX (IP Flow Information Export) and sFlow (Sample Flow) are standards based on NetFlow and designed to be vendor-neutral.
 
+NetFlow analysis can be conducted using the **SiLK suite** (System for Internet-Level Knowledge).  
+It can read, filters and extract statistics from NetFlow/IPFIX/sFlow data.
+
+
+## Network Architecture
 
 ### MDF and IDF
 
@@ -1745,19 +1796,19 @@ The IDFs (Intermediate Distribution Frame) are auxiliaries to the MDF and are di
 There may be one IDF per floor, and each workstation of that floor is connected to it.
 
 
-## 3-Planes Network Architecture
+### 3-Planes Network Architecture
 
 - **Data Plane** : carries user traffic (also called forwarding plane)
 - **Control Plane** : carries signaling traffic from and to routers, allowing to build routing tables 
 - **Management Plane** : for router administration
 
-## Cisco 3-Tiers Data Center Network Model
+### Cisco 3-Tiers Data Center Network Model
 
 - **Core layer** : backbone of the network, biggest and fastest routers
 - **Distribution layer** : middle layer implementing security / access control / redundancy
 - **Access layer** : access switches connected to end devices (computers, printers, servers...)
 
-## 2-Tiers Spine/Leaf Data Center Network Model
+### 2-Tiers Spine/Leaf Data Center Network Model
 
 This model is used for smaller data center for simplicity and cost reduction.
 
@@ -1777,7 +1828,7 @@ via an API.
 
 **SDV** (Software Defined Visibility) is the concept of using software-defined networking (SDN) principles to enhance
 and manage network visibility.  
-This is important in large network environments to monitoring and analyzing network traffic for security, performance
+This is important in large network environments for monitoring and analyzing network traffic for security, performance
 optimization, and troubleshooting.
 
 
@@ -1795,19 +1846,6 @@ To assign an IP address, BOOTP looks for the entry with a given MAC address in a
 BOOTP required manual assignment of an IP for each MAC address in the reference database.
 
 
-## Multicast IPv4 Traffic
-
-Multicast traffic uses specific multicast IP addresses, from 224.0.0.0 to 239.255.255.255.   
-A multicast source (video camera, streaming source...) can send traffic to a multicast address.
-
-Clients can register to a multicast group using **IGMP** (Internet Group Management Protocol).  
-IGMP lets routers know which interface has multicast receivers, and allows clients to join a multicast group.  
-IGMP is encapsulated directly in an IP message (no transport layer) just like ICMP.  
-
-The routing of multicast traffic uses **PIM** (Protocol-Independent Multicast).  
-PIM is a protocol that helps routers determine the most efficient path to deliver multicast traffic to members of a multicast group.
-
-
 ## CATV (Cable TV / Community Antenna TV)
 
 CATV is a service that delivers television programming to subscribers' homes via coaxial cables.  
@@ -1817,29 +1855,21 @@ The customer uses a coaxial cable to plug either a TV or a cable modem (DOCSIS m
 Most ISPs offer cable television, Internet access and phone services over the same CATV lines.  
 
 
-## T-Carrier
-
-T-Carrier system are used by ISPs to provide Internet to homes and companies.  
-It is old and getting replaced by faster technologies like fiber optics, but still used in some countries.  
-
-The most popular T-carrier line types are :
-- **T1** : 1.544Mbs debit and 24 channels
-- **T3** : combination of 28 T1 lines, 44Mbs and 24x28 channels
-
-
 ### Useful CLI Tools
 
 - **PowerShell** : task automation and configuration management tool for Windows, with a shell and its scripting language
 
-- **ping / hping** : check if a machine is up and responding to ICMP requests (hping offers more control over the packet crafting and target port) 
+- **ping** : check if a machine is up and responding to ICMP requests  
+
+- **hping** : enhanced version of ping offering more control over the packet crafting and target port 
+
+- **traceroute / pathping** : check the path in the network to a given device (tracert on Windows)
 
 - **ipconfig** : check network configuration of the connected network devices (IP address, MAC address, default gateway...)
 
 - **arp** : view and edit the ARP table (IP/MAC mapping)
 
 - **nslookup / dig** : query DNS records (get domain name IP, reverse DNS, MX server...)
-
-- **traceroute / pathping** : check the path in the network to a given device (tracert on Windows)
 
 - **route** : edit the route table on a host or server (by default, all traffic goes to the default gateway)
 
@@ -1870,7 +1900,7 @@ curl --data "<QUERY BODY>" <QUERY_URL>
 
 - **pdfinfo** : Linux command to read the metadata of a PDF document
 
-- **chmod** : Linux command to hange the access permissions of a file (user/group/others for read/write/execute)
+- **chmod** : Linux command to change the access permissions of a file (user/group/others for read/write/execute)
 
 - **logger** : Linux command providing an easy way to log data under the /var/log/syslog file
 

@@ -244,7 +244,7 @@ It is used to bypass authentication by pretending to be a trusted party.
 It is also used to establish a Man-in-the-Middle attack by sitting in the middle of 2 machines communicating,
 and pretending to both of them to be the other machine.
 
-### Credentials stuffing
+### Credentials Stuffing
 
 Credentials stuffing happens after some user/passwords leak from a website.  
 An attacker can use these credentials on other websites and services to access accounts of people using the same password.
@@ -252,7 +252,7 @@ An attacker can use these credentials on other websites and services to access a
 ### Password Spraying
 
 A brute-force password attack tries to find a user password using all combinations or a list from a dictionary.  
-Password spraying instead just tries one or 2 popular passwords on all user accounts.  
+Password spraying instead just tries 1 or 2 popular passwords on all user accounts.  
 It avoids account lockout, and is more efficient to detect weak passwords if we know many usernames.
 
 ### Broken Authentication
@@ -266,14 +266,14 @@ It can be weak password policy, weak password recovery policy, easily guessable 
 Phishing is a social engineering technique to lure someone into willingly providing critical information (credentials, credit card numbers...).    
 It is often using fake URLs in phishing emails redirecting to fake login pages :
 - **Vishing** : phishing by phone
-- **Smishing** : physhing by SMS 
+- **Smishing** : phishing by SMS 
 - **Sextortion** : obtain compromising pictures/videos, then used to blackmail the victim
 - **Insider** : the attacker applies for a job in the target company and get hired to gain access to the internal network
 
 ### Botnet
 
 A botnet is a group of computers (bots) controlled remotely by the attacker.  
-The attacker issues commands to the C&C server (Control and Command), that gives instructions to the bots.  
+The attacker issues commands to the C2 server (Control and Command), that gives instructions to the bots.  
 A victim machine becomes a bot usually after installing a trojan horse.
 
 A famous botnet is the **Mirai botnet** that infects IoT devices running the ARC processor.  
@@ -361,7 +361,7 @@ net use \<TARGET_IP>\ipc$ "" /u:""
 ```
 
 To protect against it, we should block ports 445 (SMB) and 139 (netBIOS).  
-It can also be prevented with an IPS or a Firewall blocking external requests on these ports.
+It can also be prevented with an IPS or a firewall blocking external requests on these ports.
 
 ### Supply-Chain attack
 
@@ -426,7 +426,7 @@ War dialing is an attack to automatically dial many phone numbers in order to id
 Hackers often use war dialing software, sometimes called "war dialers" to look for unprotected modems.  
 
 War dialing is used to identify all phone numbers from a company, or identify potential vulnerable modems.   
-Phone numbers can be dialed sequentially or randomly and notes.  
+Phone numbers can be dialed sequentially or randomly.  
 The response shows if the number is connected to a modem, a fax machine, an internal phone system, a home, or a business.
 
 Many phone companies have systems that are designed to detect war dialing.  
@@ -545,6 +545,17 @@ Most OS have one by default :
 - **Windows Defender Firewall** for Windows
 - **PF** (Packet Filter) for MacOS managed with the `pfctl` command
 - **iptables** or **nftables** for Linux distributions
+- **ufw** (Uncomplicated Firewall) on Ubuntu to ease the iptables config
+
+```commandline
+sudo ufw status                        // see status active/inactive and rules
+sudo ufw default allow outgoing        // set default allow/deny for outgoing traffic
+sudo ufw default deny incoming         // set default allow/deny for incoming traffic
+sudo ufw allow 22/tcp                  // allow traffic on a given port
+sudo ufw deny from 192.168.100.25      // block traffoc from a specific IP
+sudo ufw enable                        // make the UFW firewall active
+sudo ufw reset                         // reset firewall rules to default
+```
 
 Many third-party anti-malware suites also offer a software host-based firewall, like Symantec (Norton), McAfee or Zone Alarm.
 
@@ -611,7 +622,7 @@ They keep attackers away from the real routers and servers, and allow to analyze
 A FIM is an application monitoring that some files are not modified, and sending an alert when they are modified.  
 This can be used to ensure that the system files are never modified.
 
-ON Windows, the **SFC** (System File Checker) is a FIM utility allowing to scan and restore corrupted system files.
+On Windows, the **SFC** (System File Checker) is a FIM utility allowing to scan and restore corrupted system files.
 
 
 ## Cloud Security
@@ -754,8 +765,6 @@ The 2 main models for FIM to perform authentication and authorization are :
   OpenID handles the authentication, and OAuth handles the authorization.
 
 
-### Access Control
-
 ### Access Control Models
 
 With **DAC** (Discretionary Access Control), the access control is decided by the owner of each object (file, folder, device...).  
@@ -778,7 +787,6 @@ RBAC is the most commonly used access control model in corporate networks.
 
 With **ABAC** (Attribute-Based Access Control), the access control is dynamic and context aware, using IF/ELSE statements.  
 It is one of the newest forms of access control and getting a lot of success recently.
-
 
 
 ### Encryption
@@ -849,6 +857,35 @@ These TOS include Windows 8+, MacOS 10.6+, FreeBSD, Red Hat Enterprise Server...
 - Settings > Update & Security > Advanced Options > Delivery Optimization > turn off downloads from other PCs
 - Settings > Network & Internet > Windows Firewall > Ensure the firewall is on
 - Settings > Network & Internet > Wifi > Use random hardware address (if supported by the network adapter)
+
+
+### Pyramid of Pain
+
+<p align="center">
+<img alt="Pyramid of Pain" src="../images/pyramid_of_pain.jpg" width=400  style="border:1px solid black">
+</p>
+
+The pyramid of pain was invented in 2013 to describe that some indicators of compromise are more troubling to attackers than others.  
+It shows how easy it is for attackers to bypass a defense from the victim.  
+
+When the **hash** (MD5, SHA) of a malicious program is blocked, it is trivial to recompile the program with a different hash.  
+
+When the attacker **IP address** is blocked, it is easy to move the C2 infrastructure to a different network server.  
+If the attack is conducted via an anonymous proxy service (like Tor), the IP address of the attacker often varies.
+
+When a **DNS domain or sub-domain name** is blocked, it is simple for the attacker to register another domain name.  
+Legislation standards are often lax, and a registration can be done within a day or two.
+
+**Network artifacts** are pieces on the victim network that can identify malicious activity (URI pattern, C2 info in network protocols...).  
+**Host artifacts** are pieces on a victim host that can identify malicious activity (registry of files used by malware...).  
+Blocking these artifacts is annoying for the attacker, as he needs to reconfigure and recompile his tools.
+
+**Tools** are software used by the attacker during the attack, like spear-fishing utilities, backdoors to establish C2 or password crackers.  
+Preventing the attacker to use these tool is really challenging for the attacker who needs to spend time and money to build new tools.
+
+**TTPs** (Tactics, Techniques and Procedures) are the methods used by the attacker to execute the attack.  
+For example "spearfishing with a trojaned PDF file", or "dumping cached authentication credentials and re-use them in pass-the-hash attacks".  
+Identifying and reacting to these TTPs is tough for the attacker, as he needs to find a new behavior to attack, not just change tools.
 
 
 ### CWE / CVE / NVD / STIX / TAXII
@@ -968,7 +1005,7 @@ WPA was a much better standard than WEP, but it had some flaws that WPA2 replace
 
 #### WPA2
 
-WPA2 improves WPA by using **CCMP** for encryption, coupled with **AES** with a 128-bit key.
+WPA2 improves WPA by using **CCMP** for encryption, that uses **AES** with a 128-bit key.
 
 #### WPA3
 
@@ -1042,7 +1079,7 @@ Hard drive sanitization is the process of making the data inside the drive impos
 Simply deleting the files is not enough, it can be recovered by a forensic software.
 
 Self-encrypting drives can be sanitized by **Cryptographic Erase** (CE).  
-It erases the encryption key used by the drive, so the data is no longer accessible even to forensic analysts.
+It erases the encryption key used by the drive, so the data is no longer accessible even to forensic analysts.  
 For non self-encrypting drives, they can be encrypted with VeraCrypt for example, and the key destroyed.
 
 **Secure erase** (SE) is used to sanitize flash-based devices (such as SSDs or USB devices) when CE is not available. 
@@ -1092,7 +1129,7 @@ A **pre-action** sprinkler system is a variation of a dry-pipe sprinkler, but it
 
 In server rooms, we do not want to use a sprinkler system, as water would destroy all servers.  
 Instead, we use a clean agent system, that releases gaz into the room instead of water.    
-The gax (CO2, FM-200, HALON...) will replace the O2 and suffocate the fire.  
+The gas (CO2, FM-200, HALON...) will replace the O2 and suffocate the fire.  
 This creates an environment where people cannot breathe, so usually an alarm rings before to signal people to leave the room.
 
 
@@ -1160,7 +1197,7 @@ This type of OS is used by embedded systems that cannot tolerate reboots or cras
 
 An **ICS** (Industrial Control System) is a network managing embedded devices, used for electrical power stations,
 water suppliers, health services, manufacturing...  
-ICS uses **Fieldbus**, a digital serial data communications used in OT networks to link PLCs.
+ICS uses **Fieldbus**, a digital serial data communications protocol used in OT networks to link PLCs.
 
 An **HMI** (Human-Machine Interface) is an input and output control on a PLC to allow a user to configure and monitor the system.
 
@@ -1331,7 +1368,7 @@ For example, it can teardown a VM suspected to contain a malware and create a ne
 
 ### RAID (Redundant Array of Independent Disks)
 
-RAID is a technology to ensure data redundancy by using multiple disks.
+RAID is a technology to use multiple disks as a single logical disk to improve performance and/or redundancy.  
 
 - **RAID 0** : data striping over multiple disks to increase performance, no data duplication  
 - **RAID 1** : provide redundancy by mirroring the data identically on 2 hard disks

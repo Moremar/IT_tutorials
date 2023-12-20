@@ -473,6 +473,32 @@ It offers a graphical interface to the Sleuth toolkit, and adds other digital fo
 Its imaging function relies on dd, and its analysis function relies on the Sleuth toolkit.
 
 
+### Volatility
+
+Volatility is a command-line tool used by digital forensics and incident response teams to analyze a memory dump.  
+It is a Python program called `vol.py` that can analyze memory snapshots from Linux, MacOS and Windows.
+
+Its main functions are :
+- list active and closed network connections
+- list running processes
+- list command line history
+- extract malicious processes for later analysis
+
+It needs to be provided with the profile of the machine from which the memory dump was generated.  
+It is required to know the memory structure of the OS, so Volatility can make sense of the dump.  
+Windows profiles are available by default (see list with `vol.py --info`).  
+Linux profiles must be created by the user and added to the local Volatililty Linux profiles folder.
+
+```commandline
+vol.py -h                   // display help
+vol.py --info               // display all profiles, commands, plugins...
+
+vol.py -f linux.mem --profile="VistaSP0x64" linux_bash     // check command history file
+vol.py -f linux.mem --profile="VistaSP0x64" linux_pslist   // check running processes
+vol.py -f linux.mem --profile="VistaSP0x64" linux_procdump -D <OUTPUT_FOLDER> -p <PID>  // extract binary of a process
+```
+
+
 ### Cuckoo
 
 Cuckoo is an open-source software to automate the analysis of suspicious files.  
