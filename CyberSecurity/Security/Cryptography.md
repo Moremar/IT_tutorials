@@ -423,11 +423,15 @@ Certificates must be encoded under the **X.690** standard before they can be use
   - **PEM** (Privacy Enhanced Mail) is a Base64 encoded DER certificate to represent the binary as readable ASCII
   - **PKCS #12** (Public Key Cryptography Standards #12) is a binary file bundling multiple certificates or keys (.pf2 or .p12)
 
-To obtain a certificate, we must first request it to a **RA** (Registration Authority).  
+To obtain a certificate, we must first request it to a **RA** (Registration Authority) by sending a **CSR** (Certificate Signing Request).  
 The RA will verify user information, and forward them to the **CA** (Certificate Authority) that generates the certificate.  
 The CA maintains the **CRL** (Certificate Revocation List) of all certificates revoked because they got compromised.  
 Clients can query the CRL using **OCSP** (Online Certificate Status Protocol).  
 Some popular root CAs are **Verisign** and **Digisign**.  
+
+A certificate is valid at most 13 months, then it expires and is no longer valid.  
+To renew it, we need to send a new **CSR** to the CA, that will create a new certificate that needs to be deployed.  
+Once a certificate is issued, its expiry is hardcoded and cannot be modified, so "renewal" is just creating a new one.
 
 Instead of paying a CA to issue a certificate, we can create a **self-signed certificate** for our web server.  
 Private CAs can be setup using **Windows Certificate Services** (Windows) or **OpenCA** (Linux).  

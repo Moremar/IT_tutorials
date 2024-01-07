@@ -27,7 +27,7 @@ We call **pivot** the ability of an attacker to move from machine to machine in 
 
 ### Attack frameworks
 
-- **Cyber Kill Chain** : linear framework in 7 steps :  
+- **Lockheed Martin's Cyber Kill Chain** : linear framework in 7 steps :  
   - Reconnaissance : Gather Intel
   - Weaponization : Build a deliverable payload including an exploit with a backdoor
   - Delivery : Deliver the executable to the target
@@ -35,6 +35,9 @@ We call **pivot** the ability of an attacker to move from machine to machine in 
   - Installation : Malware is installed on the OS
   - Command and Control : A C2 channel is created for remote access
   - Actions : Attackers can remotely carry out any action
+
+- **AlienVault Cyber Kill Chain** : variation of Lockheed Martin's Cyber Kill Chain adding more flexibility.  
+  It considers a broader range of adversary behavior (for example retreat).  
 
 - **MITRE pre-ATT&CK and ATT&CK matrices** : Adversarial Tactics, Techniques and Common Knowledge  
   Free framework using matrices showing different tactics for reconnaissance and attack.  
@@ -127,11 +130,12 @@ A shim is a small library which transparently intercepts an API, changes the par
 or redirects the operation elsewhere.  
 Shims can also be used for running programs on different software platforms than they were developed for.
 
-
 ### Spam
 
 Spam is the abuse of electronic messaging systems to send unsolicited emails, usually containing ads.  
 Most spammers make use of **email relays** from other organizations to send emails anonymously. 
+
+We call **spimming** the spam using IM chat (Whatsapp, Messenger, SMS...).
 
 ### Malware Delivery Methods
 
@@ -163,6 +167,8 @@ For example, they can redirect to a malicious code that runs a shell, so they ha
 Buffer Overflow can be avoided by the use of ASLR (Address Space Layout Randomization) in most OSes.  
 ASLR is a technique to use random addresses for the stack, library code, heap and program code during execution.  
 This makes it much harder for an attacker to guess the address of the next instruction.
+
+Buffer overflows can easily be detected using static code analysis tools (like Sonar).
 
 #### SQL injection
 
@@ -200,6 +206,16 @@ This is done by making the user click on a URL to that site, so his session cook
 XSRF can be avoided by using XSRF tokens in the HTML templates.  
 The token is sent with each request and validated on receive, so the forged URL would not have it.
 
+
+#### IDOR (Insecure Direct Object Reference)
+
+An IDOR is a reference to an object without proper validation of the object ownership.  
+This allows a malicious user to access data that he should not have permission to access.  
+
+A common example is a user-specific page access with an ID in its URL (user ID, product ID, order ID...).  
+The backend need to properly validate that the requested page is allowed for the logged user, otherwise it is an IDOR.
+
+
 ### RCE (Remote Code Execution)
 
 Attack that allows the attacker to run any arbitrary command on a system from a remote location.  
@@ -231,31 +247,42 @@ It is often used in places offering a public Wifi (cafés, airports...).
 
 #### Bluetooth Attacks
 
-**Bluejacking** is the action of sending unsolicited messages to Bluetooth enabled devices.
+**Blue-jacking** is the action of sending unsolicited messages to Bluetooth enabled devices.
 
-**Bluesnarfing** is the unauthorized access of information from a wireless device over a Bluetooth connection.
+**Blue-snarfing** is the unauthorized access of information from a wireless device over a Bluetooth connection.  
+It can be avoided using link-level security.
+
+**Blue-sniping** is a form of blue-snarfing using specialized equipment to reach the device from further away.
+
+**Blue-bugging** is an attack to gain a back-door access to a Bluetooth device.
+
 
 ### Authentication Attacks
 
-### Spoofing
+#### Spoofing
 
 Spoofing is a software-based attack where the attacker assumes the identity of a user or process.  
 It is used to bypass authentication by pretending to be a trusted party.  
 It is also used to establish a Man-in-the-Middle attack by sitting in the middle of 2 machines communicating,
 and pretending to both of them to be the other machine.
 
-### Credentials Stuffing
+#### Credentials Stuffing
 
 Credentials stuffing happens after some user/passwords leak from a website.  
 An attacker can use these credentials on other websites and services to access accounts of people using the same password.
 
-### Password Spraying
+#### Password Spraying
 
 A brute-force password attack tries to find a user password using all combinations or a list from a dictionary.  
 Password spraying instead just tries 1 or 2 popular passwords on all user accounts.  
 It avoids account lockout, and is more efficient to detect weak passwords if we know many usernames.
 
-### Broken Authentication
+#### Cognitive Password Attack
+
+A cognitive password is a personal question used to reset the password (name of pet, first model of car...).  
+By accessing this info (from social media or social engineering) an attacker can reset the password and control the account. 
+
+#### Broken Authentication
 
 Broken authentication is a generic type of attacks exploiting a vulnerability in the application design.  
 It can be weak password policy, weak password recovery policy, easily guessable session keys, hardcoded passwords...
@@ -269,6 +296,13 @@ It is often using fake URLs in phishing emails redirecting to fake login pages :
 - **Smishing** : phishing by SMS 
 - **Sextortion** : obtain compromising pictures/videos, then used to blackmail the victim
 - **Insider** : the attacker applies for a job in the target company and get hired to gain access to the internal network
+
+Phishing campaigns use some common social engineering principles :  
+- **Urgency / Scarcity**: create a false sense of urgency to get the victim to act in a rush (limited offer...)  
+- **Social Proof / Consensus** : convince the victim that other people trust them (fake reviews...)  
+- **Authority / Intimidation** : pretend to be a superior or a government entity (high risk as it gets often reported)  
+- **Familiarity / Trust** : pretend to be from a company the victim knows well (Bank of America) or have a friendly innocent talk  
+
 
 ### Botnet
 
@@ -547,14 +581,14 @@ Most OS have one by default :
 - **iptables** or **nftables** for Linux distributions
 - **ufw** (Uncomplicated Firewall) on Ubuntu to ease the iptables config
 
-```commandline
-sudo ufw status                        // see status active/inactive and rules
-sudo ufw default allow outgoing        // set default allow/deny for outgoing traffic
-sudo ufw default deny incoming         // set default allow/deny for incoming traffic
-sudo ufw allow 22/tcp                  // allow traffic on a given port
-sudo ufw deny from 192.168.100.25      // block traffoc from a specific IP
-sudo ufw enable                        // make the UFW firewall active
-sudo ufw reset                         // reset firewall rules to default
+```shell
+sudo ufw status                        # see status active/inactive and rules
+sudo ufw default allow outgoing        # set default allow/deny for outgoing traffic
+sudo ufw default deny incoming         # set default allow/deny for incoming traffic
+sudo ufw allow 22/tcp                  # allow traffic on a given port
+sudo ufw deny from 192.168.100.25      # block traffoc from a specific IP
+sudo ufw enable                        # make the UFW firewall active
+sudo ufw reset                         # reset firewall rules to default
 ```
 
 Many third-party anti-malware suites also offer a software host-based firewall, like Symantec (Norton), McAfee or Zone Alarm.
@@ -633,6 +667,8 @@ On Windows, the **SFC** (System File Checker) is a FIM utility allowing to scan 
 SECaaS encompasses a wide range of security services hosted in the cloud and delivered to users over the internet.  
 They can include anti-malware, firewall, IDS/IPS, identity and access management (IAM), email security, encryption...  
 SECaaS follows a subscription model, so clients pay a monthly fee and do not need to buy any hardware. 
+
+SECaaS is provided by a **MSSP** (Managed Security Service Provider). 
 
 ### CASB (Cloud Access Security Broker)
 
@@ -742,6 +778,26 @@ MFA is an authentication technique that requires multiple types of identity proo
 - **where we are** : geographical region of the authentication request
 - **what we do** : writing a signature or performing any action
 
+#### OTP (One-Time Password)
+
+OTP is a form of MFA designed to make it harder for attackers to authenticate as a valid user.  
+It consists in forcing the user to provide not only his password, but also a one-time password.  
+The one-time password is provided via smartphone app, email, SMS, token...
+
+The OTP value is generated as a hash of a **seed** and a **moving factor**.  
+The seed is decided once at the creation of the user account and never changes.  
+The moving factor changes everytime a new OTP is requested by the user, causing the different value everytime.  
+
+There are 2 main types of OTP are **HOTP** and **TOTP**, that differ in the moving factor they use.
+
+**HOTP** (HMAC-based OTP) uses a moving factor based on a counter.  
+Every time a HOTP is requested and validated, the moving factor is incremented.  
+HOTP does not have any expiration mechanism for generated passwords.  
+Yubico's Yubikey is an example of OTP generator using HOTP.
+
+**TOTP** (Time-based OTP)  uses a moving factor based on time, with a timestep of 30 or 60 seconds.  
+A given OTP is valid only during a single timestep, making it harder to brute-force than HOTP. 
+
 #### Authentication methods
 
 **Context-aware authentication** is an authentication method taking into account the location or time to allow
@@ -764,6 +820,19 @@ The 2 main models for FIM to perform authentication and authorization are :
   Users log to an Identity Provider (for ex Google) and use that account to authenticate on cooperative websites.  
   OpenID handles the authentication, and OAuth handles the authorization.
 
+#### SAML (Security Assertion Markup Language)
+
+SAML is an XML-based framework for exchanging security-related information such as user authentication, entitlement, and attributes.  
+SAML is often used in conjunction with SOAP.  
+SAML is a solution for providing single sign-on (SSO) and federated identity management.  
+A **service provider** (SP) establishes a trust relationship with an **identity provider** (IdP) so that the identity 
+of a user (the principal) can be trusted by the SP without the user having to authenticate directly with the SP.  
+The principal's **user agent** (typically a browser) requests a resource from the service provider (SP).  
+The service provider can also be referred to as the **relying party** (RP).  
+
+If the user agent does not already have a valid session, the SP redirects the user agent to the identity provider (IdP).  
+The IdP requests the principal's credentials if not already signed in and, if correct, provides a SAML response containing one or more assertions.  
+The SP verifies the signature, establishes a session and provides access to the resource.
 
 ### Access Control Models
 
@@ -786,7 +855,9 @@ The permissions are set at role level, so there is no need to maintain user-leve
 RBAC is the most commonly used access control model in corporate networks.
 
 With **ABAC** (Attribute-Based Access Control), the access control is dynamic and context aware, using IF/ELSE statements.  
-It is one of the newest forms of access control and getting a lot of success recently.
+It is one of the newest forms of access control and getting a lot of success recently.  
+It provides the most detailed and explicit access control over a resource.  
+Information such as group membership, OS, IP address... can be used to allow/deny access.
 
 
 ### Encryption
@@ -976,6 +1047,20 @@ The development is split into **sprints**, short periods of 2 or 4 weeks that fo
 eDiscovery is the electronic aspect of identifying, collecting, and preserving ESI (Electronically Stored Info) for legal purpose.  
 This info must be presented in case of an investigation or a lawsuit.
 
+### Legal Hold
+
+Legal hold is a preservation order sometimes issued during e-discovery to ensure that potential evidence is immutable.
+
+Legal holds are implemented to ensure the preservation of potential evidence relevant to a legal case.  
+This includes documents, emails, electronic records, hard drives, computers...
+
+### Chain of Custody
+
+The chain of custody refers to the chronological documentation showing the seizure, custody, control, transfer,
+analysis, and disposition of physical or electronic evidence during the course of an investigation.  
+The chain of custody is required to guarantee that the evidence has not been tampered with, so it is admissible in a court of law.
+
+
 ## Jailbreaking
 
 Jailbreaking an iPhone or an iPad is the process of hacking its software to remove restriction.  
@@ -1136,6 +1221,7 @@ This creates an environment where people cannot breathe, so usually an alarm rin
 ### HVAC (Heating, Ventilation and Air Conditioning)
 
 Servers can generate a lot of heat that must be dissipated, or servers may overheat and shutdown.  
+The heat generated by each server is measured in BTU (British Thermal Unit).  
 Each machine has its own fan to cool the processor, but in a server room the air will get hotter and an HVAC system is required to cool it down.
 
 Server rooms are organized as **hot and cold aisles** : server racks are facing each other, so the aisle with the front of servers is cold, and the aisle with the back of servers is hot.  
@@ -1243,6 +1329,12 @@ A **risk** is the probability that a threat will be realized.
 A **vulnerability** is any internal weakness in the system that can be exploited.  
 A **threat** is an external factor that can use a vulnerability to damage the system (disaster, hacker...).  
 
+The typical flow is :
+- threat analysis  
+- ALE calculation  
+- risk analysis, using the ALE to prioritize the risks  
+- business impact analysis based on the risk analysis  
+
 There are 4 strategies to address a risk :
 - **Avoid** : change the strategy to eliminate the existence of the risk
 - **Transfer** : pass the risk to a 3rd party (insurance)
@@ -1334,16 +1426,18 @@ This can be monitored with the **Windows Performance Monitor** tool.
 **Protocol analyzers** are also used to monitor the packets circulating on the network.  
 It can be set in **promiscuous-mode** (capturing all packets) or **non-promiscuous mode** (capturing only packets addressed to it).  
 To have a full monitoring of the traffic on the network, we must use promiscuous mode, but not all network cards support it.  
-For the protocol analyzer to receive all traffic, it must be connected to a switch port using **port mirroring** to forward
-all traffic to it, or to use a **network tap**, a physical device allowing to intercept all the traffic between two points of the network.
+
+For the protocol analyzer to receive all traffic, it must use :
+- **port mirroring** configured in the switch so the switch sends a copy of all traffic to the protocol analyzer's port
+- a **network tap**, a physical device allowing to intercept all the traffic between two points of the network
 
 `openfiles` command on Windows can be used to monitor files open on the system.  
 `netstat` shows open connections on the machine.
-```commandline
-openfiles /local on       // enable the openfiles tracking (require admin privilege and a reboot)
-openfiles                 // list all open files with the process using it
+```shell
+openfiles /local on       # enable the openfiles tracking (require admin privilege and a reboot)
+openfiles                 # list all open files with the process using it
 
-netstat -ano              // show current connections with UDP/TCP, IP address and port and process ID
+netstat -ano              # show current connections with UDP/TCP, IP address and port and process ID
 ```
 
 ### Logging
@@ -1363,6 +1457,12 @@ automated runbooks.
 SOAR is a next-gen form of SIEM, it can scan security data, analyze it with ML, enrich it and provision resource in response.  
 For example, it can teardown a VM suspected to contain a malware and create a new VM instead.
 
+A **playbook** is a higher-level set of procedures that outlines the overall strategy and actions to be taken during an incident.  
+It provides a structured and strategic view of the response process.  
+Playbooks may include multiple runbooks, each addressing a specific phase or aspect of the incident response lifecycle.
+
+A **runbook** is a more detailed and specific set of procedures or scripts guiding the execution of individual tasks within a playbook.  
+It provides step-by-step instructions for the automation and orchestration of specific actions.
 
 ## Redundancy and Disaster Prevention
 
@@ -1471,7 +1571,7 @@ Data should be assigned a level of sensitivity that drives how much effort must 
 - Top Secret
 
 Data lifecycle should be specified in the organization policies : how long data is kept, how it is protected, how it is destroyed...  
-Some regulations require the storage of some types of data for a given period of time .
+Some regulations require the storage of some types of data for a given period of time.
 
 **PII** (Personally Identifiable Information) are data that can identify specific people.  
 They can be employee or customer data (full name, driver license number, social security numbers, DoB, email...).
@@ -1483,7 +1583,7 @@ SPI include credentials to services, precise geo-localization, genetic data, ema
 PHI include information about medical/physical/mental health-related conditions, test results, prescriptions, 
 appointments, patient forms, medical bills...
 
-Multiple regulations defining what are PII and how the must be manipulated :
+Multiple regulations defining what are PII and how they must be manipulated :
 - **Privacy Act of 1974** : affect US government computer systems collecting, storing using and sharing PII  
 - **HIPAA** (Health Insurance Portability and Accountability Act) : affect healthcare providers, insurance companies, medical data clearing houses...  
 - **SOX** (Sarbanes-Oxley) : affect publicly traded US corporations and include some accounting methods and financial reporting requirements
@@ -1491,6 +1591,8 @@ Multiple regulations defining what are PII and how the must be manipulated :
 - **FISMA** (Federal Information Security Management Act) : require federal agencies to develop, document and implement an information security program to protect their data
 - **PCI-DSS** (Payment Card Industry - Data Security Standard) : contractual obligation for organization manipulating client credit card numbers
 - **HAVA** (Help America Vote Act) : regulation governing the security, confidentiality and integrity of PII during the election and voting process
+- **COPPA** (Children's Online Privacy Protection Act) : regulation of information for services targetting children under 13 (especially parental consent)
+- **FERPA** (Family Educational Rights and Privacy Act) : govern the access to educational records by potential employers, educational institutions, foreign governments...  
 - **SB 1386** : only apply to organization making business in California, require any business storing PII to disclose any breach
 - **GDPR** (General Data Protection Regulation) : European regulation stating that personal data cannot be collected, processed or retained without the individual's informed consent.  
   GDPR grants users the right to be forgotten : their data can be erased from the system on request.  
@@ -1505,6 +1607,10 @@ Multiple regulations defining what are PII and how the must be manipulated :
 **Due Diligence** : ensuring that IT infrastructure risks are known and managed properly  
 **Due Care** : mitigation actions taken to defend against risks discovered during due diligence  
 **Due Process** : legal term referring to how an organization (or government) must respect personnel's right 
+
+**Sponsored access** to guest networks can be setup to limit who can access the guest network.  
+An employee (the sponsor) makes a request to grant access to the guest, providing valid identification of the guest.  
+Once the sponsorship is verified, the guest is granted access to the network.
 
 ### Vendor Relationship
 
@@ -1553,7 +1659,9 @@ Some enterprise IT security architecture frameworks exist to help with the creat
     across industries
 
 - **SOC** (System and Organization Control) : suite of reports of internal controls over an information system produced during an audit
-  (completing another framework with an audit method)
+  (completing another framework with an audit method)  
+  - **SOC 2 Type I**: documents the design effectiveness of controls at a specific point in time  
+  - **SOC 2 Type II**: documents the operational effectiveness of controls over a specified period (6 months or more)  
 
 - **CSA** (Cloud Security Alliance) : Security in cloud computing
   - **Cloud Control Matrix** : framework providing fundamental security principles to guide cloud vendors
@@ -1567,7 +1675,7 @@ Some enterprise IT security architecture frameworks exist to help with the creat
 **Incident management program** : program consisting of the monitoring and detection of security events on a computer
 network and the execution of proper responses.  
 Each company has its own way to conduct it, but it usually follows the same steps :
-- **Preparation** : ensure we have a well-planned incident response procedure and a strong security posture
+- **Preparation** : conduct training, prepare incident response kit, ensure strong security posture
 - **Identification** : recognize whether an event should be classified as incident
 - **Containment** : isolate the incident (close ports, terminate network connection...)
 - **Eradication** : remove the threat or attack
@@ -1584,7 +1692,7 @@ It serves as a hub for cyber-security activities and plays a critical role in ma
 
 ### NIST SP 800-61 (National Institute of Standards and Technology - Special Publication 800-61)
 
-NIST SP 800-61, titled "Computer Security Incident Handling Guide," is a publication by the NIST (NIST) in the United States.  
+NIST SP 800-61, titled "Computer Security Incident Handling Guide," is a publication by the NIST in the United States.  
 It provides guidance on establishing and maintaining an effective incident handling capability for organizations.
 
 It covers all phases of the incident management program, from preparation before the incident to the knowledge sharing once resolved.
@@ -1601,7 +1709,7 @@ The main members of the CSIRT are :
   - **Triage analysts** work on the network during the incident response to monitor the traffic and configure intrusion detection
   - **Forensic analysts** do the detective works to understand what has occurred on the network and build a timeline of events
 - **Threat Researcher** : complement the analysts by providing threat intelligence and overall context
-- **Cross-functional support** : people from management, HR. attorney/lawyer, PR, technical experts on specific system... depending on the nature of the incident 
+- **Cross-functional support** : people from management, HR, attorney/lawyer, PR, technical experts on specific system... depending on the nature of the incident 
 
 Policies and Procedures must be in place to decide when an event is considered an incident requiring to contact the CSIRT (even at 3am).  
 Depending on the nature of the incident, policies should define appropriate resolution and communication.  
@@ -1671,3 +1779,15 @@ Many forensic tools can generate a timeline, showing in a graphical format what 
 A PDS is a physically secure cabled network.  
 It includes safeguards (acoustic, electric, electromagnetic, and physical) to permit its use for the transmission of
 unencrypted information through an area of lesser classification or control.
+
+
+### Fail-Safe / Fail-Secure
+
+A common challenge in IT is the balance between safety and security.  
+For example, in case of power outage, we must keep the staff safe without compromising the security of a building.
+
+The 2 strategies on failure that products can use are :
+- **fail-safe** : in case of failure, unlock all locks (so people can get out of the building)
+- **fail-secure** : in case of failure, lock all locks (so assets cannot be accessed)
+
+The choice between fail-safe and fail-secure strategies depends on the product and system criticality.

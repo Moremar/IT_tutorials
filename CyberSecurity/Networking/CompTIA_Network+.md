@@ -227,6 +227,9 @@ specific condition is met or a threshold is breached.
 The SNMP messages exchanged between the SNMP server and the SNMP agents should be on a separate **out-of-bound network**.  
 Keeping the management packets separated from the data network improves security and prevents users to see this traffic.
 
+SNMPv1 and SNMPv2 use a **community string** to access the statistics in the device, defaulting to `public` for most devices.  
+This community string should be changed as a good practice to prevent unauthorized access to the device's information.  
+SNMPv3 uses user/password authentication and an encryption key instead.
 
 ### SSH (Secure Shell)
 
@@ -1777,9 +1780,16 @@ NetFlow is a feature on Cisco routers and L3-switches to collect and analyze IP 
 NetFlow-enabled routers collect IP statistics and later export them as NetFlow records to a **NetFlow collector**.  
 The NetFlow collector stores and pre-processes flow data received from NetFlow exporters.
 
+We can configure a **NetFlow sampler** to only process one out of X IP packets in Netflow (X can be configured).  
+This is useful in networks with high forwarding rates, to decrease the CPU utilization.
+
 The network admins can use an analysis application to analyze NetFlow data for intrusion detection, traffic profiling...
 
-IPFIX (IP Flow Information Export) and sFlow (Sample Flow) are standards based on NetFlow and designed to be vendor-neutral.
+**IPFIX** (IP Flow Information Export) is an evolution of NetFlow v9.  
+It provides a template-based structure for defining the fields to be exported.
+
+**sFlow** (Sample Flow) uses a statistical sampling technique to collect data from network flows.  
+Instead of sending all flow records, sFlow samples a subset of packets.
 
 NetFlow analysis can be conducted using the **SiLK suite** (System for Internet-Level Knowledge).  
 It can read, filters and extract statistics from NetFlow/IPFIX/sFlow data.
@@ -1861,9 +1871,11 @@ Most ISPs offer cable television, Internet access and phone services over the sa
 
 - **ping** : check if a machine is up and responding to ICMP requests  
 
-- **hping** : enhanced version of ping offering more control over the packet crafting and target port 
+- **hping** : enhanced version of `ping` offering more control over the packet crafting and target port 
 
-- **traceroute / pathping** : check the path in the network to a given device (tracert on Windows)
+- **nping** :  improvement of `hping` from the creators of Nmap, supporting IPv6
+
+- **traceroute / pathping** : check the path in the network to a given device (`tracert` on Windows)
 
 - **ipconfig** : check network configuration of the connected network devices (IP address, MAC address, default gateway...)
 
@@ -1881,6 +1893,8 @@ Most ISPs offer cable television, Internet access and phone services over the sa
   Netcat can be used for banner grabbing by sending a request to a web server.  
   It can also be used to create a shell connection and remotely control a machine.
 
+- **ncat** : improvement of `netcat` included inside the Nmap
+
 - **tcpdump** : packet sniffer in terminal for Linux (similar to WireShark but without GUI)
 
 - **tcpreplay** : utility to edit and replay previously captured network traffic
@@ -1888,7 +1902,7 @@ Most ISPs offer cable television, Internet access and phone services over the sa
 - **nmap** : discover devices and open ports on a network
 
 - **curl** : send a query to an URL and receive the response, support many protocols (HTTP, HTTPS, FTP, SFTP, SCP, IMAP, POP3...)
-```commandline
+```shell
 curl --data "<QUERY BODY>" <QUERY_URL>
 ```
 
@@ -1902,7 +1916,7 @@ curl --data "<QUERY BODY>" <QUERY_URL>
 
 - **chmod** : Linux command to change the access permissions of a file (user/group/others for read/write/execute)
 
-- **logger** : Linux command providing an easy way to log data under the /var/log/syslog file
+- **logger** : Linux command providing an easy way to log data under the `/var/log/syslog` file
 
 - **dd** : command-line utility to create a bit-by-bit copy of a disk image
 

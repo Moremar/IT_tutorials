@@ -24,11 +24,38 @@ In 2023, it moved to the WireShark Foundation non-profit corporation that promot
 WireShark can also load packets captured with `tcpdump`.
 
 
-### OpenSSL 
+### NetCat
 
-OpenSSL is a software library for applications that secure communications over insecure network from eavesdropping.   
-When we use SSH, we use OpenSSL to protect it.
+NetCat is a command-line utility available on Windows and Linux to read from and write to network connections.  
+It offers a backend for other machines to connect to a machine.  
+It is often used to create a backdoor to access a machine remotely.
 
+NetCat can be used in multiple ways :
+- data transfer
+- relay
+- port scanning
+- reverse shell / bakdoor
+- chat
+
+```shell
+# start NetCat in listening mode on port 1234
+nc -l -p 1234
+
+# from another machine, open a connection to it (for chat for example)
+nc <TARGET_IP> 1234
+
+# start NetCat as a proxy listening on port 1234 and redirecting a a target host/port
+nc -l -p 1234 | nc <TARGET_HOST> <TARGET_PORT>
+
+# use NetCat for scanning ports on a target machine
+# -v is for verbose mode and -z for scanning mode (without sending data)
+nc -v -z <TARGET_HOST> <START_PORT>-<END_PORT>
+```
+
+### OpenSSL
+
+[OpenSSL](https://www.openssl.org/) is an open-source command-line tool for cryptography and secure communications.  
+It is commonly used to generate private keys, create CSRs, install an SSL/TLS certificate, and identify certificate information.
 
 
 ## Privacy Tools
@@ -40,7 +67,7 @@ NordVPN, TunnelBear and CyberGhost are 3 popular VPN services that offer secure 
 
 NordVPN offers strong security features and commitment to user privacy.  
 TunnelBear has less features but has a more intuitive GUI that makes it a good choice for beginners.  
-CyberGhost is an intermediate solution balancing a good range of feature with an intuitive GUI. 
+CyberGhost is an intermediate solution balancing a good range of features with an intuitive GUI. 
 
 
 ### Brave / Ghostery
@@ -96,7 +123,7 @@ They can help to remove useless files, clear caches, remove cookies and free up 
 ## Reconnaissance Tools
 
 
-### NMAP (Network Mapper)
+### NMap (Network Mapper)
 
 NMap is a network scanner used to discover machines on a network.  
 NMap can scan a machine for open ports and detect the version of programs running on these ports.
@@ -107,7 +134,7 @@ NMap comes with various options to customize the type of scan, with different st
 
 NMap also comes with a collection of scripts used to detect vulnerabilities on the target network.
 
-```commandline
+```shell
 nmap                                 # display the help
 nmap 192.168.0.1 -v                  # increase logging level of the result (-vv for even more logging)
 
@@ -152,7 +179,7 @@ nmap 192.168.0.123 -g 53             # use a specific source port, should use tr
 Recon-ng is a terminal reconnaissance tool shipped with Kali Linux.  
 It is similar to Maltego, but offering a custom DSL in the terminal instead of a GUI.
 
-```commandline
+```shell
 recon-ng                          # start the Recon-ng DSL
 help                              # show all available commands of the DSL
 back                              # quit the loaded module or workspace, or exit Recon-ng
@@ -274,6 +301,51 @@ The Burp suite comes with a Community, a Professional and an Enterprise edition.
 The Community edition only includes a proxy and requests history, but a free trial of the Pro edition is available.
 
 
+### ffuf - Fuzz Faster U Fool
+
+fuff is a fast web fuzzer written in Go.  
+It accepts a list of words, and sends many requests to a web server replacing a placeholder by the words in the list.  
+It can detect which requests were successful and which were not and report its findings.  
+This is used for discovery of hidden files or pages in a website.
+
+Some good word lists are publicly available :
+- [https://github.com/danielmiessler/SecLists](https://github.com/danielmiessler/SecLists)
+- [https://github.com/six2dez/OneListForAll](https://github.com/six2dez/OneListForAll) 
+
+```shell
+# simple example with a FUZZ placeholder in the URL
+ffuf -w wordlist.txt -u 'https://ffuf.io.fi/FUZZ'
+
+# same but with a custom placeholder name
+ffuf -w wordlist.txt:FOO -u 'https://ffuf.io.fi/FOO'
+
+# multiple word lists
+# by default it tries every combination of words (n*m combinations)
+# use "-mode pitchwork" to use the 1st word of each list, then the 2nd of each list... (n combinations)
+ffuf -w wordlist1.txt:FOO -w wordlist2.txt:BAR -u 'https://ffuf.io.fi/FOO/BAR'
+
+# list all valid usernames in a website among a list of usernames
+# we use the POST method (GET by default)
+# we provide the POST body with -d parameter, as url-encoded, so we add the corresponding header
+# -mr lets us match the positive results on a regex (by default it matches on non-error response codes)
+ffuf -w SecLists/Usernames/Names/names.txt
+     -X POST
+     -d "username=FUZZ&email=x&password=x&cpassword=x" 
+     -H "Content-Type: application/x-www-form-urlencoded"
+     -u http://10.10.1.80/customers/signup
+     -mr "user already exists"
+
+# brute-force password by using a list of valid usernames and a list of potential passwords
+# use -fc 200 to filter out the 200 status code (considered as failed)
+ffuf -w valid_usernames.txt:W1
+     -w SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt:W2
+     -X POST
+     -d "username=W1&password=W2" 
+     -H "Content-Type: application/x-www-form-urlencoded"
+     -u http://10.10.1.80/customers/login
+     -fc 200
+```
+
 
 ## Exploiting Tools
 
@@ -341,7 +413,7 @@ All hashes found by Hashcat are stored in a _hashcat.potfile_ file.
 
 Hashcat shows a status of `Cracked` if a match was found, `Exhausted` otherwise.  
 
-```commandline
+```shell
 hashcat -h                                         # display help
 hashcat -a 0 -m 0 hash.txt dict.txt                # try to find a password in a dict that generates a given hash
                                                    #   -m to specify the hashing method (0 : MD5)
@@ -351,7 +423,7 @@ hashcat -a 3 -m 0 hash.txt ?l?l?l?l?l?l            # try to find a password of 6
 ```
 
 Note : to get the hash for a given string, we can use an online hash tool or the `Get-FileHash` command from Powershell :
-```commandline
+```shell
 Get-FileHash movie.mp4 | format-List                              # SHA256 hash (default)
 Get-FileHash movie.mp4 -Algorithm MD5 | format-List               # MD5 hash
 ```
@@ -365,18 +437,26 @@ It comes with a free community edition.
 John the Ripper is pre-installed on Kali Linux, and accessible with the `john` command.  
 
 For example, to crack the password of a ZIP or RAR archive, we can run :
-```commandline
-zip2john Test.zip > hash.txt        // create a file with the target hash
-john --format=zip hash.txt          // find the password of the ZIP
+```shell
+zip2john Test.zip > hash.txt        # create a file with the target hash
+john --format=zip hash.txt          # find the password of the ZIP
 ```
 
 John the Ripper can also crack the password from Linux users.  
 The password hashes are stored under `/etc/shadow` and can be cracked with :
-```commandline
-useradd -r user2        // create a user
-passwd user2            // set a password for user2
-john /etc/shadow        // crack the password for user2
+```shell
+useradd -r user2        # create a user
+passwd user2            # set a password for user2
+john /etc/shadow        # crack the password for user2
 ```
+
+
+### CrackStation.net
+
+[https://crackstation.net](https://crackstation.net) is a website for cracking unsalted hashes.  
+It keeps a database of billions of hashes and their original values for common hashing methods (MD5, SHA1, SHA-256, ...).  
+It can detect automatically the hashing method used and give the original value for up to 20 hashes at a time.
+
 
 ### Crunch
 
@@ -384,8 +464,8 @@ Crunch is a utility that generates a custom word list to provide to a password c
 We can specify the password min and max size and the allowed characters, and Crunch generates all possibilities.  
 Crunch is available by default in Kali Linux.
 
-```commandline
-// generate the pins.txt file containing all possible PIN numbers of 4 to 6 digits
+```shell
+# generate the pins.txt file containing all possible PIN numbers of 4 to 6 digits
 crunch 4 6 0123456789 -o pins.txt
 ```
 
@@ -396,8 +476,8 @@ CeWL is another custom word list generator that uses the content of a website to
 It is a Ruby app that spiders a given URL up to a specific depth to capture the words for its list.  
 Its generated file can then be used with password crackers like **John the Ripper** or **Wfuzz**.
 
-```commandline
-// generate a word list and an emails list from a website with depth 2 and min word length 5
+```shell
+# generate a word list and an emails list from a website with depth 2 and min word length 5
 cewl -d 2 -m 5 -w passwords.txt http://10.10.131.23 --email --email_file emails.txt
 ```
 
@@ -411,15 +491,15 @@ It is sending the login attempt one-by-one to the target and checks the response
 Unlike Hashcat or John the Ripper, it is not an offline password cracking tool.  
 It does not check passwords against a target hash, but against a target network system (so it can be detected).
 
-```commandline
-// try all passwords in a word list to access the target IP in SSH with a given user (login)
-// -f to stop when a valid password is found
-// -v for verbose logging
+```shell
+# try all passwords in a word list to access the target IP in SSH with a given user (login)
+# -f to stop when a valid password is found
+# -v for verbose logging
 hydra -l testuser -P rockyou.txt -f -v <TARGET_IP> ssh
 
-// try all passwords in a word list to access the target IP on a given HTML form
-// no user is needed to access, only a password
-// we specify the login PHP page, the field to use for the password, and the message on error (separated with ":")
+# try all passwords in a word list to access the target IP on a given HTML form
+# no user is needed to access, only a password
+# we specify the login PHP page, the field to use for the password, and the message on error (separated with ":")
 hydra -l '' -P pins.txt -f -v 10.10.131.34 http-post-form "/login.php:pin=^PASS^:Access Denied" -s 8000
 ```
 
@@ -431,23 +511,23 @@ It is available by default in the Kali Linux distribution.
 
 For example, Aircrack-ng can crack a WEP password in a few minutes by IV attack.    
 
-```commandline
-// list wireless networks and their encryption, find one using WEP
-// Note down its channel and BSSID
+```shell
+# list wireless networks and their encryption, find one using WEP
+# Note down its channel and BSSID
 airodump-ng wlan0mon
 
-// Start scanning the target wireless network
+# Start scanning the target wireless network
 airodump-ng --channel <CHANNEL> --bssid <BSSID> --write MyHackedTraffic wlan0mon
 
-// Keep above command running and in another terminal send an auth request
+# Keep above command running and in another terminal send an auth request
 aireplay-ng --fakeauth 0 -a <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon
 
-// Get some ARP messages
+# Get some ARP messages
 aireplay-ng --arpreplay -b <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon 
 
-// Crack the network using the IVs from the captured traffic
-// It will try to infer the WEP key from all captured IVs
-// It may fail if not enough data, it reruns every 5000 data captured by the scan 
+# Crack the network using the IVs from the captured traffic
+# It will try to infer the WEP key from all captured IVs
+# It may fail if not enough data, it reruns every 5000 data captured by the scan 
 aircrack-ng MyHackedTraffic.cap
 ```
 
@@ -461,16 +541,16 @@ FTK Imager is used to create a copy of a hard drive or a USB thumbdrive as a seq
 It is a GUI-based program for Windows.  
 These files have the `.dd` extension, a format compatible with multiple forensic tools.
 
-FTK can then open the drive copy and analyze it.  
+FTK Imager can then open the drive copy and analyze it.  
 It shows all the files of the drive, even the deleted ones, which can sometimes be recovered.
 
 
 ### Autopsy
 
-Autopsy is a popular digital forensics platform.  
+Autopsy is an open-source digital forensics platform.  
 It offers a graphical interface to the Sleuth toolkit, and adds other digital forensics tools.  
 
-Its imaging function relies on dd, and its analysis function relies on the Sleuth toolkit.
+Its imaging function relies on `dd`, and its analysis function relies on the Sleuth toolkit.
 
 
 ### Volatility
@@ -489,13 +569,13 @@ It is required to know the memory structure of the OS, so Volatility can make se
 Windows profiles are available by default (see list with `vol.py --info`).  
 Linux profiles must be created by the user and added to the local Volatililty Linux profiles folder.
 
-```commandline
-vol.py -h                   // display help
-vol.py --info               // display all profiles, commands, plugins...
+```shell
+vol.py -h                   # display help
+vol.py --info               # display all profiles, commands, plugins...
 
-vol.py -f linux.mem --profile="VistaSP0x64" linux_bash     // check command history file
-vol.py -f linux.mem --profile="VistaSP0x64" linux_pslist   // check running processes
-vol.py -f linux.mem --profile="VistaSP0x64" linux_procdump -D <OUTPUT_FOLDER> -p <PID>  // extract binary of a process
+vol.py -f linux.mem --profile="VistaSP0x64" linux_bash     # check command history file
+vol.py -f linux.mem --profile="VistaSP0x64" linux_pslist   # check running processes
+vol.py -f linux.mem --profile="VistaSP0x64" linux_procdump -D <OUTPUT_FOLDER> -p <PID>  # extract binary of a process
 ```
 
 
@@ -514,7 +594,7 @@ WinHex allows users to view, edit, and analyze binary data on various types of s
 It offers a wide range of features for examining and manipulating data at a low level.
 
 
-### DNSpy
+### DNSpy (DotNet Spy)
 
 DNSpy is an open-source tool designed for the analysis and editing of .NET assemblies.  
 It is commonly used for reverse engineering, debugging, and modifying .NET applications. 
