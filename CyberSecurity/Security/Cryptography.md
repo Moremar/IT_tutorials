@@ -89,8 +89,8 @@ The conversion function is called a **cipher**.
 It can be decrypted using a key, which is a secret required to transform the ciphertext back into the plaintext.
 
 The encryption can be **symmetric** (same key for encryption/decryption) or **asymmetric** (public/private key pair).  
-Symmetric algorithms are 100/1000 times faster than asymmetric algorithms.  
-However, they require key distribution between all people involved in the communication.  
+Symmetric algorithms are fast, but they require the distribution of the secret key between all people involved in the communication.  
+Asymmetric algorithms are 100/1000 times slower, but offer scalability, easy key distribution and non-repudiation.  
 Most implementations are hybrid, using asymmetric encryption to securely transfer a private key that is then used for symmetric encryption.
 
 There are 2 types of encryption algorithms :
@@ -391,6 +391,18 @@ SHA is a suite of hashing functions replacing MD5 for hash calculation.
 - **SHA-3** was originally called Keccak and won a contest in 2015 for the next SHA hashing function.  
   It is very different from previous SHA functions, and can also generate hashes of size 224, 256, 384 and 512 bits. 
 
+### DSS (Digital Signature Standard)
+
+DSS is a standard for digital signatures that was developed by the NIST.  
+It specifies how to create digital signatures to verify the authenticity and integrity of digital messages or documents.
+
+DSS uses SHA-2 and SHA-3 digest functions.
+
+DSS works in conjunction with one of these 3 encryption algorithms :
+- DSA (Digital Signature Algorithm)
+- ECDSA (Elliptic Curve DSA)
+- RSA
+
 
 ## PKI (Public Key Infrastructure)
 
@@ -413,6 +425,8 @@ It contains the user's information and the certificate authority's information.
 
 Digital certificates must be purchased at certificate authorities.  
 By default, they include only one domain (like www.example.com) but we can buy a **wildcard certificate** to include all subdomains.  
+
+We can also buy a **SAN** (Subject Alternative Name) that is a certificate covering multiple domains.
 
 Digital certificates can be **single-sided** (only the server has a certificate) or **dual-sided** (both client and server need a certificate).
 
@@ -439,3 +453,13 @@ Browsers need to be updated to trust this private CA, otherwise they would show 
 
 The **Web of Trust** is a decentralized trust model addressing the issues of public key authentication in a CA-based PKI system.  
 An example of Web of Trust is PGP (Pretty Good Privacy) and its open-source implementation GPG (GNU PGP Guard).  
+
+
+## Quantum Cryptography
+
+Quantum computers are starting to appear, and they have much higher computing power than modern computers.  
+This will change the current cryptography, since algorithms that are unbreakable today could be brute-forced by quantum computers.  
+Symmetric algorithms would resist pretty well, but asymmetric algorithms are more at risk (relying on factoring or discrete logarithm).
+
+**Post-quantum cryptography** is the modification of modern cryptography to make it resistant to brute-force,
+even with quantum computers.

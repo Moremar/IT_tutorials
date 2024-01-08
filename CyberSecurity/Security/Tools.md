@@ -123,6 +123,13 @@ They can help to remove useless files, clear caches, remove cookies and free up 
 ## Reconnaissance Tools
 
 
+### OSINT
+
+OSINT tools provide information from free public resources on the Internet.  
+It is the main element of passive reconnaissance.  
+
+Many OSINT resources are categorized in the OSINT framework website : [https://osintframework.com/](https://osintframework.com/)
+
 ### NMap (Network Mapper)
 
 NMap is a network scanner used to discover machines on a network.  
@@ -602,6 +609,13 @@ It is commonly used for reverse engineering, debugging, and modifying .NET appli
 
 
 ## Educational Tools
+
+
+### Oxford Journal of Cyber-Security
+
+Academic Journal from Oxford university offering free articles about Cyber-Security threats, attacks and latest defenses :
+
+[https://academic.oup.com/cybersecurity](https://academic.oup.com/cybersecurity)
 
 
 ### Hacksplaining

@@ -91,7 +91,7 @@ It is a concise version of the OSI model with only 4 layers.
 | iSCSI Target |    3260     |     TCP     |        Target of iSCSI message           |   7   | Listening port for iSCSI targeted devices when linking data storage facilities over IP.     |
 |   MySQL      |    3306     |     TCP     |            MySQL Database                |   7   | MySQL database                                                                                                                                                                                                                                      |
 |    RDP       |    3389     |  TCP / UDP  |        Remote Desktop Protocol           |   7   | Microsoft-proprietary protocol to provide a GUI to connect to a remote machine.</br>Client and server exist for Linux and MacOS as well.                                                                                                            |
-|  Diameter    |    3868     |     TCP     |               Diameter                   |   7   | More advanced AAA protocol that is a replacement for RADIUS.                                                                                                                                                                      |
+|  Diameter    |    3868     |     TCP     |               Diameter                   |   7   | More advanced AAA protocol that is a replacement for RADIUS.<br/>Diameter is based on RADIUS, it addresses several of its weaknesses but is not compatible with RADIUS.                                                                                                                                                                      |
 |    SIP       | 5060 / 5061 |     TCP     |      Session Initiation Protocol         |   7   | Voice + messaging + video real-time sessions.                                                                                                                                                                                                       |
 |    VNC       |    5900     |     TCP     |      Virtual Network Computing           |   7   | Protocol to provide a GUI to connect to a remote machine (cross-platform equivalent of RDP)                                                                |
 | Syslog-SSL   |    6514     |     TCP     |         Syslog over SSL/TLS              |   7   | Secure version of Syslog using SSL/TLS encryption, and TCP instead of UDP.           |
@@ -179,7 +179,7 @@ DNSSEC addresses vulnerabilities in the DNS and provides a means to authenticate
 It was the main tool to troubleshoot DNS related issues and verifying the DNS configuration.  
 It is now replaced by `dig` that provides more info.
 
-```commandline
+```shell
 nslookup facebook.com                # query the IPv4 and IPv6 addresses for a domain name
 nslookup 142.250.196.132             # reverse lookup, query the domain name for an IP address
 nslookup -type=MX facebook.com       # query the hostname of the mail server for a domain name
@@ -195,7 +195,7 @@ dig facebook.com @8.8.8.8            # query the IPV4 for a domain name using a 
 `whois` is a command-line tool to query who a domain is registered to.  
 It gives information about the creation date, registrar, admin organization...
 
-```commandline
+```shell
 whois google.com
 ```
 
@@ -1228,7 +1228,7 @@ IoT technologies include :
 
 - **IR** (Infrared) : TV remote controllers for example, require direct line of sight
 
-- **Bluetooth** : headphones, health trackers, wireless speakers...
+- **Bluetooth** : headphones, health trackers, wireless speakers... (part of **IEEE 802.15** standard for PAN)
 
 - **NFC** (Near-Field Communication) : very close wireless communication (up to 10cm), used by Apple Pay, contactless payment cards, commuter pass...
 
@@ -1328,12 +1328,14 @@ It allowed communication via smartphone apps instead of only SMS/MMS available w
 
 4G merged the 2 different standards GSM and CMDA into a common standard.  
 It supports up to 150Mbs download speed.  
+It uses Diameter for AAA functionalities.  
 **LTE-A** (Long Term Evolution - Advanced) improves this download rate to 300Mbs.
 
 #### 5G
 
 5G was released in 2020 and provides significant performance improvement using higher frequencies.  
 With up to 10Gbs speed, 5G allows efficient use of IoT.  
+Unlike 4G, 5G no longer identifies users by their SIM card ID.  
 4G devices cannot connect to 5G networks.
 
 5G covers 3 frequency ranges :
@@ -1516,6 +1518,7 @@ It is the main alternative to RADIUS, and was developed by Cisco so it is popula
 It can perform authentication on behalf of APs, RAS servers (Remote Access Service), 802.1x enabled switches...
 
 TACACS+ uses TCP, while RADIUS uses UDP.  
+TACACS+ encrypts the entire session, while RADIUS encrypts only the password.  
 It separates authentication and authorization, offering more granular control on command-level authorization.  
 It is regarded as more stable and secure than RADIUS.
 
@@ -1736,6 +1739,12 @@ The most popular T-carrier line types are :
 
 DLP is a strategy to prevent sensitive data to leak outside the corporate network.  
 It includes content inspection and contextual analysis of emails, DMs, data at rest on the cloud... 
+
+Multiple strategies can be used to prevent sensitive data to be exposed :
+- **tokenization** : replace data by a random token, and the token/data mapping is stored in a vault
+- **minimization** : only keep the strict minimum info required for the system to work
+- **anonymization** : remove from the data all info that could identify people
+- **data masking** : replace sensitive data by `***` or `XXX` 
 
 
 ### Defense in Depth

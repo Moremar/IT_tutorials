@@ -448,6 +448,7 @@ This access allows to reset the password from GMail for example and take control
 ### Virtualization attacks
 
 - **VM Escape** : attack allowing an attacker to break out of a normally isolated VM by interacting directly with the hypervisor
+- **VM Sprawl** : VMs no longer used and still running, that are usually no longer patched and vulnerable to attacks
 - **Data Remnant** : data left on a cloud server after the shutdown of the virtual machine, which could be stolen by an attacker
 - **Privilege Elevation** : user grants himself the ability to run functions as higher-level user
 - **Unencrypted VDI file** : A virtual machine is saved on the host as a VDI file that is not encrypted by default, so 
@@ -477,8 +478,9 @@ The best remediation is still to get rid of modems and use SSH access for remote
 In a Pass-the-Hash attack, the attacker steals the hash and sends it directly to a server instead of the password.  
 The hash can be stolen either from a database or sniffed on the network.  
 It allows to impersonate the user in servers that use the hash as an authentication input.  
+It usually targets **NTLM** (New Technology LAN Manager) on Windows machines.
 
-**Mimikatz** is a penetration testing tool that automates the harvesting of hashes and the Pass-the-Hash attack.
+**Mimikatz** is an open-source penetration testing tool that automates the harvesting of hashes and the Pass-the-Hash attack.
 
 #### Birthday Attack
 
@@ -650,6 +652,8 @@ They keep attackers away from the real routers and servers, and allow to analyze
 
 **Kippo** and **Google Hack Honeypot** are some popular honeypot solutions.
 
+When an attacker is spotted scanning the network, we can use **fake telemetry** to return false information.
+
 
 ### FIM (File Integrity Monitoring)
 
@@ -797,6 +801,11 @@ Yubico's Yubikey is an example of OTP generator using HOTP.
 
 **TOTP** (Time-based OTP)  uses a moving factor based on time, with a timestep of 30 or 60 seconds.  
 A given OTP is valid only during a single timestep, making it harder to brute-force than HOTP. 
+
+#### Smart Card
+
+A smart card is a credit-card sized token that contains a certificate, and is used for authentication together with a PIN code.  
+It can require physical proximity (NFC) or may need to be inserted in a card reader.
 
 #### Authentication methods
 
@@ -959,7 +968,7 @@ For example "spearfishing with a trojaned PDF file", or "dumping cached authenti
 Identifying and reacting to these TTPs is tough for the attacker, as he needs to find a new behavior to attack, not just change tools.
 
 
-### CWE / CVE / NVD / STIX / TAXII
+### Threat Intelligence
 
 **CWE** (Common Weakness Enumeration) is a community-developed list of software and hardware weakness types that can 
 lead to vulnerabilities in computer systems and software applications.  
@@ -973,6 +982,11 @@ Keeping softwares patched prevents all these attacks.
 **NVD** (National Vulnerability Database) is a publicly accessible database listing CVEs and their remediation.  
 It feeds from the CVE database and exposes a better navigation for the vulnerabilities.  
 It also gives a quantitative score to all vulnerabilities with the **CVSS** (Common Vulnerability Scoring System).
+
+**AIS** (Automated Indicator Sharing) is a service the CISA (Cybersecurity and Infrastructure Security Agency) provides
+to enable real-time exchange of machine-readable cyber threat indicators and defensive measures between public and
+private-sector organizations.  
+AIS helps to protect the participants of the service and reduce the prevalence of cyberattacks.
 
 **STIX** (Structured Threat Information eXpression) is a standardized language that uses a JSON-based lexicon to express
 and share threat intelligence information in a readable and consistent format.    
@@ -1090,17 +1104,21 @@ WPA was a much better standard than WEP, but it had some flaws that WPA2 replace
 
 #### WPA2
 
-WPA2 improves WPA by using **CCMP** for encryption, that uses **AES** with a 128-bit key.
+WPA2 improves WPA by using **CCMP** (Counter-mode CBC MAC Protocol) for encryption, that uses **AES** with a 128-bit key.
 
 #### WPA3
 
 WPA3 was launched in 2018 to strengthen WPA2.  
-The main improvement is the removal of the PSK (Pre-Shared Key) exchange used for encryption of all messages.  
+WPA3 has 2 modes : **WPA3-Personal** and **WPA3-Enterprise**.
+
+The main improvement in WPA3-Personal is the removal of the PSK (Pre-Shared Key) exchange used for encryption of all messages.  
 It was replaced by SAE (Simultaneous Authentication of Equals) where the client and the AP use public/private keys
-to agree on a one-time session key.  
+to agree on a one-time session key (dragonfly handshake), making it immune to brute-force attack.  
 
 Thanks to SAE, WPA3 provides **forward secrecy** : past sessions are protected even if a future key is compromised.  
 Instead of all using the same PSK (like with WPA2), each client uses a different session key. 
+
+WPA3-Enterprise uses AES with a 256-bits key (128-bits key in WPA2), and Elliptic Curve Diffie-Hellman for the initial handshake. 
 
 WPA3 is supported by Wifi 6 compatible routers.
 
@@ -1176,6 +1194,13 @@ A popular tool for drive wiping is **DBAN** (Darik's Boot and Nuke).
 **Physical destruction** of the drive makes the drive itself unusable.  
 It can be done by mechanical shredding, incineration, or degaussing magnetic hard drives.
 
+**Erasing** is the simple removal of a file from a disk.
+
+**Clearing** (or overwriting) is preparing the disk for re-use and prevent file recovery with traditional recovery tools.
+
+**Purging** is a more intense form of clearing preparing the drive for re-use in a less secure environment.  
+It may still be recoverable with forensic tools.
+
 
 ## Facilities Security
 
@@ -1186,6 +1211,8 @@ There are 5 types of fire : A, B, C, D and K :
 <p align="center">
 <img alt="Fire Types" src="../images/fire_types.jpg" width=400  style="border:1px solid black">
 </p>
+
+Only class A fires can be extinguished with water.  
 
 To protect employees, buildings, machines and data from fire, there are several fire suppression techniques.
 
@@ -1224,10 +1251,12 @@ Servers can generate a lot of heat that must be dissipated, or servers may overh
 The heat generated by each server is measured in BTU (British Thermal Unit).  
 Each machine has its own fan to cool the processor, but in a server room the air will get hotter and an HVAC system is required to cool it down.
 
+The ideal temperature for the server room is between 16 and 23 degrees Celsius.
+
 Server rooms are organized as **hot and cold aisles** : server racks are facing each other, so the aisle with the front of servers is cold, and the aisle with the back of servers is hot.  
 This makes it easier to efficiently dissipate the heat.
 
-HVAC is also used to maintain a good humidity level of 40%.  
+HVAC is also used to maintain a good humidity level between 40% and 60%.  
 Too little humidity can cause electrostatic discharge damaging components.  
 Too much humidity can cause condensation of water and corrosion of the components.
 
@@ -1278,6 +1307,13 @@ This gives flexibility to the customer to configure a custom logic.
 A **RTOS** (Real-Time OS) is a type of OS that prioritizes deterministic execution of operations to ensure consistent
 response for time-critical tasks.  
 This type of OS is used by embedded systems that cannot tolerate reboots or crashes.
+
+Common constraints in embedded systems are :
+- low power consumption
+- limited compute capability
+- network (often limited to short-range like Wifi or Bluetooth)
+- cryptography (due to small processor)
+- authentication (some systems are unable to join a network and require local logon)
 
 #### ICS and SCADA
 
@@ -1791,3 +1827,19 @@ The 2 strategies on failure that products can use are :
 - **fail-secure** : in case of failure, lock all locks (so assets cannot be accessed)
 
 The choice between fail-safe and fail-secure strategies depends on the product and system criticality.
+
+
+### IRM (Information Rights Management)
+
+IRM is a set of technologies and policies that control and protect digital information from unauthorized access or disclosure.  
+IRM enables organizations to specify and enforce access permissions, encryption, and usage policies on sensitive documents or data,
+even after they have been distributed or shared outside the organization's boundaries.
+
+
+### UEM (Unified Endpoint Management)
+
+A UEM provides management of the hardware, like laptops, mobile devices, tablets, IoT devices...  
+It ensures that they are secure and compliant before they can access the organization data.  
+It can manage the security and applications running on the devices.
+
+**Microsoft InTune** is a cloud-based example of UEM managing Windows, MacOS, OSX, Android devices.
