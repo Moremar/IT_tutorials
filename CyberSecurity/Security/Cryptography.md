@@ -109,7 +109,7 @@ This confirms that the message was not altered in transit, since only the sender
 
 There are multiple possible modes for encryption :
 - **ECB** (Electronic CodeBook) : only use the plaintext and the key for encryption, so 2 similar blocks in plaintext are encoded the same way
-- **CBC** (Cypher Block Chaining) : perform a XOR of the plaintext with the previous encrypted ciphertext
+- **CBC** (Cypher Block Chaining) : perform a XOR of the plaintext with the previous encrypted ciphertext before encrypting
 - **CTR** (Counter) : instead of encrypting the plaintext, encrypt a counter and XOR the result with 8-bit of the plaintext, then increment the counter
 - **GCM** (Galois/Counter Mode) : combine CTR with the Galois authentication
 
@@ -376,14 +376,14 @@ It is no longer secure, since a vulnerability was discovered in 1996 to create h
 
 ### RIPEMD (RIPE Message Digest)
 
-RIPEMD is a family of cryptographic hash functions (RIPEMD, RIPEMD-128, RIPEMD-160, RIPEMD-256).  
+RIPEMD is a family of cryptographic hash functions (RIPEMD-128, RIPEMD-160, RIPEMD-256, RIPEMD-320).  
 The most popular is **RIPEMD-160** generating a 160-bit hash output.  
 It is less popular than MD5 and SHA, but is used for Bitcoin and other crypto-currencies. 
 
 ### SHA (Secure Hash Algorithm)
 
 SHA is a suite of hashing functions replacing MD5 for hash calculation.  
-- **SHA-0** was developed by the NSA in 1993 based on MD5.
+- **SHA-0** was developed by the NSA in 1993 based on MD5, generating 160-bit hashes.
 - **SHA-1** was developed by the NSA in 1995 to improve SHA-0, also generating 160-bit hashes.
 - **SHA-2** was developed by the NSA in 2002 and includes multiple functions generating hashes of different size
 (SHA-224, SHA-256, SHA-384, SHA-512).  
@@ -411,7 +411,7 @@ PKI is an entire system of hardware, software, policies, procedures and people b
 A browser uses the PKI when connecting in SSL/TLS to any website using HTTPS.  
 It requests to a CA (Certificate Authority) the public key of the target website.  
 It then chooses a random secret key, encrypts it with the website's public key and sends it to the website.  
-The website receives it, decrypts it with its secret key, and now both the browser and the server know the secret key.  
+The website receives it, decrypts it with its private key, and now both the browser and the server know the secret key.  
 From then, they can open a secure tunnel using SSL or TLS and continue their exchange with symmetric encryption.
 
 ### Certificate Authority
@@ -434,8 +434,10 @@ Certificates must be encoded under the **X.690** standard before they can be use
 - **BER** (Basic Encoding Rule) : original ruleset for the encoding of data, allowing multiple encoding types
 - **CER** (Canonical Encoding Rule) : restricted version of BER allowing a single encoding type
 - **DER** (Distinguished Encoding Rule) : more restrictive than CER, used in practice for X.509 certificates
-  - **PEM** (Privacy Enhanced Mail) is a Base64 encoded DER certificate to represent the binary as readable ASCII
-  - **PKCS #12** (Public Key Cryptography Standards #12) is a binary file bundling multiple certificates or keys (.pf2 or .p12)
+  - **PEM** (Privacy Enhanced Mail) is a Base64 encoded DER certificate to represent the binary as readable ASCII (can include the private key)
+  - **PKCS #7** (Public Key Cryptography Standards #12) used to share the public key, never contains the private key (.p7b)  
+  - **PKCS #12** (Public Key Cryptography Standards #12) is a binary file used to store private and public key (.pf2 or .p12)
+    - PFX is the precursor of P12 (.pfx)
 
 To obtain a certificate, we must first request it to a **RA** (Registration Authority) by sending a **CSR** (Certificate Signing Request).  
 The RA will verify user information, and forward them to the **CA** (Certificate Authority) that generates the certificate.  

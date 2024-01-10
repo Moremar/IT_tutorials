@@ -594,7 +594,7 @@ It is basically a sandbox where we can put a suspicious file and observe its beh
 
 ### WinHex
 
-WinHex is a commercial disk editor and universal hexadecimal editor.  
+WinHex is a commercial disk editor and universal hexadecimal editor for Windows.  
 It is used for digital forensics and data recovery.
 
 WinHex allows users to view, edit, and analyze binary data on various types of storage media, including hard drives, USB drives, memory cards...  

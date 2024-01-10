@@ -390,7 +390,7 @@ Null sessions are normally used with the SMB or NetBIOS protocols for machines t
 and printers on Windows networks. 
 
 It may be used by an attacker as part of information gathering by :
-```commandline
+```shell
 net use \<TARGET_IP>\ipc$ "" /u:""
 ```
 
@@ -517,6 +517,12 @@ If a secure connection is established, it uses port **587**.
 **S/MIME** is the Secure Multipurpose Internet Mail Extensions standard providing cryptographic security for electronic messages.  
 S/MIME can encrypt emails and their content... but also potential malwares they contain, making it harder to detect them.
 
+**DKIM** (Domain Keys Identified Mail) is an email authentication method that helps verify the authenticity of the
+sender's domain and detect email spoofing.  
+DKIM allows the sender to digitally sign email messages, and the recipient can then verify the signature using the
+public key published in the sender's DNS records.  
+Many email services support DKIM as part of their email authentication mechanisms.
+
 
 ### Email tools
 
@@ -547,14 +553,14 @@ It can be either active (sending requests to the network) or passive (eavesdropp
 
 **Banner Grabbing** is a popular fingerprinting technique to find the version of running web servers.
 
-```commandline
+```shell
 telnet 192.168.1.212 80       // use telnet on open port 80 (instead of usual 23)
 HEAD / HTTP/1.0               // send a HEAD HTTP request
 ```
 The response often contains server info like `Microsoft-IIS/8.5` or `Apache/2.0.46`.  
 
 **netcat** is another tool that can help with banner grabbing, used just like telnet :
-```commandline
+```shell
 nc 192.168.1.212 80
 HEAD / HTTP/1.0
 ```
@@ -792,7 +798,7 @@ The OTP value is generated as a hash of a **seed** and a **moving factor**.
 The seed is decided once at the creation of the user account and never changes.  
 The moving factor changes everytime a new OTP is requested by the user, causing the different value everytime.  
 
-There are 2 main types of OTP are **HOTP** and **TOTP**, that differ in the moving factor they use.
+The 2 main types of OTP are **HOTP** and **TOTP**, that differ in the moving factor they use.
 
 **HOTP** (HMAC-based OTP) uses a moving factor based on a counter.  
 Every time a HOTP is requested and validated, the moving factor is incremented.  
@@ -1083,6 +1089,7 @@ Jailbreaking is performed by applying patches on the kernel to modify the way it
 It is technically legal to jailbreak our device.  
 However it implies the loss of the warranty and customer support, and official updates would break the device.
 
+On Android, it is called **rooting** since we get root access on the device.
 
 ## Wireless Security
 
@@ -1112,7 +1119,7 @@ WPA3 was launched in 2018 to strengthen WPA2.
 WPA3 has 2 modes : **WPA3-Personal** and **WPA3-Enterprise**.
 
 The main improvement in WPA3-Personal is the removal of the PSK (Pre-Shared Key) exchange used for encryption of all messages.  
-It was replaced by SAE (Simultaneous Authentication of Equals) where the client and the AP use public/private keys
+It was replaced by **SAE** (Simultaneous Authentication of Equals) where the client and the AP use public/private keys
 to agree on a one-time session key (dragonfly handshake), making it immune to brute-force attack.  
 
 Thanks to SAE, WPA3 provides **forward secrecy** : past sessions are protected even if a future key is compromised.  
@@ -1361,14 +1368,16 @@ PACS is often installed by an external supplier, and is often omitted from risk 
 ## Risk Assessment
 
 Risk assessment is a process used in risk management to identify risks in a network or system, and decide on how to address them.  
-A **risk** is the probability that a threat will be realized.  
 A **vulnerability** is any internal weakness in the system that can be exploited.  
 A **threat** is an external factor that can use a vulnerability to damage the system (disaster, hacker...).  
+A **risk** is the probability that a threat will be realized.  
 
-The typical flow is :
-- threat analysis  
-- ALE calculation  
-- risk analysis, using the ALE to prioritize the risks  
+The typical risk analysis steps are :
+- inventory assets and assign an asset value (AV) to each asset
+- identify each possible threats for each asset, calculate SLE and EF
+- threat analysis to calculate the likelihood of each threat (ARO)
+- estimate the annualized loss (ALE)  
+- analyze the risks and research countermeasure, using the ALE to prioritize the risks  
 - business impact analysis based on the risk analysis  
 
 There are 4 strategies to address a risk :
@@ -1606,6 +1615,13 @@ Data should be assigned a level of sensitivity that drives how much effort must 
 - Secret
 - Top Secret
 
+Data Roles (required by GDPR) :
+- **Data Owner** : senior management responsible of the overall data and deciding data controls
+- **Data Custodian** : member of IT, deciding how data controls are implemented
+- **Data Controller** : person that controls processing of the data
+- **Data Processor** : person or body which processes the data on behalf of the data controller
+- **Data Protection Officer** (DPO) : mandatory appointment in the organization who ensures compliance with data regulations
+
 Data lifecycle should be specified in the organization policies : how long data is kept, how it is protected, how it is destroyed...  
 Some regulations require the storage of some types of data for a given period of time.
 
@@ -1728,7 +1744,7 @@ It serves as a hub for cyber-security activities and plays a critical role in ma
 
 ### NIST SP 800-61 (National Institute of Standards and Technology - Special Publication 800-61)
 
-NIST SP 800-61, titled "Computer Security Incident Handling Guide," is a publication by the NIST in the United States.  
+NIST SP 800-61, titled "Computer Security Incident Handling Guide," is a publication by the NIST.  
 It provides guidance on establishing and maintaining an effective incident handling capability for organizations.
 
 It covers all phases of the incident management program, from preparation before the incident to the knowledge sharing once resolved.
@@ -1760,7 +1776,7 @@ There are multiple sources of data that can be used to conduct the incident resp
 - nxlog : cross-platform open-source tool similar to syslog-ng
 - journalctl : Linux command-line utility to query and display logs from journald, the systemd logging service (for example all sudo commands)
 - netflow : Cisco-proprietary network protocol collecting network traffic
-- sflow : open-source version of netflow
+- sflow : open-source sampled version of netflow
 
 ### EXIF (Exchangeable Image File Format)
 
