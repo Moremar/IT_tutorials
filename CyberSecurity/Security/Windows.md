@@ -30,7 +30,7 @@ Modern Windows machines use **NTFS** (New Technology File System).
 NTFS supports files larger than 4GB, file/folder level permission, compression and encryption.
 
 
-## Command Prompt
+## Command Prompt / PowerShell
 
 The command prompt is a terminal that can be started with `Run > cmd.exe`.  
 It offers a command-line interface to interact with the machine :
@@ -43,6 +43,12 @@ cls                    // clears the screen
 netstat                // monitor active TCP/IP connections
 net help               // help for the "net" command to monitor network resources
 ```
+
+**PowerShell** is a task automation and configuration management program developed by Microsoft.  
+It consists of a command-line shell and the associated scripting language.  
+It is open-source and available on Windows / Linux / MacOS.  
+PowerShell scripts have the extension `.ps1`.
+
 
 
 ## Windows Folders

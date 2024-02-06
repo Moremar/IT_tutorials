@@ -93,6 +93,10 @@ It detects when a real banking app is open on the phone, and adds an overlay abo
 When the user enters his credentials, it is captured by the trojan app and sent to the criminal.  
 The **AceCard** banking trojan was able to overlay over 30 banking apps.
 
+To avoid being flagged as malware by Google Play or App Store, some trojans use **staged payload**.  
+The app itself looks normal, but once installed and launched it downloads the actual malware.
+
+
 ### Adware
 
 An adware is a software displaying ads, and can also hijack the browser search page.
@@ -768,6 +772,7 @@ A **password manager** can be used to generate and manage strong passwords.
 Only the master password must be remembered, and other passwords are handled by the password manager.  
 Popular password manager solutions are **LastPass**, **Dashlane**, **OnePassword**, **PasswordSafe**...
 
+
 ### Backup
 
 All important data must be saved in a backup (for example Windows 10 full system backup).   
@@ -848,6 +853,24 @@ The service provider can also be referred to as the **relying party** (RP).
 If the user agent does not already have a valid session, the SP redirects the user agent to the identity provider (IdP).  
 The IdP requests the principal's credentials if not already signed in and, if correct, provides a SAML response containing one or more assertions.  
 The SP verifies the signature, establishes a session and provides access to the resource.
+
+
+### Zero Trust
+
+Zero-trust is a security framework where all subjects, assets and workflows are authenticated, authorized and continuously
+validated to gain access to applications or resources on the network.  
+
+The system always behaves as if there was an intruder inside the network :
+- no implicit zone trust
+- devices cannot be configured by users
+- all network connections are assumed insecure
+- consistent security policy
+
+Some core zero-trust principles are :
+- continuous verification
+- access limitation
+- automation
+
 
 ### Access Control Models
 
@@ -1001,6 +1024,9 @@ STIX includes motivations, abilities, capabilities, and response information.
 **TAXII** (Trusted Automated eXchange of Intelligence Information) is the format through which threat intelligence data is transmitted.  
 TAXII is a transport protocol that supports transferring STIX insights over HTTPS.
 
+A **TIP** (Threat Intelligence Platform) is an automation tool combining multiple threat intelligence feeds, and
+integrating them with existing SIEM solutions.
+
 
 ## Supply Chain Management
 
@@ -1081,7 +1107,7 @@ analysis, and disposition of physical or electronic evidence during the course o
 The chain of custody is required to guarantee that the evidence has not been tampered with, so it is admissible in a court of law.
 
 
-## Jailbreaking
+## Jailbreaking / Rooting / Sideloading
 
 Jailbreaking an iPhone or an iPad is the process of hacking its software to remove restriction.  
 The kernel is the core program controlling everything in the system, it is one of the first programs to load when the device is powered.  
@@ -1090,6 +1116,12 @@ It is technically legal to jailbreak our device.
 However it implies the loss of the warranty and customer support, and official updates would break the device.
 
 On Android, it is called **rooting** since we get root access on the device.
+
+**Sideloading** is the practice of installing applications from sources other than the official app store of the platform,
+such as the Play store or the App store.
+
+**MDM** (Mobile Device Management) platforms can detect and restrict rooting, jailbreaking and sideloading.
+
 
 ## Wireless Security
 
@@ -1452,6 +1484,16 @@ Common penetration testing tools are **Metasploit** and **CANVAS**.
 The **red team** is the team trying to attack the system, playing the role of the external hacker.  
 The **blue team** is the team defending the system, playing the role of the Systems team.  
 The **white team** is the team supervising the penetration testing exercise. 
+
+
+#### Bug Bounty
+
+Bug bounties are programs offered by organizations to encourage external security researchers and ethical hackers
+to find and report security vulnerabilities or bugs in their software, websites, or systems.  
+Organizations specify the scope of the bounty (assets to test, vulnerability type, rules of engagement...).
+
+Some popular bug bounty platforms are **HackerOne** and **YesWeHack**.
+
 
 #### OVAL (Open Vulnerability and Assessment Language)
 

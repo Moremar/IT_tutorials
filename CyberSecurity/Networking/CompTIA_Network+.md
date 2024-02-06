@@ -958,6 +958,9 @@ APIPA is a mechanism that allows an OS to assign to itself an IP address when th
 It uses the IP range **169.254.0.0/16** that is reserved for APIPA.  
 If a host has an IP in this range in a corporate network, it suggests an issue with the DHCP server.
 
+**169.254.169.254** is a special address in the APIPA range.  
+It is used by most cloud providers (AWS, GCP...) to provide metadata on the running instance.
+
 
 ### Subnets
 
@@ -971,7 +974,7 @@ The network masks of the subnets is 255.240.0.0.
 The subnets are 10.0.0.0/12, 10.16.0.0/12, ..., 10.240.0.0/12.  
 
 
-## Multicast IPv4 Traffic
+### Multicast IPv4 Traffic
 
 Multicast traffic uses specific multicast IP addresses, from 224.0.0.0 to 239.255.255.255.   
 A multicast source (video camera, streaming source...) can send traffic to a multicast address.
@@ -1003,8 +1006,8 @@ The last 8 bytes (4 blocks) are the interface ID identifying the device on the n
 
 With IPv6, a host can assign to itself a unique IPv6 address using the network ID and the interface ID.
 
-The network ID is obtained by sending a multicast of type RS (Router Solicitation - ICMP 133) to the "all routers" multicast address `ff02:2`.  
-The router replies with a multicast of type RA (Router Advertisement - ICMP 134) containing the network ID to the "all nodes" multicast address `ff02:1`.    
+The network ID is obtained by sending a multicast of type RS (Router Solicitation - ICMP 133) to the "all routers" multicast address `ff02::2`.  
+The router replies with a multicast of type RA (Router Advertisement - ICMP 134) containing the network ID to the "all nodes" multicast address `ff02::1`.    
 This replaces the DHCP mechanism in IPv4.
 
 The interface ID is derived from the physical MAC address of the device using the **EUI-64** format.  
@@ -1109,7 +1112,7 @@ A layer 3 switch is more expensive than a layer 2 switch but is easier to setup 
 
 ### DMZ (Demilitarized Zone)  
 
-A DMZ, or **screen subnet**, is a subnet containing all publicly available servers (web, FTP, email relay...).  
+A DMZ, or **screen subnet**, is a subnet containing all publicly available servers (web, FTP, jumpbox, email relay...).  
 The DMZ separates the internal network from the Internet.
 
 It has 2 routers :
@@ -1194,7 +1197,7 @@ It is often used in public Wi-fi networks or company guest networks.
 
 ### WPS (Wifi Protected Setup)
 
-WPS allows to join a Wifi network with a PIN of a button press instead of the full passphrase.  
+WPS allows to join a Wifi network with a PIN or a button press instead of the full passphrase.  
 It is very unsecure and should be disabled.  
 The 8-digit PIN is checked in 2 halves of 4 digits, making it easy to brute-force.  
 It just takes a few minutes to crack on a modern computer if no lockout after X failed attempts.
@@ -1928,5 +1931,7 @@ curl --data "<QUERY BODY>" <QUERY_URL>
 - **logger** : Linux command providing an easy way to log data under the `/var/log/syslog` file
 
 - **dd** : command-line utility to create a bit-by-bit copy of a disk image
+
+- **ddcfldd** : enhanced version of `dd` offering multi-file output and built-in integrity check using a hash
 
 - **memdump** : command-line utility to dump the system memory to the standard output stream

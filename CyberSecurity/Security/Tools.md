@@ -300,12 +300,19 @@ It is an alternative to Nessus.
 
 ### Burp Suite
 
-The Burp suite is a web application security testing software.  
-It is configured as a proxy that intercepts and forwards the traffic between a local browser and a target website.  
-It analyzes the traffic, sends its own requests to the website, and reports all found security vulnerabilities.
+The Burp suite is a Java-based web application security testing software.  
+It is the industry standard tool for web application and mobile application penetration testing.
+
+Burp is configured as a web proxy : it captures and enables manipulation of HTTP/HTTPS traffic between a browser and a web server.  
+It analyzes the traffic, sends its own requests to the web server, and reports all found security vulnerabilities.
 
 The Burp suite comes with a Community, a Professional and an Enterprise edition.  
 The Community edition only includes a proxy and requests history, but a free trial of the Pro edition is available.
+
+Burp Suite Professional comes with an automated vulnerability scanner, a fuzzer with no rate limit, access to Burp extensions...
+
+Burp Suite Enterprise is mostly used for continuous scanning.  
+It is installed on a server and constantly scans the target web application for potential vulnerabilities.
 
 
 ### ffuf - Fuzz Faster U Fool
@@ -431,8 +438,8 @@ hashcat -a 3 -m 0 hash.txt ?l?l?l?l?l?l            # try to find a password of 6
 
 Note : to get the hash for a given string, we can use an online hash tool or the `Get-FileHash` command from Powershell :
 ```shell
-Get-FileHash movie.mp4 | format-List                              # SHA256 hash (default)
-Get-FileHash movie.mp4 -Algorithm MD5 | format-List               # MD5 hash
+Get-FileHash movie.mp4 | Format-List                              # SHA-256 hash (default)
+Get-FileHash movie.mp4 -Algorithm MD5 | Format-List               # MD5 hash
 ```
 
 
@@ -629,6 +636,13 @@ It explains and gives examples of most common web security issues, especially th
 OWASP Juice Shop is a fake e-commerce web application designed with intentional security flaws.  
 It can be deployed locally in a container, and its aim is to teach web vulnerabilities.  
 It contains a score dashboard with a lot of challenges to break the website.
+
+
+### OWASP WebGoat
+
+WebGoat is a security testing software developed by OWASP written on the J2EE (Java 2 Enterprise Edition).  
+It is an intentionally flawed web application containing hundreds of vulnerabilities.  
+It offers courses to understand and exploit all these vulnerabilities.
 
 
 ### Altoro Mutual
