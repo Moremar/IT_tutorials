@@ -15,10 +15,12 @@ GNU/Linux is the foundation of Unix-based OS.
 Unix used to proprietary and GNU/Linux is an open-source replacement for it.
 
 Linux distributions are OS built from GNU/Linux and adding specific tools and software :
-- Ubuntu : derived from Debian, designed to be user-friendly
-- CentOS Stream : derived from RHEL (Red Hat Entreprise Linux) and offering frequent updates
-- Kali Linux : designed for penetration testing and cyber-security
-- RaspberryPi OS : optimized for the RaspberryPi single-board computer 
+- **Ubuntu** : derived from Debian, designed to be user-friendly
+- **Fedora** : community-driven, free and open-source, sponsored by Red Hat, with short release cycle and frequent updates 
+- **RHEL** : Red-Hat enterprise Linux, commercial and enterprise-focused stable Linux distribution, including Fedora changes after heavy testing
+- **CentOS Stream** : free and open-source intermediate between Fedora and RHEL, regarded as a development preview of future RHEL releases
+- **Kali Linux** : designed for penetration testing and cyber-security
+- **RaspberryPi OS** : optimized for the RaspberryPi single-board computer 
 
 
 ## Installation
@@ -209,6 +211,13 @@ It creates a file saving the entire VM state, allowing to re-create the VM from 
 
 
 - `sudo <CMD>` : run a command as superuser, require user password and the user must be allowed to use sudo
+
+
+- `watch <CMD>` : run a command periodically in the terminal
+  - `-n 3` : run the command every 3 seconds
+
+
+- `lsb_release -a` : display Linux distribution info (name, version, code name...)
 
 
 ### Command Combination and Redirection
@@ -463,15 +472,51 @@ There are several startup scripts that are loaded in different situations :
 ## Package Management
 
 Linux distributions are shipped with a package manager that can centrally manage software installation and update.  
-Debian-based distributions (like Ubuntu) use `apt`, and RHEL-based distributions (like CentOS Stream) use `dnf` (replacing `yum`).  
-Many applications no longer need to include their own updater, since they get updated by the package manager.
+Many applications no longer need to include their own updater, since they get updated by the package manager.  
+The package manager ensures compatibility between installed software, and handles dependencies.
 
 The package manager needs to be run with administrative privileges.
 
-##### Ubuntu
+### Debian-based distributions (Ubuntu / Debian)
 
-On Ubuntu, the list of available package versions is not automatically kept up-to-date by the `apt` package manager.  
-It requires an `apt update` to refresh the local versions list.
+#### dpkg
+
+dpkg (Debian Packet Manager) is the lowest-level package manager.  
+It is used to install software as .deb files, a compressed archive with all files of the software.  
+.deb files can be downloaded from the official Ubuntu package page : [https://packages.ubuntu.com/](https://packages.ubuntu.com/)  
+
+dkpg does not handle dependencies.
+
+```shell
+sudo dpkg -i neofetch_7.1.0-3_all.deb                # install a .deb package (by .deb file name)
+sudo dpkg -r neofetch                                # uninstall a package (by package name)
+```
+
+#### apt
+
+apt build on top of dpkg, it can download the requested packages from registered repositories and manage dependencies.  
+`apt-get` is the older and more stable of it, and both are compatible (they share config files and package format).  
+
+The list of available package versions is not automatically kept up-to-date by the `apt` package manager.  
+`apt` requires a `sudo apt update` to refresh the local versions list.  
+It fetches from all central repositories the full list of available packages with their version.
+
+System repositories are stored under `/etc/apt/sources.list`.  
+Additional third-party repositories are stored under `/etc/apt/sources/lists.d/*`.
+
+Repositories are defined with format `<type> <uri> <distribution> <domain1> <domain2> ...`.  
+For example : `deb http://jp.archive.ubuntu.com/ubuntu/ jammy main restricted`
+- type : either `deb` (binary packages) or `deb-src` (source parckages)
+- uri : address of the repository (or a mirror)
+- distribution : ubuntu version to download package for
+- component : define if free or paid, and if supported by Canonical (official) of by the Ubuntu community
+  - `main` : official, free
+  - `restricted` : official, paid
+  - `universe` : community-supported, free 
+  - `multiverse` : community supported, paid
+
+We can add a **PPA** (Personal Package Archive), which is a repository from personal users for a specific project.  
+The `add-apt-repository` commands configures the additional repository and adds the public key of the repository to the trusted keys.
 
 ```shell
 sudo apt update             # update the list of packages that can be upgraded
@@ -479,35 +524,143 @@ sudo apt list --upgradable  # list packages that can be upgraded
 sudo apt upgrade            # upgrade packages that can be upgraded (install additional dependencies if needed)
                             # packages that require the removal of other packages are not upgraded
 sudo apt full-upgrade       # upgrade all packages, even those requiring to removing some existing packages
+sudo apt autoremove         # remove old dependencies that are no longer needed
 
 sudo apt install <PKG>      # install a package
 sudo apt remove <PKG>       # remove a package
+
+sudo apt show <PKG>         # display info about a package (size, dependencies, description...)
+
+sudo apt install -f         # let apt resolve dependencies conflicts by installing/upgrading/removing dependencies 
+
+sudo apt add-apt-repository ppa:ondrej/php              # register a 3rd party repository
+sudo apt add-apt-repository --remove ppa:ondrej/php     # deregister a 3rd party repository 
 ```
 
-##### RHEL (Red-Hat Entreprise Linux)
+Integrity of files installed by apt can be checked with the `debsums` command :
+- `-a` : run on all files managed by apt
+- `-s` : silent mode, only log errors
+- `-l` : list packages that fo not have checksum info
 
-On RHEL the list of available package versions is kept up-to-date by default, so `dnf` has no equivalent to `apt update`.  
-EPEL (Extra Packages for Enterprise Linux) is a repository of additional packages for RHEL distributions.  
-The `epel-release` can be installed via `dnf` to configure this repository to be used as a source for packages.
+Some useful packages to install are :
+- `debsums` : used to compare the checksum of deb packages to ensure they were not tampered with
+- `cmake` : cross-platform build system generator
+- `neofetch` : system info script printing distribution logo and info on terminal
+- `cmatrix` : infinite program simulating the display from the Matrix in the terminal
+
+
+### RHEL-based distributions (Fedora, CentOS, Red-Hat Entreprise Linux)
+
+#### RPM (Red-Hat Package Manager)
+
+RHEL-based distributions use the `rpm` low-level package manager.  
+rpm can install, update and remove RPM packages, but it does not handle dependencies.
+
+rpm can be used directly, but usually the `dnf` package manager is preferred.
 
 ```shell
-sudo dnf upgrade           # download the latest version of the package list and upgrade packages
-sudo dnf update            # same effect (alias)
-
-sudo dnf install <PKG>      # install a package (for example epel-release)
-sudo dnf remove <PKG>       # remove a package
+rpm -p <PKG>.rpm              # verify a RPM package
+rpm -i <PKG>.rpm              # install a RPM package
+rpm -e <PKG>.rpm              # remove a RPM package
 ```
 
-##### MacOS
+#### dnf
+
+`dnf` is the high-level package manager for RHEL-based distributions (replacing `yum`).  
+It uses `rpm` under the hood to manage RPM packages and their dependencies.
+
+On RHEL the list of available package versions is kept up-to-date by default, so `dnf` has no equivalent to `apt update`.  
+
+EPEL (Extra Packages for Enterprise Linux) is a repository of additional packages for RHEL distributions.  
+It is a community project to make high-quality Fedora packages available to CentOS Stream and RHEL.    
+The `epel-release` package can be installed via `dnf` to configure this repository to be used as a source for packages.
+
+```shell
+sudo dnf upgrade             # download the latest version of the package list and upgrade packages
+sudo dnf update              # same effect (alias)
+
+sudo dnf search <STR>        # search known packages for a given string
+
+sudo dnf install <PKG>       # install a package (for example epel-release)
+sudo dnf remove <PKG>        # remove a package
+
+sudo dnf mark install <PKG>  # mark an installed dependency so it is not removed even if the package
+                             # that installed it gets removed
+
+sudo dnf repoquery --provides <PKG>        # show the functionalities provided by a package
+sudo dnf repoquery --requires <PKG>        # show the required dependencies of a package
+sudo dnf repoquery --recommends <PKG>      # show the recommended dependencies of a package
+sudo dnf repoquery --suggests <PKG>        # show the suggested dependencies of a package
+sudo dnf repoquery --whatprovides <FN>     # show which packages provide a given functionality
+sudo dnf repoquery --whatrequires <FN>     # show which packages depend on a given functionality
+sudo dnf repoquery --whatsupplements <FN>  # show which packages improve a given functionality
+
+sudo dnf deplist <PKG>                     # summary of dependencies of a package and what packages provide them
+
+sudo dnf install epel-release              # 2 commands needed to make EPEL repos available
+sudo dnf config-manager --set-enabled crb  # CentOS-specific
+```
+
+By default, when installing a package, dnf installs the required dependencies, and the recommended ones if they do not create a conflict.  
+It does not install the suggested dependencies.
+
+We can configure the repositories that dnf can access by adding repo files under `/etc/yum.repos.d/*.repo`.  
+It already contains a `centos.repo` file by default.  
+When installing `epel-release`, it adds some EPEL-related repo files here as well.
+
+dnf uses **modules** to allow better control on the version of the software we use.  
+A module is a set of related packages working together for a given functionality.  
+Each module supports one or more versions, called **streams**.
+```shell
+dnf module list                  # list available modules
+
+dnf module install nodejs        # install a module directly
+dnf module install nodejs:18     # install a module directly on a specific version (stream)
+
+dnf module enable nodejs         # enable a module
+dnf module enable nodejs:18      # enable a module on a specific stream (version)
+dnf upgrade                      # upgrade node to the version of the specified stream
+
+dnf module remove --all nodejs   # uninstall all software installed as part of a module
+dnf module disable nodejs        # disable a module, so it remains installed but we no longer get updates 
+```
+
+
+### Snap
+
+Snap is an alternative package manager that tries to solve common issues with traditional package managers (`apt` or `dnf`).
+
+Snap bundles each package with its dependencies, so it is no longer possible to have dependencies conflicts.  
+The trade-off is that the same dependency can be installed multiple times (once for each package using it).  
+This also allows Snap to use packages independent of the Linux distribution.
+
+Snap packages are available on [https://snapcraft.io/](https://snapcraft.io/).  
+It is branded as the app store for Linux, and is mostly used for desktop applications : Spotify, Steam, GIMP, JetBrains IDEs, ...
+
+Snap packages are updated automatically by the `snapd` background process.  
+Snaps are stored under `/var/lib/snapd/snaps/`, and they are simply replaced by the new version on update.  
+These snap packages are mounted to `/snap/`, where they have a full file hierarchy with binaries and dependencies.  
+Symlinks to the main binaries of the installed snaps are saved under `/snap/bin` that is part of the PATH.
+
+```shell
+sudo snap install gimp
+```
+
+### MacOS
 
 On MacOS, the shell used by the Terminal application is **ZSH**, not Bash.  
 We can run the `bash` command to run Bash, but it runs on an old version (3.2) because of licensing issue.  
-We can use the Homebrew package manager to install the latest Bash version.
+
+We can use the **Homebrew** package manager to install the latest Bash version.
 
 ```shell
 brew update                 # update the list of packages that can be upgraded
 brew upgrade                # upgrade the packages that can be upgraded
+berw upgrade <PKG>          # upgrade a specific package
 brew install <PKG>          # install a package (for example bash)
+
+brew list                   # list all installed packages
+brew outdated               # list all outdated installed packages
 ```
 
 ## Unix File-system Hierarchy Standard (FHS)
@@ -853,4 +1006,158 @@ It is displayed also by `ls -l` with a `s` or `S`, but at the position of the gr
 ```shell
 chmod +s my_bin       # set the SUID bit
 chmod g+s my_bin      # set the SGID bit
+```
+
+## Linux Processes
+
+A process is an independent execution unit managed by the Linux kernel.  
+It has its own resources (CPU, memory, opened files, network connections...) that it does not share with other processes.  
+
+When a process in a shell exits, its exit code is available via the `$?` special variable, with `echo $?`.
+
+
+### Process monitoring 
+
+Processes can be monitored from the **System Monitor** application in Ubuntu.  
+Processes are organized in a hierarchy, where each process knows its parent process that initiated it.  
+For example if we run `ping` in a bash, the bash is the parent process of the ping process.
+
+#### ps command
+
+Processes can be displayed with the `ps` command.
+
+`ps` can use Unix-style parameters, with a dash prefix :
+- `-e` or `-A` : show all running processes
+- `-f` : full details, show additional columns like process owner, parent process ID, time, command...
+- `-l` : long format, add a few more columns including the process state
+- `-p 1234` : limit to a specific process ID
+- `--forest` : show the process hierarchy
+
+`ps` can also use BSD-style parameter with no dash profix :
+- `a` : show all processes of all users
+- `u` : user-oriented output with additional columns
+- `x` : also include processes without a tty (started outside a terminal)
+
+```shell
+ps                         # show running processes in the current terminal
+ps -A                      # show all processes (same as -e)
+ps -e -f -l                # show details about all processes
+ps aux                     # show details about all running processes (BSD-style)
+```
+
+#### top / htop commands
+
+The `top` command displays all processes from the system (in-shell equivalent of the System Monitor).
+
+It uses individual process-level pseudo-files under `/proc` giving info on each process.  
+Running it with `sudo` includes more processes that are not visible to our current user.  
+- `-u <username>` : limit to processes owned by a specific user
+- `-d 5` : set the delay between 2 updates to 5 sec
+- `-i` : hide idle processes
+- `-c` : show the full command line (instead of just command name)
+
+When top is running, we can also perform some actions on the processes displayed :
+- `F` (fields) : select fields to display, specify the sort field, ...
+- `K` (kill) : send a signal to a process
+- `R` (renice) : renice a process
+- `Z` : switch on color mode
+
+The `htop` command is an improved version of top.  
+It needs to be installed with `sudo apt install htop` on Ubuntu.  
+It has nice colors by default and shows CPU and memory usage, allows sorting by column on click and scrolling
+to see the entire command...  
+A few shortcuts are displayed at the bottom (search, filter, show as a tree, increase/decrease niceness, kill process).
+
+
+### Process Priority
+
+The operating system uses **context switching** to run multiple processes in parallel.  
+It works a bit on a process, then moves to another, then to another, then back to the first...
+
+We can influence the priority of a process by setting its **niceness** with the `nice` command.  
+The niceness is a value between -20 (high priority) and +19 (low priority), with a default of 0.  
+The nicer a process is, the more it lets other processes run.  
+The scheduler will dedicate more time to processes with lower niceness.  
+We need administrative privilege to decrease the niceness (higher priority) but not to increase it.
+
+```shell
+nice -n 19 ping google.com         # start a proess with niceness 19
+
+pgrep ping                         # get the process ID of the process running the ping command, for ex 1234
+sudo renice -n 10 1234             # set the niceness of running process with PID 1234 to 10
+```
+
+### Signals
+
+Signals are messages sent to running processes to interrupt the process flow at a convenient time.  
+We can emit a signal, and the OS will deliver it to the running process asynchronously.
+
+The `kill` command can send signals, that the OS will deliver to a process to interrupt it.
+
+The most popular signal types are :
+- **SIGTERM** (terminate) : tell the process to terminate if possible but allow it to cleanup or ignore the signal
+- **SIGINT** (interrupt) : tell the process to stop so we can regain control over the terminal (Ctrl-C)
+- **SIGKILL** (kill) : kill the process without giving it a chance to cleanup or ignore the signal, handled by the kernel and the process does not even know about it
+- **SIGHUP** (hang up) : notify a process that the terminal it runs in has been closed, so process should stop if not a daemon
+- **SIGSTOP** (stop) : tell the kernel to pause the process (not kill), not catchable by the process itself
+- **SIGCONT** (continue) : tell the kernel to resume a process that was previously stopped
+
+```shell
+kill -l                         # show all available signals
+
+kill 1234                       # send a SIGTERM signal to process 1234 (default signal)
+kill -s SIGTERM 1234            # explicitly send a SIGTERM signal
+kill -SIGTERM 1234              # alternative syntax
+kill -s 15 1234                 # send the SIGTERM signal by ID (as listed by kill -l)
+
+kill -s SIGINT 1234             # send a SIGINT signal to process 1234
+
+killall firefox                 # kill all processes for a given command name (also kill the sub-processes)
+```
+
+`kill` is a built-in Bash function, but there is also a `/usr/bin/kill` external binary.  
+The built-in one is faster, but the external one may have more options and can be required when Bash built-ins are not usable (in scripts for example).
+
+### Process State
+
+A process state is shown with `ps -el` :
+- `R` (running) : currently using CPU and memory
+- `S` (sleeping) : waiting for an event or a signal
+- `D` (uninterruptible sleep) : cannot receive a signal, used for system call (like I/O)
+- `T` (traced or stopped) : when it receives a SIGSTOP or Ctrl-Z from a shell
+- `Z` (zombie) : no longer running but an entry still exists is in the process table
+
+### Jobs
+
+A job is a wrapper above a command being executed.  
+It can contain multiple processes, for example the command `cat a.txt | wc -l` generates a job that has 2 processes.  
+
+A job can be run in the foreground (blocking the shell) or in the background with a `&` suffix.  
+Jobs running in the background still display their output in the shell (if not redirected).
+
+A job can also be run with `nohup`, to keep it running even when the shell session is closed.  
+It will create a `nohup.out` file in the current directory for its output.  
+When the shell is closed, the parent process of the process running with `nohub` becomes process 1 (systemd).
+
+```shell
+ping -c 10 google.com > a.txt &                 # run a job in the background
+  [1] 1234                                      # display job ID and process ID
+  [1] Done   ping -c 10 google.com > a.txt &    # display a message when the job is done
+
+jobs                                            # list running jobs
+fg                                              # bring the last started job to the foreground
+fg %1                                           # bring job 1 in the foreground
+
+CTR-Z                                           # pause the current job, it is set as Stopped in the jobs output
+fg %1 &                                         # resume job 1 and run it in the background
+bg %1                                           # same
+
+kill %1                                         # send a SIGTERM signal to job 1 (only works with the builtin bash kill)
+kill -s SIGKILL %1                              # send a SIGKILL signal to job 1
+
+wait                                            # wait for all background jobs to complete
+wait %1                                         # wait for background job 1 to complete
+wait -n                                         # wait for any background job to complete
+
+nohup ping -c 10 google.com > a.txt &           # start a job in the background that survives when closing the shell
 ```
