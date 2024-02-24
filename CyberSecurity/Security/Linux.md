@@ -200,6 +200,18 @@ It creates a file saving the entire VM state, allowing to re-create the VM from 
   - `-a` to append instead of replacing the output file
 
 
+- `date +<FORMAT>` : display the current date in a specific format
+  - `%H` : hour (24h)
+  - `%I` : hour (12h)
+  - `%p` : AM or PM
+  - `%M` : minute
+  - `%S` : second
+  - `%T` : 24h format time, equivalent to `%H:%M:%S`
+  - `%m` : month
+  - `%d` : day
+  - `%Y` : year
+
+
 - `which <CMD>` : show the full path of a shell command
   - `-a` : print all matching executables (not only the first)
 
@@ -543,6 +555,8 @@ Integrity of files installed by apt can be checked with the `debsums` command :
 - `-l` : list packages that fo not have checksum info
 
 Some useful packages to install are :
+- `apache2` : HTTPD Apache web server
+- `links` : in-terminal web browser (useful to see if a web server is reachable for example)
 - `debsums` : used to compare the checksum of deb packages to ensure they were not tampered with
 - `cmake` : cross-platform build system generator
 - `neofetch` : system info script printing distribution logo and info on terminal
@@ -1160,4 +1174,296 @@ wait %1                                         # wait for background job 1 to c
 wait -n                                         # wait for any background job to complete
 
 nohup ping -c 10 google.com > a.txt &           # start a job in the background that survives when closing the shell
+```
+
+
+## Boot Process and Systemd
+
+
+### Bootloader
+
+On computer startup, the first component to load is the BIOS / UEFI, in charge of loading the hardware itself.   
+
+Then the bootloader is the first software to load on startup, and it is the first we can influence.  
+It is in charge of loading the OS : it loads the kernel into memory, and then hands control to it.  
+On Linux, the bootloader is **GRUB2** (Grand Unified Bootloader).  
+On Windows machines, the bootloader is the **Windows Boot Manager**.  
+
+On Linux, the bootloader config can be changed in the _/etc/default/grub_ configuration file.  
+After modification, we should run `sudo update-grub` to update the GRUB configuration.  
+It re-generates the final bootloader config file _/boot/grub/grub.cfg_ from this new config.  
+For example, to force the GRUB menu to show on startup for 5 sec, we can modify :
+```shell
+# GRUB_TIMEOUT_STYLE=hidden             # comment this line out
+GRUB_TIMEOUT=5
+```
+This can allow us to start the machine in recovery mode and get a root shell.
+
+
+### Linux Kernel
+
+The Linux kernel is the core component of the Linux operating system.  
+It was created by Linus Torvalds and released in 1991.  
+
+The kernel is responsible for managing system resources and coordinating processes :
+- **process management** : schedule processes, allocate resources, inter-processes communication...
+- **memory management** : manage physical and virtual memory, handle allocation and de-allocation
+- **file system management** : support multiple file systems (ext4, xfs...), handle read and write on those
+- **networking stack** : implementation of various network protocols (Ethernet, TCP/IP...), routing, packet filtering, traffic control
+- **hardware abstraction layer** (HAL)
+
+**Kernel modules** are pieces of code that can be loaded into the kernel to extend its functionalities.  
+Some proprietary drivers can be loaded to the core of the OS using this module mechanism.  
+Modules are often used for device drivers (Nvidia graphics card, wireless card), virtualBox add-ons, ZFS filesystem...  
+We can list loaded kernel modules on our system with : `sudo lsmod` 
+
+The Linux kernel is updated with the packet manager just like other packages.  
+We can lock a specific version to prevent the kernel to be upgraded automatically.  
+This is mostly used if we have installed custom modules, that are not compatible with later versions of the kernel.
+```shell
+sudo apt-mark hold linux-generic-hwe-22.04              // on Ubuntu
+sudo dnf versionlock kernel                             // on CentOS
+```
+
+**Kernel mode** and **User mode** are 2 distinct privilege levels in an OS that decides the level of access a program has on the system resources.  
+Kernel mode has unrestricted access, it is used by the kernel and by some device drivers.  
+User mode has limited access to system resources, and is used by all other applications.    
+These applications can perform system calls that the kernel receives and executes for the application if it has the required permission.
+
+
+### Systemd
+
+Systemd is a set of tools to manage processes, group them, start them automatically...  
+There are a lot of different systemd processes : init, systemctl, journalctl, journald, networkd, logind...  
+Most of these processes can be listed with : `ps -ef | grep systemd`
+
+Systemd includes the `init` process, the main process of the OS (PID = 1) started directly by the kernel.  
+It can be listed with the `ps 1` command, and its binary is stored under _/lib/sytemd/systemd_  
+It is in charge of initializing basic functionalities of the OS.  
+It becomes the new parent of any process that becomes orphan (for example a background process started in a shell when
+the shell is closed).
+
+Systemd has many roles :
+- start the system
+- mount drives
+- start services
+- configure network connections
+
+Systemd created a controversy in the Linux community when it was introduced.  
+It is criticized for being overly complex and doing too many things, violating the Unix philosophy.  
+But it is widely adopted by several Linux distributions, and brings key advantages, like dynamic configuration,
+improved speed using parallelization...
+
+
+#### Systemd units
+
+We can install and run a basic Apache web server with :
+```shell
+sudo apt install apache2               # install httpd web server
+sudo apt install links                 # install links (in-terminal web browser)
+links http://localhost                 # display the webpage delivered by the Apache web server
+```
+Simply installing the web server makes it available, and we can access the welcome page from a browser.  
+We did not need to run manually a process to start the web server.
+
+When installing apache2, it registered itself to Systemd as a unit, that we can monitor with `systemctl` :
+```shell
+systemctl list-units           # show all units registered in systemd
+systemctl status <UNIT>        # show the status, the processes and the logs of a specific unit (for example apache2.service)
+
+systemctl enable <UNIT>        # enable a unit, so it is loaded on boot if specified in the config file
+                               # --now : also load it immediately
+systemctl disable <UNIT>       # disable a unit so it no longer starts on boot                               
+                               
+systemctl start <UNIT>         # start a unit
+systemctl stop <UNIT>          # stop a unit
+systemctl restart <UNIT>       # restart a unit
+systemctl reload <UNIT>        # reload the unit configuration
+
+systemctl cat <UNIT>           # show the configuration file of the unit
+```
+
+Multiple types of units can be managed by Systemd :
+- **service** : define how a service should be started, stopped and managed 
+- **socket** : represent a socket for inter-process communication or network services
+- **device** : represent a device in the Linux device tree, to manage device-specific settings and dependencies 
+- **mount** : represent a mount point for a file system
+- **target** : represent a custom synchronization point for other units
+- **slice** : represent a resource allocation group for system resources
+- **timer** : represent a schedule to run an underlying service
+
+#### Cgroups (Control Groups)
+
+Cgroups are a feature of Linux kernel to group related processes together into a hierarchy.  
+A web server for example can have multiple child processes to execute incoming requests.  
+A cgroup can contain units or other cgroups.
+
+We can limit the resources allowed to be used and measure resources used at cgroup level.  
+When starting a sub-process, the sub-process is in the same cgroup as its parent.
+
+The cgroup hierarchy can be viewed with `systemctl status` starting with the top level cgroup called `/`  
+We can see the resources (CPU and memory) used by all cgroups with `systemd-cgtop [--depth=5]`  (optional depth, 3 by default)
+
+#### Systemd Targets
+
+A target in Systemd groups units logically towards a specific goal.  
+```shell
+systemctl get-default                      # display the default target (graphical.target)
+systemctl set-default multi-user.target    # set another default target effective on reboot (no GUI, just a black terminal)
+systemctl cat graphical.target             # display the config for a given target (config file location and content)
+systemctl isolate multi-user.target        # switch target without rebooting
+systemctl list-units --type target --all   # list all targets
+```
+
+#### Systemd Timers
+
+Timers are a type of Systemd units letting us run a service at a later time.  
+It operates on a disabled service, and should have the same name as the service with a `.timer` suffix.  
+Timers can run a service once in the future or periodically according to a specified schedule.
+
+
+#### Unit files
+
+The unit files are the configuration files for the systemd units, for example _/lib/systemd/system/apache2.service_
+
+A unit file contains a list of properties to define a specific unit.  
+These properties are grouped in sections :
+- `[Unit]` : common section to all types of units
+  - `Description` : brief description of the unit
+  - `Documentation` : URL of the documentation
+  - `Requires` : other units to start before this unit (otherwise this one does not start)
+  - `Wants` : other units to start before this unit (but still starts this one if failed)
+  - `After` : other units not required, but if present this one should start after them
+  - `Before` : other units not required, but if present this one should start before them
+- `[Service]` : service-specific section to configure how the service is started, stopped, executed...
+  - `Type` : process type deciding startup behavior : simple (default service behavior), forking, oneshot...
+  - `ExecStart` : command to start the service, can include arguments and options (can appear multiple times if multiple commands to run)
+  - `ExecStop` : optional command to stop the service, by default systemd sends a signal to stop it
+  - `Restart` : when the service should be restarted (no, on-success, on-failure, always...)
+  - `User` : user to run the service as
+  - `Environment` : optional environment variables
+- `[Install]` : section specifying if the unit should be enabled or not
+  - `WantedBy` : targets that should include this unit as dependency.  
+    Common targets are `multi-user.target` and `graphical.target`.  
+    It enables the unit to be started at boot if `systemctl enable` was used for this unit.
+
+To edit these unit config files, we should not edit them in `/lib/systemd/system/` because they may be overridden by later updates.  
+Instead, we can copy them to `/etc/systemd/system/` and update this copy that takes precedence over the one in `/lib/systemd/system/`.  
+After the change, we can call `sudo systemctl daemon-reload` to force the reload of modified services.  
+
+These unit config files can also be edited with the `systemctl edit <UNIT>` command.  
+It automatically creates a folder in `/etc/systemd/system/` to override only parts of the configuration.  
+We can add another target in the `WantedBy` field for example.  
+If we want to replace the `WantedBy` targets (instead of extending them) we need an empty assignment :
+```
+WantedBy=
+WantedBy=graphical.target
+```
+This solution to edit is preferred as it allows setting only specific properties, and it is maintained by Systemd.
+
+
+#### Systemd unit examples
+
+##### Basic service limiting Firefox memory
+
+To create a custom cgroup to limit the memory usable by firefox :
+- create a Systemd user-level slice unit, by creating the file `~/.config/systemd/user/browser.slice` containing :
+```shell
+[Slice]
+MemoryHigh=100M
+```
+- start the browser cgroup in systemd (it opens a firefox window) :
+  `systemd-run --user --slice=browser.slice /usr/bin/firefox`
+- We can monitor the memory usage from the System Monitor, it works on CentOS but in Ubuntu Firefox still uses more than 100M.  
+  When right-clicking to access properties, we see that it runs in a different slice, created by snap.  
+  When inspecting /usr/bin/firefox, we see it is not a binary but a text script calling /snap/bin/firefox  
+  /snap/bin/firefox is just a symlink to /usr/bin/snap (that reads the original command to know it needs to start firefox)  
+  We can see the real firefox binary used by snap by calling `ps -ef | grep firefox`  
+  We can start again our systemd slice using this binary instead, and now Firefox is limited to 100M :  
+  `systemd-run --user --slice=browser.slice /snap/firefox/3779/usr/lib/firefox/firefox`
+
+##### Basic service starting at boot
+
+- Create the service config file `/etc/systemd/system/myservice.service`.  
+  This can be done either manually, or with : `systemctl edit --force --full myservice.service`
+```shell
+[Unit]
+Description=Ping and log time
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+StandardOutput=append:/var/log/myservice.txt
+ExecStart=date '+%%T'
+ExecStart=ping -c 3 facebook.com
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- Start the service with `systemctl start myservice.service`  
+  We can see that it was executed with `systemctl status myservice.service`  
+  It shows status inactive, because it completed and exited.  
+
+- We can enable the service so it is starts automatically on boot with `systemctl enable myservice.service`
+
+##### Timer on the previous service
+
+We first should disable the service with `systemctl disable myservice.service` to prevent it to start on boot.
+
+Then we create the timer config file with `systemctl edit --force --full myservice.timer`
+
+```shell
+[Unit]
+Description=Timer to start the custom service after 5 min
+
+[Timer]
+OnActiveSec=5min
+Unit=myservice.service
+
+[Install]
+WantedBy=timers.target
+```
+
+The timer can be started like any unit : `systemctl start myservice.timer`
+
+The timer can also be enabled so it is started on boot.
+
+Timers can also be repeated according to a schedule with the `OnCalendar` property instead of `OnActiveSec`.  
+The schedule can be defined either explicitly or using a shortcut like `hourly` or `minutely`.  
+For example, to execute the underlying service every 15 min :
+```shell
+OnCalendar=*-*-* *:0,15,30,45
+```
+
+#### Journald
+
+Journald is the tool in the Systemd suite in charge of centralizing system logs.  
+It is a replacement for Syslog on Linux distributions.
+
+Journald logs are stored in binary format to save storage space.  
+Journald supports log file rotation and retention.
+
+Journald also includes logs from the boot process.
+
+`journalctl` is used to read the journald log files. 
+
+```shell
+journalctl                       # display all logs in all log files
+journalctl -b                    # display all logs of the current boot
+journalctl --list-boots          # display all available boots that have logs
+journalctl -b <BOOT_ID>          # display all logs of a specific boot
+journalctl -u apache2.service    # display all logs for a given unit
+journalctl --since '2024-01-01'  # display all logs from a given date
+journalctl --until '2024-01-01'  # display all logs until a given date
+journalctl -f                    # display all logs and follow new logs
+journalctl -t anacron            # display all logs with a specific identifier
+```
+
+Logs can be written to journald with the `systemd-cat` command :
+
+```shell
+echo 'Hello' | systemd-cat             # write a log to journald (visible with journalctl)
+echo 'Hello' | systemd-cat -t aaa      # write a log to journald with a specific identifier
 ```
