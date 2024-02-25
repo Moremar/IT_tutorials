@@ -1197,12 +1197,16 @@ Extended alliance including more countries were formed :
 ## File Systems
 
 A file system (FS) is a method used by an OS to store, organize, and manage files and directories on a storage device.  
+The file system handles files creation, deletion, metadata management...
+
 Most popular file systems are :
 
 - **FAT32** (File Allocation Table) : old FS used by previous versions of Windows, with a 4GB file size limit  
 - **exFAT** (Extended FAT) : portable Microsoft FS building on FAT32 and improving file size limit 
 - **NTFS** (New Technology FS) : modern FS used by Windows, supporting file/folder permissions, compression, encryption...
-- **ext4** (Extended FS) : FS commonly used on Linux and other Unix-based OS
+- **reFS** (Resilient FS) : newest Microsoft FS used for Windows Server, offering scalability, availability and integrity
+- **ext4** (EXTended) : FS commonly used on Linux and other Unix-based OS
+- **xfs** (eXtended FS) : FS commonly used on some Linux distributions (like CentOS) designed to handle large files
 - **HFS+** (Hierarchical FS) : old FS used by macOS
 - **APFS** (Apple FS) : modern FS introduced by Apple for MacOS and iOS devices
 

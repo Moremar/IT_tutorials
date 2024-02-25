@@ -557,6 +557,9 @@ Integrity of files installed by apt can be checked with the `debsums` command :
 Some useful packages to install are :
 - `apache2` : HTTPD Apache web server
 - `links` : in-terminal web browser (useful to see if a web server is reachable for example)
+- `gparted` : Gnome Partition Editor GUI
+- `smartmontools` : SMART protocol support for physical drive health monitoring
+- `lvm2` : Logical Volume Manager to abstract multiple physical disks behind a single logical volume
 - `debsums` : used to compare the checksum of deb packages to ensure they were not tampered with
 - `cmake` : cross-platform build system generator
 - `neofetch` : system info script printing distribution logo and info on terminal
@@ -1467,3 +1470,297 @@ Logs can be written to journald with the `systemd-cat` command :
 echo 'Hello' | systemd-cat             # write a log to journald (visible with journalctl)
 echo 'Hello' | systemd-cat -t aaa      # write a log to journald with a specific identifier
 ```
+
+
+## Volumes and Mounts
+
+### Partitioning
+
+A partition is a part of a physical drive.  
+Partitions each have their own size, name and file system, and cannot interact with each other.  
+A common example is to have a partition per OS on a machine that has dual-boot configured.
+
+A storage device (HDD, SSD, USB stick) is structured with a **partition table** :
+- **MBR** (Master Boot Record) is the old partition scheme limited to 4 partitions and 2TB disk size
+- **GPT** (GUID Partition Table) is the modern partition scheme limited to 128 partitions and much higher disk size
+
+On Ubuntu, partitions can be edited with **GParted** (Gnome Partition Editor), installed with the `apt` package manager.
+
+By default on Ubuntu, multiple partitions are created on the main disk `/dev/sda` :
+- `/dev/sda1` for the bootloader in BIOS-based system
+- `/dev/sda2` for the bootloader in UEFI-based system (fat32 file system)
+- `/dev/sda3` for the Ubuntu OS (ext4 file system)
+
+With VirtualBox, we can create a virtual disk for a virtual machine : _Settings > Storage > Controller: SATA > Add hard disk_  
+After starting the machine, we can see in GParted that 2 disks are now available (`/dev/sda` and `/dev/sdb`).  
+The newly created `/dev/sdb` disk has no partitions yet, it is fully unallocated.  
+We can create a partition table with : _Device > Create Partition Table > gpt (partition table type)_  
+Then we can create a new partition on the disk (specifying its size, name and file system).  
+After clicking the Apply button, the newly created partition appears as `/dev/sdb1`.
+
+Instead of using the GParted GUI to manage partitions, we can use the `parted` command-line tool.  
+Running the `sudo parted` command opens the parted shell.  
+```shell
+help                             # show available commands
+quit                             # quit the parted shell
+
+print devices                    # show existing disks
+print partitions                 # show existing partitions on the selected disk
+select /dev/sdb                  # select a disk
+rm 1                             # remove partition 1 on the selected disk
+mklabel gpt                      # create a partition table on the selected disk (wipe all partitions on it)
+mkpart primary ext4 2048s 1000   # create a partition with ext4 FS of 1GB
+name 1 aaa                       # Give a name to partition 1 on the selected disk
+```
+All these parted CLI commands have an equivalent in the normal terminal, for example :
+```shell
+sudo parted /dev/sdb print partitions
+```
+
+When creating a partition with `parted`, we specified that the FS should be ext4, but we did not create the actual FS.  
+To create the ext4 FS on the new partition, we need to run the following command (done automatically when using GParted).
+```shell
+sudo mkfs.ext4 /dev/sdb1
+```
+
+In general, we should prefer the GParted GUI when available.  
+When working with a remote machine, we may not have access to a GUI so the parted CLI can be the only way.  
+If we need to include parted commands in scripts, then the in-terminal commands can be considered.
+
+To create an exFAT partition, we need to first create an NTFS partition with `parted` (it does not supports exFAT) :
+```shell
+mkpart primary ntfs 2048s 1000   # create a partition with NTFS of 1GB
+```
+Then we quit the parted shell, install ubuntu exFAT packages, and install the exFAT FS on the partition :
+```
+sudo apt install exfat-fuse exfatprogs     # install exFAT packages
+sudo mkfs.exfat /dev/sdb1                  # initialize the FS of the partition to exFAT
+```
+It then appears as using the exFAT FS in GParted as well.
+
+### Volumes
+
+A volume is a logical storage area on the system with a specific file system.  
+A volume is usually associated with a single partition of a device, but it can sometimes contain multiple partitions (see LVM below).  
+An OS can associate a drive letter (Windows) or a mount point (Linux) to a volume to make it accessible to users and applications.  
+
+### Mounts
+
+A mount point is a connection of a volume to the Linux directory tree.  
+It makes the volume readable and writable for users and applications.  
+
+Volumes from external removable medias are usually mounted as a sub-folder of the `/media` folder.  
+In a Ubuntu virtual machine, that is where shared folders and VirtualBox add-on volumes are mounted.
+
+Volumes from internal permanent disks are usually mounted as a sub-folder of the `/mnt` folder.  
+
+Ubuntu can automatically create a volume on a partition we created and mount it.  
+Ensure GParted is closed, then open the Files Browser and click "Other Locations".  
+A folder should appear for the new partition, we can double-click on it, then right-click and select "Open Terminal".  
+This automatically mounts the volume under `/media/<USER>/<LONG_ID>` under the `root` user and group.
+
+We can create the volume and mount it manually for a better flexibility.  
+We can see the partition names either with `parted` or with `lsblk -f` commands.  
+```shell
+mkdir /mnt/mybackups               # create a folder to mount the volume
+mount /dev/sdb1 /mnt/mybackups     # mount the volume to that folder
+                                   # -o <COMMA_SEPARATED_OPTIONS> to add mount options
+                                   #   ro : read-only (even for root user)
+                                   #   rw : read-write (default)
+                                   #   noexec : prevent execution of any file in the volume
+                                   #   nosuid : prevent the execution of files with the owner permission
+                                   #   noatime : prevent update of the access time
+                                   #   uid=1001 : set the user ID of the files (for exFAT that does not support users)
+                                   #   gid=1001 : set the group ID of the files (for exFAT that does not support groups)     
+                                   #   umask=0027 : set the permission umask (for exFAT that does not support permissions)     
+mount                              # show all mounts. should list the newly mounted volume
+df -h                              # also show all mounted volumes
+umount /dev/sdb1                   # unmount the volume (using its partition name)
+umount /mnt/mybackups              # unmount the volume (using its mounted folder)
+```
+
+#### /etc/fstab
+
+The `/etc/fstab` file is a configuration file in Linux to define how storage devices and partitions should be mounted at boot.  
+Each line in the file represents a volume to mount, and fields are separated by spaces or tabs :  
+
+- device identifier (UUID given by `lsblk -f` or device path)
+- mount point
+- file system
+- mount options (`defaults` for all defaults, `rw`, `nosuid`, `noexec`, `auto` to mount automatically, `nouser` to require root privilege...)
+- dump options (backup utility, 0 for no backup)
+- check order (0 for no check)
+
+We can for example add this line to the `/etc/fstab` file to mount the /dev/sdb1 volume on boot :
+```
+UUID=d4f68760-eb33-4ce8-b3a8-194c3a6250d9 /mnt/backups ext4 defaults,noexec 0 0
+```
+The volume should be mounted at every boot, we can force it to mount now with `sudo mount -a`.
+
+#### Mount an FTP volume
+
+We can mount an FTP volume to a folder on our local machine, to use that remote folder as if it was local.  
+On Ubuntu, this requires 2 additional packages :
+```
+sudo apt install fuse           # let the kernel know to delegate FS instructions instead of executing them itself
+sudo apt install curlftpfs      # FTP FS support    
+```
+Then we can mount an FTP volume with :
+```shell
+sudo mkdir /mnt/ftp                                                     # create the folder to mount to
+sudo curlftpfs ftp://<USER>:<PASSWORD>@<FTP_SERVER>/<FOLDER> /mnt/ftp   # mount the FTP folder to the local folder
+sudo ls /mnt/ftp                                                        # check that we can access the FTP folder
+sudo touch /mnt/ftp.test.txt                                            # create a file in the FTP folder
+
+sudo fusermount -u /mnt/ftp                                             # unmount the FTP folder
+```
+Note that the user and password can be stored in the `/root/.netrc` file to avoid writing them in the command.
+
+We can also specify this FTP mount in the `/etc/fstab` configuration file.  
+The user and password can either be in the file or stored more securely in the `/root/.netrc` file.  
+We need to specify `fuse` as the file system, so the kernel knows that it should delegate the FS operations to fuse.  
+We need to specify the `noauto` option so the kernel does not try to mount it directly when the network is possibly not up yet.  
+Instead we use the `x-systemd.automount` option, so systemd will mount it when it is first used.  
+This results in a line like :
+```shell
+curlftpfs#ftp://<FTP_SERVER>/<FOLDER> /mnt/ftp fuse noauto,noexec,allow_user,ssl,x-sustemd.automount 0 0
+```
+
+### Drive Health Monitoring
+
+The SMART protocol can be used to monitor the health of the physical drives.  
+It only reports on the physical drive, it does not catch errors at file-system or partition level.  
+```shell
+sudo apt install smartmontools
+sudo smartctl --all /dev/sda
+```
+Note that this only applies to physical drives, virtual drives used with VirtualBox will show that SMART support is unavailable.
+
+We can use `fsck` to check the health of a drive at file-system level.  
+This requires the drive to not be encrypted, and to not be mounted (so the drive cannot be in use during the check).
+```
+fsck /dev/sdb1                         # should detect the file system and call internally fsck.ext4
+fsck.ext4 /dev/sdb1                    # if the above does not work, call fsck.ext4 directly
+```
+If some errors are detected, `fsck` can try to repair the file system.  
+It can make the volume mountable again, and the recovered files can be found in the `lost+found` folder.
+
+
+### File System Resizing
+
+Some file systems support resizing (like `ext4` on Linux), others do not (like `exFAT`).  
+If a FS does not support resizing, we can simply mount it, copy its content somewhere else, delete the partition and create a new one.
+
+To increase the size of a partition and its FS, we first need to increase the partition size, then the FS size.  
+To decrease the size of a partition and its FS, we first need to decrease the FS size, then the partition size.
+
+Example to decrease the size of partition `/dev/sdb2` and its ext4 FS :
+```shell
+umount /dev/sdb2          # unmount the FS before reducing its size
+fsck /dev/sdb2            # good practice to check that the FS is healthy before reducing it
+resize2fs /dev/sdb2 1G    # reduce an ext4 FS to 1G (each FS can have its own command, or simply not support it)
+                          # this reduces the FS only, not the partition containing it !
+                          # note than when increasing the FS size to the full partition size, we do not need to specify the size
+```
+This does reduce the FS size, but not the size of the partition containing it, so we can now resize the partition :
+```shell
+sudo parted                 # open the parted shell
+    print devices           # show disks
+    select /dev/sdb         # select a given disk
+    unit GiB                # change the unit to GiB (base 1024 instead of base 1000 for GB)
+    resize part 2 1         # reduce partition 2 on that disk to 1GiB 
+```
+
+### LVM (Logical Volume Manager)
+
+Without LVM, partitions and FS sizes are limited by the size of the underlying disk.  
+A partition is a part of the space on a specific disk, so its size cannot exceed the disk space.  
+
+LVM is an abstraction on top of the physical disks, that allows to span partitions and FS over multiple physical disks.  
+LVM combines the space on physical disks into a **volume group** that can be used to create mountable logical volumes.
+
+LVM can be installed with : 
+```shell
+sudo apt install lvm2
+```
+
+#### Logical Volume Creation
+
+To include a disk in a logical volume managed by LVM, we create a partition with 100% of space and set the `lvm` flag.  
+We then create a physical volume in LVM referencing this partition.  
+We can do that with multiple partitions, to have multiple physical volumes registered in LVM.  
+We can then create a volume group across multiple physical volumes.
+```shell
+sudo parted                        # open the parted shell
+    select /dev/sdb                # select the disk to create a partition for
+    mklabel gpt                    # create a partition table for this disk
+    mkpart primary 0% 100%         # create a partition using 100% of the disk
+    set 1 lvm on                   # set the LVM flag for partition 1 (just created)
+    quit                           # close the parted shell
+    
+sudo pvcreate /dev/sdb1            # initialize a physical volume for use in LVM (shows as "lvm pv" FS in GParted)
+sudo pvs                           # list physical volumes known to LVM
+sudo pvdisplay                     # detailed info about the physical volumes
+sudo pvscan                        # force the detection of physical volumes if the above command did not detect them
+
+# do above steps again for each other disk, for example /dev/sdc and /dev/sdd 
+
+sudo vgcreate vgroup /dev/sdb1 /dev/sdc1 /dev/sdd1   # create a volume group "vgroup" with the 3 registered physical volumes
+sudo vgs                                             # list volume groups known to LVM
+sudo vgdisplay                                       # detailed info about the volume groups
+sudo vgscan                                          # force the detection of volume groups if not automatically detected
+
+sudo lvcreate -L 200M -n data1 vgroup       # create a logical volume of 200M in the "vgroup" volume group
+sudo lvcreate -l 100%FREE -n data2 vgroup   # create a logical volume using all free space in the "vgroup" volume group
+sudo lvs                                    # list all logical volumes known to LVM
+sudo lvdisplay                              # detailed info about the logical volumes
+sudo lvscan                                 # force the detection of logical volumes
+```
+
+Logical volumes can be used to create a file system and be mounted to folders as if they were partitions.  
+They are referenced by their path listed by `lvdisplay`, for example `/dev/vgroup/data1`.
+
+```shell
+sudo mkfs.ext4 /dev/vgroup/data2              # create an ext4 FS on the logical volume
+sudo mkdir /mnt/my_lvm                        # create a folder to mount the logical volume to
+sudo mount /dev/vgroup/data2 /mnt/my_lvm      # mount the logical volume
+```
+
+#### LVM Modification and Deletion
+
+```shell
+# Add a physical volume to a volume group
+sudo vgextend vgroup /dev/sde1
+
+# Increase the size of a logical volume by 1G (require a free 1G in its volume group)
+# the extension of the FS can be automated with the --resizefs option
+sudo lvextend -L +1G --resizefs /dev/vgroup/data2
+
+# Reduce the size of a logical volume
+# This require to unmount the file system first, then reduce the file system, then reduce the logical volume
+sudo umount /mnt/my_lvm
+sudo resize2fs /dev/vgroup/data2 800M
+sudo lvreduce -L 800M /dev/vgroup/data2
+
+# Remove a physical volume from a volume group
+sudo pvmove /dev/sdb1              # tell LVM to move all data away from /dev/sdb1
+                                   # this requires to have enough free space in the volume group of /dev/sdb1 to put
+                                   # the data of /dev/sdb1 on other physical volumes in the group
+sudo pvs                           # this should now show that /dev/sdb1 is fully free (ready to be removed)
+sudo vgreduce vgroup /dev/sdb1     # remove physical volume /dev/sdb1 from its volume group
+sudo pvremove /dev/sdb1            # remove the physical volume /dev/sdb1 from LVM
+
+# Delete a logical volume and its volume group
+sudo lvremove /dev/vgroup/data2
+sudo vgremove vgroup
+```
+
+#### LVM Additional Features
+
+LVM can be run on top of **software RAID** (0, 1, 5, 6...).  
+
+LVM also supports **thin volumes**, which are volumes with total size bigger than the underlying physical volumes.  
+This works fine as long as we do not actually need more storage than we have, and we can add more physical volumes later.
+
+LVM supports **snapshots**, that mark the data at a given time.  
+The snapshot itself does not use storage space, storage is only needed when data is changed after the snapshot.
