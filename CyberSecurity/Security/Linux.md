@@ -58,6 +58,37 @@ A VM can be saved as a **snapshot** with `Machine > Take Snapshot`.
 It creates a file saving the entire VM state, allowing to re-create the VM from the snapshot if needed.  
 
 
+## Upgrade
+
+`apt full-upgrade` upgrades installed packages, but not the Ubuntu OS version.  
+If a new version of the Ubuntu OS is available, we can upgrade manually.  
+
+There is a risk of data loss in case of upgrade failure, so we should have a full backup available.  
+It is recommended to wait a few days after a new OS version release, so early patches can be released.
+
+First ensure that all dependencies are updated, then reboot the system :
+```shell
+sudo apt update
+sudo apt full-upgrade
+sudo reboot
+```
+Ensure that the update manager is installed, we need it to perform the system upgrade :
+```shell
+sudo apt install update-manager-core
+```
+Execute the upgrade.  
+Note that we first need to upgrade to the highest minor version, for example 22.04 to 22.10.  
+We need to run again the same upgrade command to then upgrade from 22.10 to 23.04.
+```shell
+sudo do-release-upgrade
+```
+
+If we face some issues with the upgrade (bootloader, kernel...), we may need to use a **live Linux** for troubleshooting.  
+A live Linux distribution is a Linux OS booted from DVD or USB, that does not save anything on disk (all is saved in memory).  
+It allows access to the disk so we can modify some files that could help with the boot.  
+For example, we can modify the GRUB configuration file to show the bootloader menu and allow reboot on the previous OS version.
+
+
 ## Bash Shell
 
 ### Bash commands
@@ -210,6 +241,11 @@ It creates a file saving the entire VM state, allowing to re-create the VM from 
   - `%m` : month
   - `%d` : day
   - `%Y` : year
+
+
+- `flock mylock.txt <CMD>` : take an exclusive lock (create the lock file if needed) and run a command once the lock is obtained
+  - `-n` : if the lock is already taken, exit immediately instead of waiting for the lock
+  - `-E 0` : return status when exiting due to the `-n` flag (0 for OK status)
 
 
 - `which <CMD>` : show the full path of a shell command
@@ -479,6 +515,44 @@ There are several startup scripts that are loaded in different situations :
   - it often sources _~/.bashrc_ to have shared setup between login and non-login shell
 - _~/.bash_login_ : loaded in an interactive login shell if _~/.bash_profile_ not found
 - ~/.profile : loaded in an interactive login shell if _~/.bash_profile_ and _~/.bash_login_ not found
+
+
+## Cron Jobs
+
+`cron` is a command-line tool to schedule the execution of commands.  
+cron is available on all Unix machines (Linux, Mac...).  
+On Linux distributions using systemd, this can also be performed with systemd timers.
+
+There are multiple implementations of cron, that have slightly different features (vixie-cron, anacron, cronie...).
+
+The `crond` daemon process in in charge of running the scheduled processes.  
+It reads the scheduled tasks from **crontab files** :
+- `/var/spool/cron/crontabs` for user-level tasks, should be edited with the `crontab` command
+- `/etc/crontab` for system-wide tasks (owned by root)
+- `/etc/cron.d/` folder on Debian-based systems, used by third-party applications
+
+User-specific cronjobs are created with `crontab -e` command that opens the corresponding crontab file.  
+Active cronjobs are listed with the`crontab -l` command.
+
+cronjobs are specified in the following format : `<MINUTE> <HOUR> <DAY> <MONTH> <DAY_OF_WEEK> <COMMAND>`  
+We can use the `*` placeholder to execute the command at every value of a specific unit.
+
+```shell
+* * * * * ls                # run every minute
+30 7 * * * ls               # run every day at 7:30
+0,15,30,45 * * * * ls       # run every 15 min
+0 8-19 * * * ls             # run every hour between 8am and 7pm
+*/5 * * * * ls              # run every 5 min
+```
+
+cron can be configured to send the output of commands by email, with the `MAILTO` environment variable.  
+It requires the installation of the `mailutils` package on Ubuntu.
+
+cronjobs in `/etc/crontab` can be edited directly by the root user (using sudo).  
+The syntax is slightly different, it has an additional parameter before the command to specify the user to run as.
+```shell
+* * * * * myuser cd /home/myuser/ && ls > ls.txt
+```
 
 
 ## Package Management
