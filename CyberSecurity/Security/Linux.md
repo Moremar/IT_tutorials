@@ -12,7 +12,7 @@ The Linux kernel is also released under the GPL licence.
 GNU provides a lot of the utilities used in combination with the Linux kernel.
 
 GNU/Linux is the foundation of Unix-based OS.  
-Unix used to proprietary and GNU/Linux is an open-source replacement for it.
+Unix used to be proprietary and GNU/Linux is an open-source replacement for it.
 
 Linux distributions are OS built from GNU/Linux and adding specific tools and software :
 - **Ubuntu** : derived from Debian, designed to be user-friendly
@@ -147,7 +147,7 @@ For example, we can modify the GRUB configuration file to show the bootloader me
 - `diff <FILE> <FILE>` : show the different lines between 2 files
 
 
-- `find <DIR>` : list files and folder matching filter conditions
+- `find <DIR>` : list files and folders matching filter conditions
   - `-type {f|d}` : list only files/directories
   - `-mtime -7` : filter on files/directories modified in the last 7 days
   - `-size +10M` : filter on files/directories bigger than 10M
@@ -265,7 +265,21 @@ For example, we can modify the GRUB configuration file to show the bootloader me
   - `-n 3` : run the command every 3 seconds
 
 
+- `hostname` : display the hostname of the machine, to reach it from the local network (with the `.local` suffix) 
+
+
 - `lsb_release -a` : display Linux distribution info (name, version, code name...)
+
+
+- `screen` : open a virtual terminal in the background, and connect the local terminal to it.  
+             It looks like a normal terminal, but it has created a session that other users can interact with.  
+             It is very useful to create a shared terminal for debugging remotely with a colleague.
+  - `screen -list` : list all existing screen sessions
+  - `screen -x <SESSION_NAME>` : join an existing session, so we can enter commands and see anything happening on the terminal
+  - `Ctrl-A Ctrl-D` : detach from the session (keep the session alive in the background)
+  - `exit` : terminate the session and detach all terminals that joined it
+             
+
 
 
 ### Command Combination and Redirection
@@ -490,7 +504,7 @@ set -x          # xtrace mode : display every command executed by the shell (for
 Features are enabled with `-s` and disabled with `-u`.  
 ```shell
 shopt -s autocd      # allow to navigate to a folder without typing 'cd'
-shopy -s cdspell     # allow minor typo in folder name when using 'cd' 
+shopt -s cdspell     # allow minor typo in folder name when using 'cd' 
 ```
 
 ### Shell Aliases
@@ -514,7 +528,7 @@ There are several startup scripts that are loaded in different situations :
 - _~/.bash_profile_ : loaded in an interactive login shell (like SSH)
   - it often sources _~/.bashrc_ to have shared setup between login and non-login shell
 - _~/.bash_login_ : loaded in an interactive login shell if _~/.bash_profile_ not found
-- ~/.profile : loaded in an interactive login shell if _~/.bash_profile_ and _~/.bash_login_ not found
+- _~/.profile_ : loaded in an interactive login shell if _~/.bash_profile_ and _~/.bash_login_ not found
 
 
 ## Cron Jobs
@@ -525,7 +539,7 @@ On Linux distributions using systemd, this can also be performed with systemd ti
 
 There are multiple implementations of cron, that have slightly different features (vixie-cron, anacron, cronie...).
 
-The `crond` daemon process in in charge of running the scheduled processes.  
+The `crond` daemon process is in charge of running the scheduled processes.  
 It reads the scheduled tasks from **crontab files** :
 - `/var/spool/cron/crontabs` for user-level tasks, should be edited with the `crontab` command
 - `/etc/crontab` for system-wide tasks (owned by root)
@@ -581,7 +595,7 @@ sudo dpkg -r neofetch                                # uninstall a package (by p
 #### apt
 
 apt build on top of dpkg, it can download the requested packages from registered repositories and manage dependencies.  
-`apt-get` is the older and more stable of it, and both are compatible (they share config files and package format).  
+`apt-get` is the older and more stable version of it, and both are compatible (they share config files and package format).  
 
 The list of available package versions is not automatically kept up-to-date by the `apt` package manager.  
 `apt` requires a `sudo apt update` to refresh the local versions list.  
@@ -602,14 +616,14 @@ For example : `deb http://jp.archive.ubuntu.com/ubuntu/ jammy main restricted`
   - `multiverse` : community supported, paid
 
 We can add a **PPA** (Personal Package Archive), which is a repository from personal users for a specific project.  
-The `add-apt-repository` commands configures the additional repository and adds the public key of the repository to the trusted keys.
+The `add-apt-repository` command configures the additional repository and adds the public key of the repository to the trusted keys.
 
 ```shell
 sudo apt update             # update the list of packages that can be upgraded
 sudo apt list --upgradable  # list packages that can be upgraded
 sudo apt upgrade            # upgrade packages that can be upgraded (install additional dependencies if needed)
                             # packages that require the removal of other packages are not upgraded
-sudo apt full-upgrade       # upgrade all packages, even those requiring to removing some existing packages
+sudo apt full-upgrade       # upgrade all packages, even those requiring to remove some existing packages
 sudo apt autoremove         # remove old dependencies that are no longer needed
 
 sudo apt install <PKG>      # install a package
@@ -626,9 +640,12 @@ sudo apt add-apt-repository --remove ppa:ondrej/php     # deregister a 3rd party
 Integrity of files installed by apt can be checked with the `debsums` command :
 - `-a` : run on all files managed by apt
 - `-s` : silent mode, only log errors
-- `-l` : list packages that fo not have checksum info
+- `-l` : list packages that do not have checksum info
 
 Some useful packages to install are :
+- `wireshark` : networking traffic analyzer
+- `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
+- `nmap` : network scanner (machines and open ports)
 - `apache2` : HTTPD Apache web server
 - `links` : in-terminal web browser (useful to see if a web server is reachable for example)
 - `gparted` : Gnome Partition Editor GUI
@@ -747,7 +764,7 @@ We can use the **Homebrew** package manager to install the latest Bash version.
 ```shell
 brew update                 # update the list of packages that can be upgraded
 brew upgrade                # upgrade the packages that can be upgraded
-berw upgrade <PKG>          # upgrade a specific package
+brew upgrade <PKG>          # upgrade a specific package
 brew install <PKG>          # install a package (for example bash)
 
 brew list                   # list all installed packages
@@ -762,7 +779,7 @@ brew outdated               # list all outdated installed packages
 |     /bin        | essential binaries needed for boot before the _/usr_ partition is mounted<br/> → cat, ps, zsh ...<br/> → recent distributions use a symlink to `/usr/bin` |
 |     /boot       | important files needed while booting (kernel files, bootloader files...) |
 |     /dev        | device access files, for example `/dev/input/mice` for the mouse input |
-|     /etc        | configuration files (mostly in .conf) |
+|     /etc        | configuration files (mostly in .conf)<br/> → `/etc/hosts` : locally configured DNS cache<br/> → `/etc/hostname` : set the hostname of the machine |
 |     /home       | home directories of users |
 |     /lib        | libraries essential for binaries on the system<br/> → recent distributions use a symlink to `/usr/lib` | |
 |  /lost+found    | directory where Unix stores files recovered during the repair of a corrupted file system |
@@ -1124,7 +1141,7 @@ Processes can be displayed with the `ps` command.
 - `-p 1234` : limit to a specific process ID
 - `--forest` : show the process hierarchy
 
-`ps` can also use BSD-style parameter with no dash profix :
+`ps` can also use BSD-style parameter with no dash prefix :
 - `a` : show all processes of all users
 - `u` : user-oriented output with additional columns
 - `x` : also include processes without a tty (started outside a terminal)
@@ -1172,7 +1189,7 @@ The scheduler will dedicate more time to processes with lower niceness.
 We need administrative privilege to decrease the niceness (higher priority) but not to increase it.
 
 ```shell
-nice -n 19 ping google.com         # start a proess with niceness 19
+nice -n 19 ping google.com         # start a process with niceness 19
 
 pgrep ping                         # get the process ID of the process running the ping command, for ex 1234
 sudo renice -n 10 1234             # set the niceness of running process with PID 1234 to 10
@@ -1302,7 +1319,7 @@ sudo apt-mark hold linux-generic-hwe-22.04              // on Ubuntu
 sudo dnf versionlock kernel                             // on CentOS
 ```
 
-**Kernel mode** and **User mode** are 2 distinct privilege levels in an OS that decides the level of access a program has on the system resources.  
+**Kernel mode** and **User mode** are 2 distinct privilege levels in an OS that decide the level of access a program has on the system resources.  
 Kernel mode has unrestricted access, it is used by the kernel and by some device drivers.  
 User mode has limited access to system resources, and is used by all other applications.    
 These applications can perform system calls that the kernel receives and executes for the application if it has the required permission.
@@ -1412,6 +1429,8 @@ These properties are grouped in sections :
   - `Wants` : other units to start before this unit (but still starts this one if failed)
   - `After` : other units not required, but if present this one should start after them
   - `Before` : other units not required, but if present this one should start before them
+
+
 - `[Service]` : service-specific section to configure how the service is started, stopped, executed...
   - `Type` : process type deciding startup behavior : simple (default service behavior), forking, oneshot...
   - `ExecStart` : command to start the service, can include arguments and options (can appear multiple times if multiple commands to run)
@@ -1419,6 +1438,8 @@ These properties are grouped in sections :
   - `Restart` : when the service should be restarted (no, on-success, on-failure, always...)
   - `User` : user to run the service as
   - `Environment` : optional environment variables
+
+
 - `[Install]` : section specifying if the unit should be enabled or not
   - `WantedBy` : targets that should include this unit as dependency.  
     Common targets are `multi-user.target` and `graphical.target`.  
@@ -1697,7 +1718,7 @@ We need to specify the `noauto` option so the kernel does not try to mount it di
 Instead we use the `x-systemd.automount` option, so systemd will mount it when it is first used.  
 This results in a line like :
 ```shell
-curlftpfs#ftp://<FTP_SERVER>/<FOLDER> /mnt/ftp fuse noauto,noexec,allow_user,ssl,x-sustemd.automount 0 0
+curlftpfs#ftp://<FTP_SERVER>/<FOLDER> /mnt/ftp fuse noauto,noexec,allow_user,ssl,x-systemd.automount 0 0
 ```
 
 ### Drive Health Monitoring
@@ -1734,7 +1755,7 @@ umount /dev/sdb2          # unmount the FS before reducing its size
 fsck /dev/sdb2            # good practice to check that the FS is healthy before reducing it
 resize2fs /dev/sdb2 1G    # reduce an ext4 FS to 1G (each FS can have its own command, or simply not support it)
                           # this reduces the FS only, not the partition containing it !
-                          # note than when increasing the FS size to the full partition size, we do not need to specify the size
+                          # note that when increasing the FS size to the full partition size, we do not need to specify the size
 ```
 This does reduce the FS size, but not the size of the partition containing it, so we can now resize the partition :
 ```shell
@@ -1811,7 +1832,7 @@ sudo vgextend vgroup /dev/sde1
 sudo lvextend -L +1G --resizefs /dev/vgroup/data2
 
 # Reduce the size of a logical volume
-# This require to unmount the file system first, then reduce the file system, then reduce the logical volume
+# This requires to unmount the file system first, then reduce the file system, then reduce the logical volume
 sudo umount /mnt/my_lvm
 sudo resize2fs /dev/vgroup/data2 800M
 sudo lvreduce -L 800M /dev/vgroup/data2
@@ -1838,3 +1859,116 @@ This works fine as long as we do not actually need more storage than we have, an
 
 LVM supports **snapshots**, that mark the data at a given time.  
 The snapshot itself does not use storage space, storage is only needed when data is changed after the snapshot.
+
+
+## Networking in Linux
+
+### ip
+
+The `ip` command was recently added to replace the `ifconfig`, `route` and `netstat` commands.  
+It provides information about the IP configuration, the routing table and the listening and established sockets.
+
+```shell
+ip addr show                                   # show network interfaces config : MAC address, IP address, network mask
+ip addr add 192.168.1.4/24 dev enp0s5          # add an IP address to a network interface
+ip addr del 192.168.1.4/24 dev enp0s5          # remove an IP address from a network interface
+
+ip link set dev <interface> up                 # enable a network interface (listed by ip addr show)
+ip link set dev <interface> down               # disable a network interface
+
+ip route show                                         # show the routing table
+ip route get 8.8.8.8                                  # show the route to a given IP address
+ip route add 10.0.0.0/24 via 192.168.1.1 dev enp0s5   # add a route to the routing table 
+ip route del 10.0.0.0/24 via 192.168.1.1 dev enp0s5   # remove a route from the routing table 
+```
+
+`ip` is not available on MacOS, so we should use `ifconfig`, `route` and `netstat` commands instead.  
+We can also install `iproute2mac`(with Homebrew) that offers a wrapper on these commands to use the `ip` syntax.
+
+### DHCP
+
+On Ubuntu, by default, the `systemd-networkd` service is in charge of DHCP.  
+We can monitor its logs to understand its activity : `journalctl -b -u systemd-networkd`
+
+NetworkManager is an alternative to `systemd-networkd` used by default on CentOS.  
+We can monitor its logs with `journalctl -b -u NetworkManager`
+
+
+### DNS
+
+On Ubuntu, the `systemd-resolved` service is in charge of the DNS resolution.  
+It listens to port 53 for incoming DNS requests, we can see it with : `lsof -i :53`
+
+If we add some static DNS mapping to `/etc/hosts`, we need to refresh the local cache with :
+```shell
+sudo resolvectl flush-caches      # clear local cache and reload from /etc/hosts
+sudo resolvectl status            # show the status (DNS server used for each interface)
+sudo resolvectl statistics        # show how many DNS queries were replied, how many times the cache was used...
+```
+
+
+### SSH
+
+To allow incoming SSH connections to a Linux machine, we need to run an SSH server, for example OpenSSH.
+```shell
+sudo apt install openssh-server           # install OpenSSH and start a server as a Systemd service
+sudo systemctl status ssh                 # check that the OpenSSH server is running
+```
+
+When the SSH server is running, we can connect to it from an external machine (in the same network) :
+```shell
+ping <MACHINE_IP>              # ensure we can reach the machine (the IP is given by "ip addr show")
+ssh <USERNAME>@<MACHINE_IP>    # open a remote shell on the Linux machine via SSH 
+```
+
+Access logs can be checked in `/var/log/auth.log` for suspicious activity.
+
+We can customize some configuration of the SSH server in `/etc/ssh/sshd_config` :
+- `Port 22` : can be changed to another port to avoid automated scans and bruteforce attempts
+- `PermitRootLogin no` : to prevent root user to directly login through SSH (users would need to sudo from the server)
+- `AllowUsers myuser` : to white-list some users for SSH instead of allowing every user with a password
+- `PasswordAuthentication no` : only accept login from users using a private/public key pair, not with a password
+
+After modification of the SSH configuration, we should restart the SSH server :
+```shell
+sudo systemctl restart sshd
+```
+
+Instead of connecting to the remote server in SSH using a password, we can use a cryptographic key pair.  
+The remote server needs to know our public key, and we use our private key to connect.  
+We can generate the key pair and transfer the public key to the remote server with :
+```shell
+ssh-keygen -t rsa -b 4096                      # generate a RSA key pair of size 4096 bits
+                                               # private key :  ~/.ssh/id_rsa
+                                               # public key :   ~/.ssh/id_rsa.pub
+
+ssh-copy-id -i <PUBLIC_KEY> <USER>@<SERVER>    # copy the public key to the remote server in ~/.ssh/authorized_keys
+                                               # this requires a password to access the server in SSH
+
+ssh <USER>@<SERVER>                            # ensure that no password is required anymore
+```
+
+Once the key pair is configured, we can disable the login via password.  
+This reduces the attack surface, since a secret key is impossible to guess.  
+It also forces an attacker to obtain the private key for login AND the user password for sudo.
+
+By default, an SSH connection drops after a certain time of inactivity.  
+To prevent this timeout, we can configure the client (or the server) to send keep-alive packets regularly.  
+On client-side, we can configure it at user-level in `~/.ssh/config` or system-level in `/etc/ssh/ssh_config`.  
+For example to send a keep-alive packet every minute and accept up to 3 successive failure, add : 
+```shell
+Host *
+    ServerAliveInterval 60
+    ServerAliveCount 3
+```
+
+When we connect to a remote server in SSH for the first time, the server's fingerprint is added to the `~/.ssh/known_hosts` file.  
+If we connect again later to this server, the fingerprint received from the server is compared to the known one.  
+If they do not match, a warning is shown, as it could mean we are victim of a man-in-the-middle attack.
+
+When SSH is configured between a client and a server, it also allows the use of SFTP.  
+SFTP us used in the same way as FTP to transfer files between client and server, and is secured by SSH.  
+```shell
+scp <USERNAME>@<SERVER>:<FILE_TO_COPY> <LOCAL_DESTINATION>
+```
+Some GUI applications, like **CyberDuck** on Mac and Windows, allow the file transfer between a client and an SFTP server.

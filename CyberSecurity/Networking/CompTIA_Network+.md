@@ -199,6 +199,26 @@ It gives information about the creation date, registrar, admin organization...
 whois google.com
 ```
 
+#### mDNS (multicast DNS)
+
+mDNS is an alternative to traditional DNS on the local network.  
+Instead of relying on a DNS server, it uses multicast traffic to resolve hostname to IP address.  
+The client sends the mDNS request to multicast address `224.0.0.251` for IPv4 or `ff02::fb` for IPv6.  
+Every host on the local network will receive it.  
+The target host will respond with a multicast as well, to inform all other hosts on the local network.
+
+To use mDNS on the local network, we should use the `.local` suffix :
+```shell
+ping mymachine.local
+```
+
+The hostname of a machine can be specified in `/etc/hostname`, and must be also updated in `/etc/hosts`.  
+
+Some implementations of mDNS are :
+- **Bonjour** : Apple implementation used to easily connect printers
+- **Avahi** : open-source implementation often used in Linux
+- **DNS-SD** : mDNS implementation on Windows 10+
+
 
 ### SNMP
 
@@ -230,6 +250,28 @@ Keeping the management packets separated from the data network improves security
 SNMPv1 and SNMPv2 use a **community string** to access the statistics in the device, defaulting to `public` for most devices.  
 This community string should be changed as a good practice to prevent unauthorized access to the device's information.  
 SNMPv3 uses user/password authentication and an encryption key instead.
+
+
+### Telnet
+
+Telnet is a protocol based on TCP used to connect to a remote host's command line interface.  
+A telnet server runs on port 23 and offers a shell when connected to.
+
+Telnet does not use encryption, so it is not secure and was replaced by SSH for remote management.  
+Telnet is still used by system administrators to test connectivity to remote services using TCP.
+
+With telnet, we can simulate a browser and send plaintext HTTP requests to a web server.
+
+```shell
+telnet <machine name or IP> 23        # open a connection to a telnet server
+
+telnet <machine name or IP> 80        # open a connection to an HTTP web server
+GET / HTTP/1.1                        # send an HTTP request to it
+HOST: www.example.com
+```
+
+**netcat** is a more powerful tool to open connections to UDP or TCP ports and send requests.
+
 
 ### SSH (Secure Shell)
 
