@@ -643,6 +643,7 @@ Integrity of files installed by apt can be checked with the `debsums` command :
 - `-l` : list packages that do not have checksum info
 
 Some useful packages to install are :
+- `git` : most popular version control system for code and configuration files
 - `wireshark` : networking traffic analyzer
 - `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
 - `nmap` : network scanner (machines and open ports)
@@ -1972,3 +1973,192 @@ SFTP us used in the same way as FTP to transfer files between client and server,
 scp <USERNAME>@<SERVER>:<FILE_TO_COPY> <LOCAL_DESTINATION>
 ```
 Some GUI applications, like **CyberDuck** on Mac and Windows, allow the file transfer between a client and an SFTP server.
+
+
+## Web Server using the LAMP Stack
+
+### LAMP stack
+
+The LAMP stack is a popular suite of technologies used to build a web server running on a Linux machine :
+- Linux : Operating system
+- Apache : open-source web server
+- MySQL : relational database system maintained by Oracle since 2010
+- MariaDB : alternative to MySQL, open-source fork from MySQL from the original developers who did not like Oracle policy 
+- PHP : open-source scripting language well-suited for web development
+
+It can be installed with :
+```shell
+sudo apt install apache2
+sudo apt install mysql-server
+sudo apt install mysql-client
+sudo apt install php
+sudo apt install libapache2-mod-php
+```
+
+### Apache Web Server
+
+Apache web server (httpd) responds to HTTP requests from clients (browsers or applications).  
+It is a **module-based system**, so modules can be used to extend its behavior (modify URL, use SSL, PHP support...).  
+It supports **virtual hosts**, so a single httpd server can serve multiple websites. 
+
+Installing the `apache2` package creates and starts the `apache2.service` unit in Systemd.  
+The web server should already be running, and accessible at `http://localhost`.  
+It starts multiple workers to respond to HTTP requests, that can be seen with `systemctl status apache2`.
+
+The httpd server configuration is split into multiple configuration files, including one main file listing the others.  
+The location of these files differs on CentOS and Ubuntu, on Ubuntu the files are : 
+```shell
+/etc/apache2/apache2.conf              # main configuration file
+/etc/apache2/ports.conf                # defines ports the web server listens to (included in apache2.conf)
+/etc/apache2/mods-enabled/*.conf       # config file for httpd modules (included in apache2.conf)
+/etc/apache2/conf-enabled/*.conf       # config file for global httpd config (included in apache2.conf)
+/etc/apache2/sites-enabled/*.conf      # config file for virtual hosts (included in apache2.conf)
+```
+
+Modules, global config and virtual hosts are created in the `/etc/apache2/*-available/` folders.  
+To enable them in the web server, a symlink must be created in the corresponding `/etc/apache2/*-enabled/` folder :
+```shell
+sudo a2disconf charset            # disable the charset global config
+sudo a2enconf charset             # enable the charset global config
+sudo a2dismod alias               # disable the alias module
+sudo a2enmod alias                # enable the alias module
+sudo a2dissite 000-default        # disable the 000-default site
+sudo a2ensite 000-default         # enable the 000-default site
+
+sudo systemctl restart apache2    # after any config change, restart the httpd server
+```
+
+Multiple virtual hosts can be served by the same httpd server.  
+This happens if the same machine has multiple hostnames, and each hostname corresponds to one website to serve.  
+The server will decide which website to serve depending on the requested hostname.  
+
+On Ubuntu, to create a new virtual site on a machine with hostname `ubuntu1`, we can :
+- create a virtual site config file `/etc/apache2/sites-available/001-ubuntu1.conf` :
+```shell
+<VirtualHost *:80>
+    ServerName ubuntu1
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html/ubuntu1
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+- create a symlink to it in `/etc/apache2/sites-enabled/` with the command `sudo a2ensite 001-ubuntu1`
+- create the site root folder `/var/www/html/ubuntu1` and create a file `index.html` in it containing `Hello from ubuntu1 !`
+- restart the httpd web server with command `sudo systemctl restart apache2`
+
+With this configured, we should now get the custom welcome page when accessing `http://ubuntu1`.  
+We should still get the default welcome page when accessing `http://localhost`.
+
+We can also create a file called `.htaccess` in the document root folder or any of its sub-folders.  
+This file can override the access policy at folder-level, to prevent Apache to serve it.  
+For example this file can contain :
+```shell
+Deny from all
+```
+To be taken into account, we need to update the virtual host configuration in `/etc/apache2/sites-enabled/` to allow override :
+```shell
+<Directory /var/www/html/ubuntu1>
+    AllowOverride All
+</Directory>
+```
+
+We can use this feature to password-protect some folders inside the document root folder.  
+We can create a password file `.htpasswd` in the same folder as the `.htaccess` file.  
+This password file contains the hashed password for each user that has access.
+```shell
+sudo htpasswd -c .htpasswd user1      # prompt for a password for user1 and create the .htpasswd file with its hash
+sudo htpasswd .htpasswd user2         # prompt for a password for user2 and update the .htpasswd file with its hash
+```
+The `.htaccess` file can then specify a restricted area that needs a user/password to access :
+```shell
+AuthType Basic
+AuthName "Restricted Area"
+Require valid-user
+AuthUserFile /var/www/html/ubuntu1/.htpasswd
+```
+
+### PHP 
+
+PHP is a commonly-used language for server-side scripting.  
+Instead of requesting an HTML page, we request a PHP page that will run a script to customize the response.
+
+On CentOS, PHP scripts are processed by a dedicated service `php-fpm.service`.  
+On Ubuntu, the processing of the PHP script is handled by the httpd workers directly.  
+It requires the `php8.1` httpd module (or higher) to be enabled.
+
+We can create a sample PHP file called _phpinfo.php_ in `/var/www/html/` that contains the instruction `<?php phpinfo(); ?>`.  
+When navigating to `http://localhost/phpinfo.php`, we can now see web server info : Linux version, server time, server version, env vars...
+
+
+### MySQL
+
+MySQL database is made of a MySQL server running the database, and some MySQL clients that interact with the database.  
+A PHP worker uses a MySQL client to write or read the database.
+
+On Ubuntu, the MySQL `mysql` service is enabled and runs upon install : `sudo systemctl status mysql`
+
+By default on a new MySQL database, we can connect to the MySQL root user without a password if we have root privilege on the machine.  
+```shell
+sudo mysql -u root             # access the MySQL root user without password (require sudo for root privilege)
+```
+This opens a MySQL shell to the MySQL database, where we can use SQL commands :
+```shell
+CREATE DATABASE test;
+USE test;
+SELECT CURRENT_TIME();
+CREATE TABLE student (student_id INT, first_name VARCHAR(255), last_name VARCHAR(255));
+INSERT INTO student  (student_id, first_name, last_name) values (1, "Tom", "Riddle");
+SELECT * FROM student;
+```
+
+In the MySQL shell, we create a user called `admin` and grant him full privileges :
+```shell
+CREATE USER 'admin'@'localhost' IDENTIFIED BY 'p4ssw0rd';
+GRANT ALL PRIVILEGES ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+```
+
+We can now access the MySQL client with the `admin` user :
+```shell
+mysql -u admin -p              # prompt for the user password, no need for sudo
+```
+
+**PhpMyAdmin** is a free and open-source web-based administration tool for managing MySQL and MariaDB databases.  
+We can install it with :
+```shell
+sudo apt install phpmyadmin
+```
+During the installation wizard, we select Apache2 (with Spacebar) to auto-generate the phpMyAdmin config.  
+We can see that it created the file `/etc/apache2/conf-available/phpmyadmin.conf`.  
+Once install, we restart the web server with `sudo systemctl restart apache2`.  
+We can then access the phpMyAdmin management interface at URL : `http://localhost/phpmyadmin`
+
+To avoid the phpMyAdmin web interface to be compromised, we can add `Require local` in the config file to limit access to localhost connection.
+
+We can create a new user and database in MySQL from the phpMyAdmin management interface for a WordPress blog.  
+In phpMyAdmin, follow _New > User accounts > Add user account_.  
+Create a user `blog` with Hostname `Local` to allow local socket connection from PHP to MySQL.  
+Tick "Create database with same name and grant all privilege", then "Go" to create both the `blog` user and database.
+
+
+### WordPress
+
+WordPress is a free and open-source CMS (Content Management System) for blog and website creation.  
+It is primarily based on PHP and MySQL, and is highly customizable with themes and plugins.
+
+WordPress can be downloaded from [wordpress.org](https://wordpress.org/) (not [wordpress.com](https://wordpress.com/) that is a commercial company offering WordPress hosting).  
+We can extract the zip and copy all its content to the document root folder configured to be served by our Apache site.  
+For example, if we have setup Apache to serve files in document root `/var/www/html/ubuntu1` :
+```shell
+sudo rm /var/www/html/ubuntu1/*               # cleanup whatever already exists in the document root
+sudo cp wordpress/* /var/www/html/ubuntu1/    # copy all content of the extracted wordpress archive to the document root
+```
+
+We can now access the Wordpress setup screen in a browser at `http://ubuntu1/`, and click "Let's go".  
+We can then enter the database name/host and user name/password and press "OK".  
+This will generate the content of the file `wp-config.php` to save ourselves in the document root folder.  
+When done, click "Start Installation" in the browser.  
+We can then choose the blog name and a new user that would be in charge of editing the blog (not a DB admin) and click "Install".  
+The configuration is complete, we now have a WordPress blog that we can login to.
+
