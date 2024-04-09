@@ -93,6 +93,7 @@ It is a concise version of the OSI model with only 4 layers.
 |    RDP       |    3389     |  TCP / UDP  |        Remote Desktop Protocol           |   7   | Microsoft-proprietary protocol to provide a GUI to connect to a remote machine.</br>Client and server exist for Linux and MacOS as well.                                                                                                            |
 |  Diameter    |    3868     |     TCP     |               Diameter                   |   7   | More advanced AAA protocol that is a replacement for RADIUS.<br/>Diameter is based on RADIUS, it addresses several of its weaknesses but is not compatible with RADIUS.                                                                                                                                                                      |
 |    SIP       | 5060 / 5061 |     TCP     |      Session Initiation Protocol         |   7   | Voice + messaging + video real-time sessions.                                                                                                                                                                                                       |
+|    mDNS      |    5353     |     TCP     |             Multicast DNS                |   7   | Alternative to DNS to resolve hostnames into IP addresses on local networks                                  |
 |    VNC       |    5900     |     TCP     |      Virtual Network Computing           |   7   | Protocol to provide a GUI to connect to a remote machine (cross-platform equivalent of RDP)                                                                |
 | Syslog-SSL   |    6514     |     TCP     |         Syslog over SSL/TLS              |   7   | Secure version of Syslog using SSL/TLS encryption, and TCP instead of UDP.           |
 
@@ -201,7 +202,7 @@ whois google.com
 
 #### mDNS (multicast DNS)
 
-mDNS is an alternative to traditional DNS on the local network.  
+mDNS is an alternative to traditional DNS on the local network operating on port 5353.  
 Instead of relying on a DNS server, it uses multicast traffic to resolve hostname to IP address.  
 The client sends the mDNS request to multicast address `224.0.0.251` for IPv4 or `ff02::fb` for IPv6.  
 Every host on the local network will receive it.  
@@ -1942,6 +1943,8 @@ Most ISPs offer cable television, Internet access and phone services over the sa
 - **iptables** : firewall-like command on Linux, can show the number of received/sent packets or block access to a given IP
 
 - **netstat** : show open connections to and from a server (`-ano` to list open connections and identify backdoors)
+
+- **ss** : more recent, simpler and faster alternative to netstat
 
 - **netcat** : read from and write to network connections using TCP or UDP, used by applications and scripts.   
   Netcat can be used for banner grabbing by sending a request to a web server.  

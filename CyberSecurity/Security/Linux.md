@@ -645,6 +645,7 @@ Integrity of files installed by apt can be checked with the `debsums` command :
 Some useful packages to install are :
 - `git` : most popular version control system for code and configuration files
 - `wireshark` : networking traffic analyzer
+- `firewalld` : popular Linux firewall on top of `iptables` or `nftables` backend
 - `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
 - `nmap` : network scanner (machines and open ports)
 - `apache2` : HTTPD Apache web server
@@ -2162,3 +2163,77 @@ When done, click "Start Installation" in the browser.
 We can then choose the blog name and a new user that would be in charge of editing the blog (not a DB admin) and click "Install".  
 The configuration is complete, we now have a WordPress blog that we can login to.
 
+
+## Firewalld
+
+The `ss` command  (recent replacement for the `netstat` command) shows information and statistics about network connections :
+```shell
+ss              # complete list of sockets with ESTABLISHED connection
+                #  -l : complete list of LISTENING sockets
+                #  -a : complete list of LISTENING and ESTABLISHED sockets
+                #  -t : restrict to sockets using TCP
+                #  -u : restrict to sockets using UDP
+                #  -4 : restrict to sockets using IPv4 
+                #  -6 : restrict to sockets using IPv6
+                #  -n : show port number instead of protocol name
+                #  -p : show the process info responsible for the socket
+                              
+ss -nap4        # list listening and established IPv4 sockets with their port ID and process details                               
+```
+
+The Linux firewall called `firewalld` controls which incoming and outgoing connections are allowed to go through.  
+
+The firewall mechanism on Linux is made of multiple layers :
+- the `netfilter` kernel subsystem, part of the Linux kernel in charge of packet filtering
+- the firewalld backend, either `iptables` or its successor `nftables`
+- the firewalld daemon service
+- the firewalld tools like `firewall-cmd` (CLI) and `firewall-config` (GUI)
+
+It is possible to interact directly with the firewall backend (iptables of nftables).  
+Using firewalld tools provide an easier interface for firewall configuration.  
+
+On CentOS and RHEL, `firewalld` is the default firewall and is already installed.  
+On Ubuntu, the default firewall is `ufw` (Uncomplicated Firewall) that is easier but more basic than `firewalld`.
+
+We can use the `firewall-cmd` tool to manage allowed connections :
+- add `http` service if we run a web-server
+- add `mdns` service if we need to be discovered by hostname
+
+```shell
+sudo ufw disable                                   # disable ufw firewall
+sudo apt install firewalld                         # install firewalld
+sudo systemctl enable --now firewalld              # start firewalld and enable it to start on boot
+
+sudo firewall-cmd --state                          # show the firewall state (running / stopped)
+sudo firewall-cmd --list-all                       # summary of configured rules
+sudo firewall-cmd --get-services                   # show the list of services (protocol names) known to firewalld
+                                                   # these names can be used instead of port numbers to allow/block traffic
+                                                   # this mapping is ensured by an XML file per service under /etc/firewalld/services/
+sudo firewall-cmd --info-service http              # show info about a specific service (port number and TCP/UDP)
+
+sudo firewall-cmd --add-service=http               # allow a service by name until next reboot
+sudo firewall-cmd --add-port=80/tcp                # allow a service by port number and protocol TCP/UDP until next reboot
+sudo firewall-cmd --remove-service=http            # remove a service by name until next reboot
+sudo firewall-cmd --remove-port=80/tcp             # remove a service by port number and protocol TCP/UDP until next reboot
+
+sudo firewall-cmd --permanent --add-service=http   # use the --permanent option to change the permanent firewall config
+sudo firewall-cmd --reload                         # reload permanent config
+```
+
+**Zones** in firewalld are groupings of network interfaces that are assigned a certain level of trust.  
+A network interface can only be in one zone at a time.  
+For example, a server can have 2 network interfaces : 
+- one for internal network in the `trusted` zone allowing SSH
+- one for public access in the `public` zone blocking SSH
+
+Some built-in zone, from most trusted to least trusted, are : `trusted`, `home`, `work`, `public`, `drop`
+
+Zones are stored as XML files under `/usr/lib/firewalld/zones/`
+```shell
+sudo firewall-cmd --get-zones
+sudo firewall-cmd --get-default-zone
+sudo firewall-cmd --set-default-zone=work
+sudo firewall-cmd --zone=work --list-all                   # list all rules for a given zone
+sudo firewall-cmd --zone=public --change-interface=enp0s5  # set an interface in a given zone
+```
+All previous commands can take the `--zone=ZONE` parameter, and use the default zone if not specified.
