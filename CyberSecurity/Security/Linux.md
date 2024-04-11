@@ -2237,3 +2237,107 @@ sudo firewall-cmd --zone=work --list-all                   # list all rules for 
 sudo firewall-cmd --zone=public --change-interface=enp0s5  # set an interface in a given zone
 ```
 All previous commands can take the `--zone=ZONE` parameter, and use the default zone if not specified.
+
+
+
+## Security-Enhanced Linux (SELinux)
+
+SELinux is a security module for the Linux kernel developed by the NSA and made open-source.  
+It allows using MAC in addition to DAC for access control policies, reducing vulnerability to privilege escalation.  
+
+SELinux comes by default in the RH-based distributions (CentOS Stream, Fedora, RHEL...).  
+It does not work on Ubuntu, that uses `AppArmor` instead (easier but less powerful than SELinux) with service `apparmor.service`.
+
+DAC (Discretionary Access Control) defines access to resources based on the actor identity (owner, group, other).  
+With DAC, when an application is compromised, the attacker gets access to all resources the application user can access.  
+By using MAC in addition to DAC, SELinux mitigates the consequences of a compromise by adding another layer of security.  
+For each access attempts, if DAC says OK, then MAC will check if the access should be granted.
+```shell
+sudo getenforce        # return "Enforcing" if running
+sudo sestatus          # more info about SELinux status, including the current SELinux policy ("targeted" by default)
+setenforce 0           # set to permissive mode (until next reboot)
+```
+
+Permanent SELinux configuration is stored in `/etc/selinux/config`.
+
+### File Context
+
+**File contexts** are a way of labeling files in SELinux, to check if access to specific files should be granted.  
+Each resource has a SELinux user, role, type and label, shown with `ls -Z`.
+
+```shell
+ls -Z
+   -rw-rw-rw-. user1 user1 unconfined_u:object_r:default_t:s0 test.txt    
+```
+- SELinux user : `unconfined_u`
+- SELinux role : `object_r`
+- SELinux type : `default_t`
+- SELinux label : `s0`
+
+These users, roles, types and label are used by SELinux rules to allow or deny access to resources.  
+For example, a web server will only have access to resources with type `httpd_sys_content_t` and `httpd_sys_config_t`.  
+If trying to access a file unrelated to httpd, SELinux will deny access even if the web server has DAC access.  
+This is an implementation of least privilege.
+
+By default, a new file inherits the context from its parent directory.  
+We can specify rules in SELinux to override this default, called a **type transition**.
+
+```shell
+chcon -t mytype_t test.txt          # temporarily change the SELinux context of a file or folder
+                                    #  -u <USER>  : change the SELinux user
+                                    #  -r <ROLE>  : change the SELinux role
+                                    #  -t <TYPE>  : change the SELinux type
+                                    #  -l <LABEL>  : change the SELinux label
+                                    #  -R : apply the change recursively
+                                    #  -v : verbose
+                                    
+restorecon -F test.txt              # restore the SELinux context of a file or folder to its default
+                                    #  -F : restore also the SELinux user and role (by default only restore the type)
+                                    #  -R : restore the context recursively
+                                    #  -v : verbose                                                                
+```
+
+The default context mapping for each SELinux policy is stored in `/etc/selinux/<POLICY>/contexts/files`.  
+It can be browsed directly, but it is better to use the `semanage fcontext` command.
+
+```shell
+semanage fcontext -l                                    # list all defined SELinux default rules
+semanage fcontext -a -t mytype_t '/public(/.*)?'        # add a SELinux default rule
+semanage fcontext -d -t mytype_t '/public(/.*)?'        # delete a SELinux default rule
+
+semanage fcontext -a -e /usr/share/nginx/html/ /public  # add a default SELinux rule as a mapping to an existing rule
+                                                        # all rules applied to /usr/share/nginx/html/ will apply to /public 
+```
+
+Every process on the system runs with a specific SELinux context (user + role + type).  
+```shell
+ps -efZ        # show the security context of running processes
+```
+
+The `targeted` policy in SELinux applies the MAC policy on processes, but not on users.  
+This means that it protects against a compromised service, but not against a compromised user.  
+The SELinux user of any user logged to the system is `unconfined_u` which is not restricted.  
+This means that any process directly started by a user is also using `unconfined_u`.  
+
+**SELinux booleans** can be toggled to adjust the SELinux policies to our needs.  
+```shell
+getsebool -a                              # display all SELinux booleans with their status
+semanage boolean -l                       # more detailed info on each boolean 
+setsebool httpd_read_user_content on      # switch on a SE boolean temporarily
+                                          #  -P : make the change permanent
+```
+
+All SELinux policy violations are logged in `/var/log/audit/audit.log`.  
+That is useful for security monitoring, but also to debug SELinux permission issues during configuration.  
+```shell
+sudo cat /var/log/audit/audit.log                # show all SELinux policy violations
+sudo ausearch -ts recent                         # more user-friendly view of last 10min violations (including timestamp)
+sudo journalctl -t setroubleshoot --sice 14:10   # more detailed info about a violation
+```
+
+SELinux also manages ports that each process can use.  
+If a process tries to listen to a port outside of its allowed port numbers, SELinux will not allow it.
+```shell
+semanage port -l                               # list all port types with the port numbers they include
+semanage port -a -t http_port_t -p tcp 8888    # add port 8888/tcp to the SELinux http_port_t type
+```
