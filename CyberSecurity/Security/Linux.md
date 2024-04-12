@@ -15,12 +15,38 @@ GNU/Linux is the foundation of Unix-based OS.
 Unix used to be proprietary and GNU/Linux is an open-source replacement for it.
 
 Linux distributions are OS built from GNU/Linux and adding specific tools and software :
-- **Ubuntu** : derived from Debian, designed to be user-friendly
-- **Fedora** : community-driven, free and open-source, sponsored by Red Hat, with short release cycle and frequent updates 
-- **RHEL** : Red-Hat enterprise Linux, commercial and enterprise-focused stable Linux distribution, including Fedora changes after heavy testing
-- **CentOS Stream** : free and open-source intermediate between Fedora and RHEL, regarded as a development preview of future RHEL releases
-- **Kali Linux** : designed for penetration testing and cyber-security
-- **RaspberryPi OS** : optimized for the RaspberryPi single-board computer 
+
+- **Red-Hat family** : distributions derived or influenced by RHEL, using RPM, SELinux and with extensive documentation
+  - **Fedora** : community-driven, direct initiative from Red-Hat, cutting-edge technology, short release cycle and frequent updates
+  - **CentOS Stream** : also direct initiative from Red-Hat, moderately cutting-edge (less than Fedora, more than RHEL)
+  - **CentOS** : used to be the free downstream version of RHEL provided by Red-Hat, now deprecated
+  - **RHEL (Red-Hat Enterprise Linux)** : targeted for business, with support and certifications, subscription required
+  - **Rocky Linux** : downstream version of RHEL, open-source replacement of CentOS with 100% binary compatibility with RHEL
+  - **Alma Linux** : similar to Rocky Linux, drop-in replacement for CentOS with long-term support and stability
+  - **Oracle Linux** : similar to Rocky Linux, developed by Oracle and offering commercial support services (technical support, patches, updates...)
+
+
+- **Debian family** : community-driven without a commercial entity driving it, using DPKG/APT
+  - **Debian** : base of the entire family, offers multiple branches (experimental, unstable, testing, stable)
+  - **Ubuntu** : based on Debian, user-friendly, release every 6m and LTS every 2y, developed by Canonical Ltd with community contribution 
+    - **Ubuntu-Server** : variant of Ubuntu without a GUI (command-line only) used for servers 
+    - **Kubuntu** : variant of Ubuntu using KDE as a desktop environment instead of Gnome 
+    - **Xubuntu** : variant of Ubuntu using XFCE as a desktop environment instead of Gnome 
+  - **Kali Linux** : based on Debian, designed for penetration testing and cyber-security 
+  - **RaspberryPi OS** : based on Debian, optimized for the RaspberryPi single-board computer
+  - **LinuxMint** : based on Debian or Ubuntu, comes with out-of-the box software
+
+
+- **SUSE family Linux**
+  - **SUSE Linux Enterprise (SLE)** : aims at businesses with LTS, commercially supported with subscription model 
+  - **openSUSE** : free and open-source, community-driven, sponsored by SUSE Linux 
+  - **openSUSE Tumbleweed** : rolling version of openSUSE with latest software (like Fedora for Red-Hat)
+  - **openSUSE Leap** : more stable version than Tumbleweed (like CentOS for Red Hat)
+
+
+- **Others**
+  - **ArchLinux** : rolling release model, always contains the latest software, use the pacman package manager, very customizable, manual steps to install 
+  - **Gentoo** : highly customizable and flexible, use the Portage packet manager that compiles packages from source code, optimized for our CPU
 
 
 ## Installation
