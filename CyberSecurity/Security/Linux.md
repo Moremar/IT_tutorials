@@ -291,6 +291,51 @@ For example, we can modify the GRUB configuration file to show the bootloader me
   - `-n 3` : run the command every 3 seconds
 
 
+- `echo '1.5 + 2.3' | bc` : basic calculator, evaluate a math string and return the result of the operation
+
+
+- `source <SCRIPT>` : run a script in the current context (so variables defined in the script persist)
+
+
+- `awk '<PATTERN> { <ACTION> }' <FILE>` : text-processing tool and programming language, used mostly with CSV files and tabular data.  
+  It has a rich language, but is being replaced by Python for complex text analysis.  
+  It processes a file line by line, and executes the action if the line matches the pattern.  
+  It breaks the lines into column (with space delimiter by default) and makes each column available with parameters $1, $2 ...
+```shell
+awk '/aaa/' file                             # print all lines containing "aaa" (action omitted so by default print the entire line)
+awk '$2 > 10' file                           # print all lines where the 2nd column is a number bigger than 10
+awk '{ print $2 }' file                      # print the 2nd column for each line (pattern omitted so by default every line matches)
+awk -F ',' '{ print $2 }' file               # print the 2nd column for each line for a comma-separated file
+awk '{ sum += $1 } END { print sum }' file   # sum the first column of each line of a file and print this sum
+```
+
+
+- `curl <OPTIONS> <URL>` : fetch and display web pages or API content, supporting multiple protocols (HTTP, HTTPS, FTP, SFTP...)  
+  It takes a URL-encoded string as URL, and displays the response in stdout.   
+  It must be installed with `sudo apt install curl`  
+  `curl 'https://www.example.com/api.php' -G --data-urlencode 'param1=New York' --data-urlencode 'param2=aaa'`
+  - `-v` : verbose
+  - `-o <FILE>` : save output to a file
+  - `-s` : silent mode (do not show errors or progress bar)
+  - `-G` : force an HTTP GET request (default to POST if `--data` or `--data-urlencode` is provided)
+  - `-d <DATA>` : send the data to a POST request
+  - `--data-urlencode <DATA>` : same as `-d` but perform URL-encoding on the data (to replace every space by `%20` for example)
+  - `--fail` : on HTTP failure, curl exits with failure code 22 instead of creating the output returned by the server
+
+
+- `jq` : command-line JSON parser to parse and retrieve fields in JSON files.  
+  It must be installed with `sudo apt install jq`
+```shell
+cat file.json | jq                                # pretty-print the JSON file
+cat file.json | jq '.name'                        # print the value of the "name" property
+cat file.json | jq '[.name, .age]'                # print an array with the values of the name and age properties
+cat file.json | jq '.hobbies[0].name'             # print the name of the first hobby inside the hobbies array property
+cat file.json | jq '.hobbies[].name'              # print the name of each hobby inside the hobbies array property
+cat file.json | jq '.hobbies[]' | jq '.[].name'   # same, but using multiple linked calls to jq
+cat file.json | jq '.hobbies | length'            # print the length of the hobbies array using the length operator
+```
+
+
 - `hostname` : display the hostname of the machine, to reach it from the local network (with the `.local` suffix) 
 
 
@@ -330,8 +375,10 @@ ls | wc -l
 ls invalid_file.txt 2>&1 > /dev/null | wc -l
 
 # we can store the result of a command as a temporary file provided to another command with <(CMD)
+# This is called "process substitution", <(CMD) creates a temporary file with the result of the CMD command.
 echo <(ls)                         # /dev/fd/11   (tmp file path)
 diff <(ls ./dir1) <(ls ./dir2)     # diff between the file names of 2 folders
+wc -l < <(ls)                      # use the tmp file as standard input for the wc command
 
 # we can also write it in the other direction with >(CMD)
 # the 1st commands writes into a tmp file, and that file is the input of the 2nd command 
@@ -357,6 +404,17 @@ The `ls` command received the replaced input, and does not even know that globbi
 
 Note : Globbing does not use regular expressions !  
 It looks similar, but the syntax is different and more limited.
+
+#### Sequence expansion
+
+Sequence expansion replaces a sequence by the list of elements between the start and end elements.
+```shell
+{1..5}              # 1 2 3 4 5
+{1..10..2}          # 1 3 5 7 9  (step size 2)
+{a..z}              # a b c ... y z
+{z..a}              # z y ... c b a
+file{1..3}          # file1 file2 file3
+```
 
 #### Tilde expansion
 
