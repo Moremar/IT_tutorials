@@ -497,3 +497,125 @@ for (( my_i = 0 ; my_i < 10 ; my_i++ )) ; do        # in math mode, the ++ opera
     echo $my_i
 done
 ```
+
+### select loop
+
+The select loop is a Bash built-in structure that lets the user choose between multiple values.  
+At execution, Bash presents all options with an index starting from 1.  
+The user must enter the index of an option, and Bash assigns the corresponding value to the select variable.  
+Bash also exposes the chosen index with the `$REPLY` variable.  
+We can overwrite the prompt string before the user reply with the `PS3` variable (it display `#?` by default).
+
+```shell
+# Generic syntax of a select loop
+PS3="Select an option : "
+select my_option in option1 option2 option3 ; do
+  echo "Chose option $REPLY : $my_option"            # REPLY is the user entered index, my_option is option1, option2, option3 or empty
+  break                                              # loop until we break
+done
+
+# Combine a select loop with a case block
+PS3="Choose info: "
+select info in Name Age Hobby ; do
+  echo "You selected option $REPLY"
+  case $info in
+    Name)  echo "Alice" ;;
+    Age)   echo "25" ;;
+    Hobby) echo "Dance" ;;
+    *)     echo "Invalid response, select a valid option."
+           continue ;;
+  esac
+  break
+done
+```
+
+### dialog command
+
+The `dialog` command opens an in-shell dialog for richer user interactions than the `select` loop.  
+It returns the selected option by exit code, so it can easily be used inside a Bash script.  
+For dialogs that return a value (inputbox or menu), the result is sent to stderr (since stdout is used for display).
+
+Some parameters are common to all types of dialogs :
+- `--title <TITLE>` : specify a title for the dialog
+- `--backtitle <TITLE>` : specify a title for the background
+- `--keep-tite` : delete the dialog from the shell after user response
+
+```shell
+sudo apt install dialog
+
+# open an in-shell info pop-up with custom text and an OK button (specify number of lines and columns, 0 for auto)
+# it returns exit code 0 on OK and 1 on Ctrl-C
+dialog --title "Nice Title" --backtitle "Nice Back Title" --msgbox "Nice shirt bro!" 0 0
+
+# open an in-shell Yes/No dialog
+# it returns exit code 0 on Yes and 1 on No or Ctrl-C
+dialog --yesno "Need a hug ?" 0 0
+
+# open an in-shell input dialog where the user can enter some text
+# the user input is sent to stderr
+dialog --inputbox "Any question ?" 0 0 2>response.txt
+
+# when used in a Bash script, we can capture the output of the inputbox dialog in a variable
+# For that, we redirect stderr to stdout and stdout to /dev/tty, so we get only stderr in the variable
+response=$(dialog --keep-tite --inputbox "Any question ?" 0 0 2>&1 >/dev/tty)
+
+# open a menu dialog to choose from a set of values
+# each value has a tag and a description
+# we can hide the tag from the displayed menu with the --no-tags parameter
+# the selected tag is returned in stderr
+# we can specify the number of lines and columns of the dialog, and lines of the menu (0 for auto)
+dialog --keep-tite --no-tags --menu "Choose info:" 0 0 0 "name" "Name" "age" "Age" 2>response.txt
+```
+
+Example in-shell GUI program to ask for student names and save them in a file :
+```shell
+#!/usr/bin/env bash
+
+while true ; do
+
+  # in-shell input box to get a student name
+  student_name=$(dialog --keep-tite --title "Student Record" --inputbox "Enter a student name:" 0 0 2>&1 >/dev/tty)
+
+  # exit if the user selected Cancel
+  exit_code=$?
+  if (( exit_code != 0 )) ; then
+    break
+  fi
+
+  # save the student name in a file if not empty
+  if [[ -n $student_name ]] ; then
+    echo $student_name >> students.txt
+  fi
+
+  # in-shell yes/no box to ask if we should continue
+  if ! dialog --keep-tite --title "Student Record" --yesno "Continue ?" 0 0 ; then
+    break
+  fi
+
+done
+```
+
+### zenity command
+
+For GUI dialogs (instead of in-shell dialogs) we can use the `zenity` program instead.  
+Zenity requires a GUI to be available on the machine, so it does not work with a remote SSH connection.  
+
+Zenity supports **Pango markup language**, so we can style the text with `<b></b>`, `<i></i>` ...  
+Unlike `dialog`, Zenity creates a GUI for its dialog (not stdout) so it uses stdout for the output (not stderr).  
+
+```shell
+sudo apt install zenity
+
+zenity --help                      # top-level help
+zenity --help-general              # help on general options
+zenity --help-question             # help on question dialog specific options (each dialog type has its help option)
+
+# open a yes/no dialog, with exit code 0 (Yes) or 1 (No)
+zenity --question --title "Check" --text "Are you OK ?"
+
+# open a dialog where the user can enter custom text, and return the user text to stdout
+zenity --entry --text "Any question ?"
+
+# saving the output of an entry dialog to a variable is easier than with dialog, because it does not need redirection
+response=$(zenity --entry --text "Any question ?")
+```

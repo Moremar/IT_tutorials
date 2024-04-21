@@ -151,6 +151,12 @@ For example, we can modify the GRUB configuration file to show the bootloader me
 - `touch <FILE>` : create an empty file, or update the modification time if the file exists
 
 
+- `basename <FILE>` : show the base name of the file (without the full path) 
+
+
+- `dirname <FILE>` : show the directory of the file 
+
+
 - `mkdir <DIR>` : create an empty directory
   - `-p` : create parent directories if needed, and no error if the directory already exists
 
@@ -441,6 +447,18 @@ echo ${#HOME}                            # number of bytes in a variable (same a
 echo ${HOME:2:5}                         # substring of an env variable
 echo ${HOME/<PATTERN>/<REPLACEMENT>}     # replace a pattern in an env variable (one occurrence)
 echo ${HOME//<PATTERN>/<REPLACEMENT>}    # replace a pattern in an env variable (all occurrences)
+echo ${HOME#<PATTERN>}                   # remove the shortest match of the pattern
+echo ${HOME##<PATTERN>}                  # remove the longest match of the pattern
+echo ${HOME%<PATTERN>}                   # remove the shortest match of the pattern from the end of the string
+echo ${HOME%%<PATTERN>}                  # remove the longest match of the pattern from the end of the string
+
+file=aa.bb.txt
+echo ${file#b*}            # aa.bb.txt : no change because aa.bb.txt does not match the pattern to remove "b*"
+echo ${file#*b}            # b.txt     : the shortest match of the pattern "*b" is "aa.b" so it is removed
+echo ${file##*b}           # .txt      : the longest match of the pattern "*b" is "aa.bb" so it is removed
+echo ${file##*.}           # txt       : elegant way to get the extension of a file, we remove up to the last dot
+echo ${file%*.}            # aa.bb     : elegant way to get the name of the file without the extension
+echo ${file%%*.}           # aa        : the longest match of the pattern ".*" from the end is ".bb.txt" so it is removed
 ```
 
 #### Escape characters
@@ -509,9 +527,9 @@ Some common environment variables are :
   - `\W` : last folder of the working directory
   - `\t` : time (24h format)
   - `\@` : time (AM/PM format)
+- `PS3` : prompt string of the `select` control flow, usually overwritten in Bash scripts using a `select` loop
 - `IFS` : characters used for word splitting, by default contains a space, a tab and a newline.  
   Single and double quotes disable word splitting, so we can create a file with spaces in its name : `touch "a b c.txt"`
-
 
 
 ### Shell Colors and Style
@@ -731,6 +749,7 @@ Some useful packages to install are :
 - `wireshark` : networking traffic analyzer
 - `firewalld` : popular Linux firewall on top of `iptables` or `nftables` backend
 - `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
+- `imagemagick` : image editor and image format convertor
 - `nmap` : network scanner (machines and open ports)
 - `apache2` : HTTPD Apache web server
 - `links` : in-terminal web browser (useful to see if a web server is reachable for example)
@@ -2424,4 +2443,36 @@ If a process tries to listen to a port outside of its allowed port numbers, SELi
 ```shell
 semanage port -l                               # list all port types with the port numbers they include
 semanage port -a -t http_port_t -p tcp 8888    # add port 8888/tcp to the SELinux http_port_t type
+```
+
+## Useful Linux packages
+
+### Image Magick
+
+Image Magick is a Linux program to manipulate and convert images.  
+When installed, it provides several commands :
+- `identify` to show image information
+- `convert` to create a new image by editing (resize, crop, rotate...) and/or changing the format
+- `composite` to overlay an image above another
+- `montage` to combine multiple images into a grid
+
+```shell
+sudo apt install imagemagick
+
+convert --version                    # ensure that ImageMagick is correctly installed
+
+identify dog.jpg                     # show image size, format, size...
+identify -verbose dog.jpg            # show a lot more information about the image, including exif info
+identify -format '%wx%h' dog.jpg     # print specific information about the image in a given format
+
+convert dog.jpg output.png                              # convert an image to a different format
+convert dog.jpg -resize 100x100 output.jpg              # convert an image with a max size of 100x100
+convert dog.jpg -rotate 90 output.jpg                   # rotate the image by 90 degrees
+convert dog.jpg -swirl 100 -resize 100x100 output.jpg   # apply a swirl effect, then resize the image  
+convert dog.jpg -crop 300x200+200+10 output.jpg         # crop a piece of an image : WIDTHxHEIGHT+OFFSET_X+OFFSET_Y
+
+# create a montage with 2 tiles (1 image per line and 2 per column)
+# each tile has size 300x200 and tiles are separated by 5 pixels spacing
+montage dog1.jpg dog2.jpg -geometry 300x200+5+5 -tile 1x2 output.log
+
 ```
