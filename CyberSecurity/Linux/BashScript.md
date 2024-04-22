@@ -619,3 +619,66 @@ zenity --entry --text "Any question ?"
 # saving the output of an entry dialog to a variable is easier than with dialog, because it does not need redirection
 response=$(zenity --entry --text "Any question ?")
 ```
+
+## Script Arguments
+
+A Bash script can accept any number of parameters when called from a shell.  
+Bash exposes several Bash variables used to interact with arguments :
+- `$0` : name of the script that is being executed  
+- `$1`, `$2`, `$3` ... : positional arguments given to the script in the command line
+- `$#` : number of positional arguments
+- `$@` : array containing all positional arguments
+- `$*` : single string containing all positional arguments
+- `$$` : current process ID
+
+### shift 
+
+The `shift 1` commands can be used if we want to write a Bash script with a dynamic number of arguments.  
+It throws away the first argument, and shifts all remaining arguments by one position to the left.  
+It also updates the value of `$#` to the number of remaining positional arguments.  
+This way we can write a while loop that reads the first argument, processes it if not empty, then shifts the remaining arguments.
+```shell
+while (( $# != 0 )) ; do
+  echo "Processing argument: $1"
+  shift 1
+done
+```
+
+### getopts
+
+We can accept options in a Bash script like `-a` or `-l`, or multiple options together like `-al`.  
+Instead of parsing manually the options provided by positional arguments (like `$1`), we can use the `getopts` command.  
+It takes a list of supported options, and a variable where it stores one of the received options.  
+Multiple calls to `getopts` will return all the provided options one by one.  
+`getopts` return exit code 0 when an option is read, and 1 when no more option can be read.
+
+```shell
+# when ran in a script called with ./script.sh -al -o
+getopts 'alo' option         # option stores "a", exit code 0
+getopts 'alo' option         # option stores "l", exit code 0
+getopts 'alo' option         # option stores "o", exit code 0
+getopts 'alo' option         # no more option to read, exit code 1
+```
+
+`getopts` also supports options with a value, by adding `:` after the option name.  
+The value is stored in the `$OPTARG` variable.
+
+```shell
+# when ran in a script called with ./script -o a.txt
+getopts 'o:' option
+echo "$option $OPTARG"     # o a.txt
+```
+
+`getopts` is often used with a while loop and a case block to process all options.  
+We can redirect its stderr to avoid having messages in the terminal on unlisted option.
+
+```shell
+while getopts 'alo:' option 2>/dev/null ; do
+  case $option in
+    a) echo "option all" ;;
+    l) echo "option list" ;;
+    o) echo "option output $OPTARG" ;;
+    *) echo "invalid option" ; exit 1 ;;
+  esac
+done
+```
