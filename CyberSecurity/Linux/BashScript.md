@@ -622,6 +622,8 @@ response=$(zenity --entry --text "Any question ?")
 
 ## Script Arguments
 
+### Bash argument variables
+
 A Bash script can accept any number of parameters when called from a shell.  
 Bash exposes several Bash variables used to interact with arguments :
 - `$0` : name of the script that is being executed  
@@ -670,7 +672,7 @@ echo "$option $OPTARG"     # o a.txt
 ```
 
 `getopts` is often used with a while loop and a case block to process all options.  
-We can redirect its stderr to avoid having messages in the terminal on unlisted option.
+We can redirect its stderr to avoid having messages in the terminal on invalid options.
 
 ```shell
 while getopts 'alo:' option 2>/dev/null ; do
@@ -681,4 +683,153 @@ while getopts 'alo:' option 2>/dev/null ; do
     *) echo "invalid option" ; exit 1 ;;
   esac
 done
+```
+
+
+## Bash Functions
+
+Bash Functions can be defined in a Bash script when a block of code needs to be re-used.  
+Just like a Bash script, a function can access its parameters with the Bash argument parameters.  
+`$0` is the name of the Bash script, and `$1` is the first argument received by the function.  
+Unlike common programming languages, function parameters are not specified in the function definition.
+
+```shell
+# function definition
+my_func() {
+  echo "called my_func from script $0 with $# arguments : $*"
+}
+
+# alternative function definition with the "function" keyword, in that case brackets are optional
+function my_func2 {
+  echo "called my_func2"
+}
+
+# function invocation
+my_func a b c             # called my_func from script ./script.sh with 3 arguments : a b c
+```
+
+Variables have a global scope within a Bash script.  
+Any variable defined in the script or inside a function is visible to the rest of the script, and inside other functions.  
+We can define a variable inside a function with the `local` keyword to limit its scope to this function.
+
+```shell
+my_func() {
+  local v1="V1"
+  v2="V2"
+}
+
+my_func      # execute the function
+echo $v1     # empty because v1 is local to the function
+echo $v2     # V2, because v2 is global 
+```
+
+We can implement a function that allows an argument to be provided or not, by defaulting the value of the parameter :
+
+```shell
+function my_func {
+  local msg=${1:-"Hello"}     # default to "Hello" if $1 is empty
+  echo "$msg"
+}
+```
+
+A function can use the return command to return a custom exit code (0 by default).  
+Unlike most programming languages, the return value of a function only represents its exit code, not a value it computed.  
+To return other custom values, we can either store it in a global variable (to avoid), or send it to stdout.  
+
+```shell
+function my_func {
+  echo "Hello $1"
+}
+
+msg=$(my_func 'Bob')
+```
+
+
+## Arrays
+
+Bash arrays behave differently from other programming languages.  
+A normal Bash variable is just a 1-size array variable.  
+An array variable returns its first element when used without index.  
+
+Bash supports array expansion with `${my_array[@]}` to expand an array to one word per element in the array.
+
+Another expansion is `${my_array[*]}` that creates a string of all elements of the array separated by a space.  
+It behaves the same as `${my_array[@]}` with `echo` but has a different meaning since the separation between words is lost.
+
+```shell
+my_array=(aaa bbb ccc)                 # use brackets to define an array
+declare -a my_array=(aaa bbb ccc)      # explicitly declare an array variable
+
+echo ${my_array}                       # aaa : default to my_array[0]
+echo ${my_array[1]}                    # bbb
+echo ${my_array[3]}                    # empty string since above the amx index
+echo ${my_array[-1]}                   # ccc (negative indexes start from the end)
+
+echo ${my_array[@]}                    # aaa bbb ccc  (array expansion)
+echo ${my_array[*]}                    # aaa bbb ccc  (all values separated by a space)
+
+my_array[1]="BBB"                      # override an element of the array
+my_array[3]="ddd"                      # add an element to the array at a specific index
+
+# normal variables are just 1-size arrays
+my_var=2
+my_var[0]=3                               # override my_var
+echo ${my_var[@]}                         # print the value of my_var
+
+${#my_array[@]}                           # size of the array
+${#my_array[*]}                           # same
+my_array+=(eee)                           # add an element to the array
+unset my_array[2]                         # delete element at position 2 (but no shift of next elements, just create a hole in the array)
+${my_array[@]:2:3}                        # slice of the array, starting at index 2 and containing 3 elements
+my_copy=("${my_array[@]}")                # create a copy of an array
+my_new=( "AAA" "${my_array[@]}" "BBB" )   # create a new array containing all elements of an array, and other elements
+
+# for loop on elements of an array
+for elem in "${my_array[@]}" ; do
+  echo "$elem"
+done
+
+# select loop on elements of an array
+select elem in "${my_array[@]}" ; do
+  echo "$elem"
+done
+```
+
+We can store user input into an array with `read -a` , with a split on spaces.  
+This is especially useful to store the output of a command into an array.
+
+```shell
+read -a my_arr                            # store user input into an array
+read -a tokens < <(uptime)                # create an array of the tokens generated by the uptime command
+```
+
+Since Bash 4, the `readarray` and `mapfile` commands (2 identical commands) allow to convert input lines into elements of an array.  
+For example, we can give it a file in output, and it generates an array variable with each of the file lines.
+
+```shell
+readarray -t my_arr < file.txt           # create an array of lines of the input file
+                                         #  -t : remove the trailing new line
+                                         #  -n 5 : limit the number of lines to read to 5 
+                                         #  -0 5 : start including the array at a specific index (0 by default)
+                                         #  -s 5 : discard the first 5 lines
+```
+
+### Associative Arrays (map)
+
+Since Bash 4, associative arrays can be created with the `declare -A` command.  
+
+```shell
+declare -A my_map                   # declare a map
+my_map["aaa"]="AAA"                 # assign a key/value pair in the map
+
+my_map=(                            # syntax to declare and assign a map
+  ["aaa"]="AAA"
+  ["bbb"]="BBB"
+)
+
+echo "${my_map["aaa"]}"             # print the value for a key in a map
+echo "${my_map[@]}"                 # print all values of a map (not the keys)
+echo "${!my_map[@]}"                # print all keys of a map
+
+[[ -v my_map["ccc"] ]]              # condition to test for the existence of a key in a map
 ```

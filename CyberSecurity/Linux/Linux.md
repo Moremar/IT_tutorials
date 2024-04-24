@@ -215,6 +215,7 @@ For example, we can modify the GRUB configuration file to show the bootloader me
 - `du <FILE>` : display disk usage for a file or directory
   - `-s` : only show a summary
   - `-h` : human-readable units using K/M/G (by default it uses blocks)
+  - `-m` : set the unit to Mb
 
 
 - `nano <FILE>` : basic command-line text editor
@@ -225,6 +226,7 @@ For example, we can modify the GRUB configuration file to show the bootloader me
   - `-n` : sort according to numerical order
   - `-k 5` : sort according to the 5th column
   - `-u` : unique values (no duplicates)
+  - `-R` : sort in a random order (useful for quizz options for example)
 
 
 - `uniq` : remove duplicate lines on a sorted input
@@ -333,6 +335,8 @@ awk '{ sum += $1 } END { print sum }' file   # sum the first column of each line
   It must be installed with `sudo apt install jq`
 ```shell
 cat file.json | jq                                # pretty-print the JSON file
+                                                  #  -r : raw string (does not include color code)
+                                                  #  -c : compact (on a single line instead of pretty-print) 
 cat file.json | jq '.name'                        # print the value of the "name" property
 cat file.json | jq '[.name, .age]'                # print an array with the values of the name and age properties
 cat file.json | jq '.hobbies[0].name'             # print the name of the first hobby inside the hobbies array property
@@ -373,6 +377,12 @@ ls 2> error.txt        # redirect stderr (stream 2)
 ls 2> /dev/null        # discard stderr
 ls 2>&1                # redirect stderr to stdout
 ls < input.txt         # redirect stdin (stream 0)
+
+# <<< is used to pass a string as input to a command
+input=$'line1\nline2\nline3'
+while IFS= read -r line ; do
+  echo "Processing line : $line"
+done <<< "$input"                     # use a multi-line string as input for the while loop
 
 # pipes
 ls | wc -l
@@ -469,6 +479,14 @@ Including them inside single quotes would also work, since escaping is disabled 
 ```shell
 echo \" \' \* \\
 echo '"'
+
+# the -e option allows to interpret the special characters
+echo "aa\nbb\ncc"       # print uninterpreted string "aa\nbb\ncc"
+echo -e "aa\nbb\ncc"    # print aa, bb and cc on 3 lines
+
+# we can define a variable with the $'...' construct to interpret the characters
+my_str=$'aa\nbb\ncc'
+echo "$my_str"          # print aa, bb and cc on 3 lines
 ```
 
 #### Command Substitution
@@ -530,6 +548,7 @@ Some common environment variables are :
 - `PS3` : prompt string of the `select` control flow, usually overwritten in Bash scripts using a `select` loop
 - `IFS` : characters used for word splitting, by default contains a space, a tab and a newline.  
   Single and double quotes disable word splitting, so we can create a file with spaces in its name : `touch "a b c.txt"`
+- `RANDOM` : return a pseudo-random 16-bit integer (between 0 and 32767)
 
 
 ### Shell Colors and Style
