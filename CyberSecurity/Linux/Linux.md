@@ -157,6 +157,9 @@ For example, we can modify the GRUB configuration file to show the bootloader me
 - `dirname <FILE>` : show the directory of the file 
 
 
+- `file <FILE>` : give details about a file (file type and size on disk)
+
+
 - `mkdir <DIR>` : create an empty directory
   - `-p` : create parent directories if needed, and no error if the directory already exists
 
@@ -233,11 +236,50 @@ For example, we can modify the GRUB configuration file to show the bootloader me
   - `-d` : only keep the duplicates
 
 
-- `grep <PATTERN> <FILE>` : looks for a pattern in a file or in stdin
-  - `-F` : disable the basic regular expression and interpret the pattern as a fixed string
+- `grep <PATTERN> <FILE>` : look for a pattern in a file or in stdin
+  - `-F` : interpret the pattern as a fixed string instead of the default Basic Regular Expression (BRE)
+  - `-E` : enable Extended Regular Expression (ERE) instead of the default BRE 
+  - `-P` : enable Pearl-Compatible Regular Expression (PCRE) instead of the default BRE
   - `-i` : case-insensitive matching
   - `-n` : show the line number of the match
+  - `-o` : only show the matching part, not the full line
   - `-r` : recursive search in sub-directories
+  - `-c` : count the number of lines in which the pattern is found (each line counts only once)
+  - `-s` : suppress errors about non-existent files or missing permissions 
+  - `-l` : only show the name of the files that have a match
+  - `-q` : check if a pattern is present, exit with code 0 if present, else 1
+  - `--color` : highlight the match in color  
+  Basic Regular Expression allows the use of the following meta-characters :
+  - `.` : any single character except newline
+  - `^` : beginning of the line
+  - `$` : end of the line
+  - `\ ` : escape characters that have a special meaning in the regular expression, like `\.`, `\^`, `\$`...
+  - `*` : quantifier for 0 or more occurrences of the previous letter or block
+  - `[aeiou]` : character class, that matches any letter in the square brackets
+  - `[a-zA-Z]` : range class, that matches any character in the range
+  - `[^abc]` : negating class, that matches any character that is not included in the character or range class
+  - `[[:digit:]]` : named character class, also : `lower`, `upper`, `alpha`, `alnum`, `blank` (space and tab)
+  - `\([a-z][0-9]\)` : character group using backslash-brackets, used to set a quantifier to a group    
+  ERE extends BRE, it is mostly compatible with BRE and adds new matching syntax and quantifiers :
+  - `([a-z][0-9])` : simpler syntax for character group (only incompatibility with BRE)
+  - `(aaa|bbb)` : alternation, matches one of the 2 alternatives
+  - `?` : quantifier for 0 or 1 occurrence of the previous letter or block`
+  - `+` : quantifier for 1 or more occurrences of the previous letter or block
+  - `{3}` : quantifier to match a block repeated exactly 3 times
+  - `{3,5}` : quantifier to match a block repeated 3 to 5 times
+  - `\<` and `\>` : indicate the beginning or the end of a word (`\<f` matches words starting with 'f')   
+  PCRE extends ERE and is not available on all implementations of `grep`, but is usually included in the GNU implementation.  
+  PCRE is the regex engine used by most programming languages.
+  - `\d` : matches any digit, equivalent of `[0-9]` or `[[:digit:]]`
+  - `\D` : matches any non-digit character
+  - `\s` : matches any whitespace character (space, tab, newline...)
+  - `\S` : matches any non-whitespace character
+  - `\w` : matches any word character (lower/upper-case letter, digit or underscore)
+  - `\W` : matches any non-word character
+  - `\d+(?= days)` : look-ahead, matches any number that is followed by " days"
+  - `\d+(?! days)` : negative look-ahead, matches any number that is not followed by " days"
+  - `(?<=still )\d+` : look-behind, matches any number that follows "still "
+  - `(?<!still )\d+` : negative look-behind, matches any number that does not follow "still "
 
 
 - `tr <CHAR> <CHAR>` : replace a character by another in the input file or stream
@@ -275,6 +317,46 @@ For example, we can modify the GRUB configuration file to show the bootloader me
   - `%m` : month
   - `%d` : day
   - `%Y` : year
+
+
+- `time <CMD>` : measure the time that a command takes to run
+
+
+- `gzip <FILE>` : compress a file by gzip compression (GNU zip) with extension `.gz`
+  - `-k` : also keep the original file (by default it may remove it)
+  - `-v` : verbose mode
+  - `-d` : decompress a gzip compressed file (can also use the `gunzip` command instead)
+
+
+- `bzip2 <FILE>` : compress a file by bzip2 compression with extension `.bz2`, slower and more efficient than gzip
+  - `-k` : also keep the original file (by default it may remove it)
+  - `-v` : verbose mode
+  - `-d` : decompress a bzip2 compressed file (can also use the `bunzip2` command instead)
+
+
+- `xz <FILE>` : compress a file by LZMA compression with extension `.xz`, most advanced compression
+  - `-k` : also keep the original file (by default it may remove it)
+  - `-v` : verbose mode
+  - `-d` : decompress a xz compressed file (can also use the `unxz` command instead)
+  - `-e` : extreme compression, take more CPU to compress even more efficiently
+
+
+- `tar czvf <FOLDER>` : create or extract a compressed tar archive.
+  - `-c` : create a new archive
+  - `-x` : extract an archive
+  - `-z` : compress/decompress an archive with gzip
+  - `-j` : compress/decompress an archive with bzip2
+  - `-J` : compress/decompress an archive with xz
+  - `-v` : verbose mode
+  - `-f <NAME>` : specify the name of the archive to create/extract
+  - `-C <FOLDER>` : specify the name of the folder to extract the archive into
+  - `-t` : list the content of an archive
+```shell
+tar -cvf data.tar ./data           # create an archive
+tar -czvf data.tgz ./data          # create a compressed archive (gzip)
+tar -tf data.tgz                   # list the content of an archive
+tar -xzvf data.tgz                 # decompress an archive
+```
 
 
 - `flock mylock.txt <CMD>` : take an exclusive lock (create the lock file if needed) and run a command once the lock is obtained
