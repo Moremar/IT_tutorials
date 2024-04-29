@@ -833,3 +833,24 @@ echo "${!my_map[@]}"                # print all keys of a map
 
 [[ -v my_map["ccc"] ]]              # condition to test for the existence of a key in a map
 ```
+
+## Signal Traps
+
+When writing a Bash script that takes a while to run, we may want to react when signals are received.  
+The `trap` command allows to define a function to use on reception of a SIGINT of SIGTERM signal.
+
+```shell
+# function to execute on signal reception
+function teardown {
+  echo "Teardown the script"
+  exit 0
+}
+
+# set the signal trap
+trap teardown SIGINT SIGTERM
+
+# infinite loop
+while true ; do
+  sleep 1
+done
+```

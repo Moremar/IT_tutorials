@@ -359,6 +359,19 @@ tar -xzvf data.tgz                 # decompress an archive
 ```
 
 
+- `history` : show the history of commands executed in this terminal  
+  Bash history is persistent and stored in the `~/.bash_history` file.  
+  We can control the history file and history size with variables `HISTFILE` and `HISTSIZE`.   
+  - `-c` : clear the command history
+  - `-d 150` : delete command history entry at position 150
+```shell
+!!               # execute the most recent command in the history
+!150             # execute the command in the history at position 150
+!-3              # execute the 3rd most recent command in the history
+!cd              # execute the most recent command that starts with "cd"
+!?cd?            # execute the most recent command that contains "cd"
+```
+
 - `flock mylock.txt <CMD>` : take an exclusive lock (create the lock file if needed) and run a command once the lock is obtained
   - `-n` : if the lock is already taken, exit immediately instead of waiting for the lock
   - `-E 0` : return status when exiting due to the `-n` flag (0 for OK status)
@@ -400,6 +413,20 @@ awk '{ sum += $1 } END { print sum }' file   # sum the first column of each line
 ```
 
 
+- `wget http://example.com/file.zip` : non-interactively download a file from an URL and save it in the current directory.  
+  wget can download an entire website and pause/resume downloads (which curl cannot), but it cannot upload data. 
+  - `-O <FILE_NAME>` : specify the name of the file saved locally
+  - `-c` : resume an interrupted download from where it stopped
+  - `-b` : run the download in the background and output in a log file instead of the standard output of the terminal
+  - `-q` : quiet mode, do not generate any output
+  - `-i <TXT_FILE>` : provide an input .txt file with the list of files to download
+  - `-r` : recursive download, to download links in the target website or sub-folders of the target folder
+  - `-p` : download all website pre-requisites like stylesheets, scripts, images... (used when downloading a website)
+  - `-k` : converts links in the downloaded website to reference the local files
+  - `-l 5` : set the maximum recusion level to 5
+  - `-A jpg` : limit the links followed in the recursion to accept only specific extensions (jpg only here)
+
+
 - `curl <OPTIONS> <URL>` : fetch and display web pages or API content, supporting multiple protocols (HTTP, HTTPS, FTP, SFTP...)  
   It takes a URL-encoded string as URL, and displays the response in stdout.   
   It must be installed with `sudo apt install curl`  
@@ -411,6 +438,20 @@ awk '{ sum += $1 } END { print sum }' file   # sum the first column of each line
   - `-d <DATA>` : send the data to a POST request
   - `--data-urlencode <DATA>` : same as `-d` but perform URL-encoding on the data (to replace every space by `%20` for example)
   - `--fail` : on HTTP failure, curl exits with failure code 22 instead of creating the output returned by the server
+
+
+- `md5sum <FILE>` : calculate the MD5 hash of a file
+
+
+- `shasum -a 1 <FILE>` : calculate the SHA-1 hash of a file, we can also use variations of SHA-2.  
+  SHA algo-specific commands also exist : `sha224sum`, `sha256sum`, `sha512sum` ...
+```shell
+shasum file.txt                             # calculate the SHA-1 hash of the file
+shasum -a 1 file.txt                        # same (explicitly specify SHA-1 instead of defaulting it)
+sha1sum file.txt                            # same, using the SHA-1 specific command
+sha256sum file.txt                          # calculate the SHA-256 hash of the file
+echo "<MD5_HASH> <FILE>" | shasum --check   # check if the hash in the input is valid
+```
 
 
 - `jq` : command-line JSON parser to parse and retrieve fields in JSON files.  
@@ -483,6 +524,23 @@ wc -l < <(ls)                      # use the tmp file as standard input for the 
 ls > >(echo)                      # /dev/fd/12
 ```
 
+We can also group several command together, so they take a common input :
+```shell
+# execute several commands on the content of the input file
+{
+  read line1
+  read line2
+  echo "$line1 / $line2"
+} < file.txt
+
+# brackets variation, executing all commands in the group in a sub-shell instead of the main shell
+(
+  read line1
+  read line2
+  echo "$line1 / $line2"
+) < file.txt
+```
+
 
 ### Shell Expansion
 
@@ -494,7 +552,7 @@ Globbing is the replacement of wildcards patterns by files or paths :
 - `*` : any combination of characters
 - `?` : any single character
 - `[0-9]` : range of characters
-- `**` : any combination of characters and `/` representing a folder (may need to be enabled)
+- `**` : any combination of characters and `/` representing a folder (may need to be enabled with `shopt -s globstar`)
 
 For example, the command `ls *.jpg` uses globbing.  
 Bash replaces `*.jpg` by the list of matching files, for example `boat.jpg plane.jpg`.   
@@ -706,8 +764,13 @@ set -x          # xtrace mode : display every command executed by the shell (for
 - The `shopt` command is used to set Bash-specific configuration options.  
 Features are enabled with `-s` and disabled with `-u`.  
 ```shell
-shopt -s autocd      # allow to navigate to a folder without typing 'cd'
-shopt -s cdspell     # allow minor typo in folder name when using 'cd' 
+shopt -s autocd          # allow to navigate to a folder without typing 'cd'
+shopt -s cdspell         # allow minor typo in folder name when using 'cd' 
+
+shopt -s globstar        # allow the use of ** in globing to represent a recursive folder, for example folder1/folder2
+shopt -s dotglob         # also include files starting with a dot (hidden files) in file expansion
+shopt -s failglob        # fail the command on file expansion failure instead of returning the globbing pattern 
+shopt -s nocaseglob      # case insensitive globbing matching
 ```
 
 ### Shell Aliases
@@ -732,6 +795,66 @@ There are several startup scripts that are loaded in different situations :
   - it often sources _~/.bashrc_ to have shared setup between login and non-login shell
 - _~/.bash_login_ : loaded in an interactive login shell if _~/.bash_profile_ not found
 - _~/.profile_ : loaded in an interactive login shell if _~/.bash_profile_ and _~/.bash_login_ not found
+
+
+### Z-Shell
+
+Z-Shell (or zsh) is a Unix shell introduced in 1990 and is the main alternative to Bash.  
+Most of the features and syntax are common with Bash, but Zsh offers additional features and options.
+
+Zsh is the default Shell on several OS, like MacOS (due to licensing reasons), KaliLinux and ParrotOS.  
+We can set Zsh as the default shell with the command : `chsh -s $(which zsh)`
+
+It is common to use Zsh as the default shell, but use Bash for scripts, as it is more widely used.
+
+
+#### Zsh configuration files
+
+The first time we launch Zsh, if no Zsh startup scripts are detected, the Zsh configuration assistant is started.  
+It can help with the configuration of those startup scripts, but we can use OhMyZsh instead.
+
+Zsh configuration files are :
+- `.zshenv` : loaded first in any Zsh shell, used for essential configuration like PATH, EDITOR...
+- `.zprofile` : only loaded for login shells
+- `.zshrc` : only loaded for interactive shells
+- `.zlogin` : loaded last in login shells
+- `.zlogout` : loaded in login shells when the user logs out
+
+If we use Zsh only as an interactive shell and not for scripts, we can put all our config in `.zshrc`
+
+
+#### Oh My Zsh
+
+OhMyZsh is an open-source tool to improve the Zsh experience.  
+When installed, it creates a `.zshrc` file with a lot of reasonable defaults.
+
+OhMyZsh uses a system of plugins that can be loaded from the `.zshrc` file.  
+These plugins offer better functionalities for specific tools, for example git, dnf, pip, docker ...
+
+#### Some differences between Zsh and Bash
+
+```shell
+ls *.txt
+```
+Bash and Zsh behave differently on globing file expansion failure.  
+If the folder does not contain any txt file, Bash displays the `*.txt` glob pattern.  
+Zsh fails the command, acting like if the `globfail` shell option was set in Bash.
+
+```shell
+echo "Hello\nWorld"
+```
+Bash and Zsh behave differently for the special characters in the `echo` command.  
+Bash displays `Hello\nWorld`, to get the `\n` interpreted as a newline we need `echo -e` or `$'Hello\nWorld'`   
+Zsh interprets `\n` as a newline by default.
+
+```shell
+tasks=( task1 task2 task3 )
+echo ${tasks[1]}
+```
+Bash and Zsh use a different indexing strategy for array variables.  
+Bash returns `task2`, because in Bash array indices start from 0.  
+Zsh returns `task1`, because in Zsh array indices start from 1.  
+This difference would usually not impact us if we use Zsh interactively and keep writing scripts with Bash.
 
 
 ## Cron Jobs
@@ -848,6 +971,8 @@ Integrity of files installed by apt can be checked with the `debsums` command :
 Some useful packages to install are :
 - `git` : most popular version control system for code and configuration files
 - `wireshark` : networking traffic analyzer
+- `zsh` : advanced Unix shell (alternative to Bash)
+- `wget` : command-line tool to download files from the Internet
 - `firewalld` : popular Linux firewall on top of `iptables` or `nftables` backend
 - `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
 - `imagemagick` : image editor and image format convertor
