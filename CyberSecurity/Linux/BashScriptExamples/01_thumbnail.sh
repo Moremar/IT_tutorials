@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Program that generates a thumbnail for each .jpg file in a folder that is at least 100 pixels big
-# and does not have a thumbnail yet
+# Program that uses ImageMagick to generate a thumbnail for each .jpg file in a folder that
+# is at least 100 pixels big and does not have a thumbnail yet
 # Usage :    ./thumbnail.sh ./images
 
 

@@ -22,7 +22,7 @@ The shebang specifies the executable to run the script (this is not Bash-specifi
 
 A common shebang for Bash is `#!/bin/bash` that hardcodes the path of the `bash` command to use.
 
-A more recent shebang is `#!/usr/bin/env bash` that looks in the environment for the the `bash` command.  
+A more recent shebang is `#!/usr/bin/env bash` that dynamically looks in the environment for the `bash` command.  
 This is preferred, as it allows to control the `bash` command to use from the `PATH` environment variable.  
 This allows for example on MacOS to use a more modern version of Bash than the old one installed by default.
 
@@ -92,7 +92,7 @@ my_var = val                   # try to run the "my_var" command and give it 2 p
 ```
 
 We can also explicitly use the `declare` command when declaring a variable.  
-It is usually optional, but it is required when using ommand options.
+It is usually optional, but it is required when using command options.
 ```shell
 my_var=val                     # create a Bash variable with value "val"
 declare my_var=val             # same with explicit "declare" command
@@ -171,7 +171,7 @@ declare -r green="$(tput setaf 2)"
 declare -r reset="$(tput sgr0)"
 
 # prompt for user input and print message
-read -p "Name: " name
+read -r -p "Name: " name
 echo "Hello ${green}${name}${reset}!"
 
 # print number of files in a folder
@@ -324,9 +324,9 @@ Tests on a file :
 
 Logical NOT / AND / OR :
 ```shell
-[[ ! -e 'test.txt ]]                      # test for non existence
-[[ -e 'test.txt && -f 'test.txt ]]        # logical AND with &&
-[[ -e 'test1.txt || -e 'test2.txt ]]      # logical OR with ||
+[[ ! -e 'test.txt' ]]                        # test for non existence
+[[ -e 'test.txt' && -f 'test.txt' ]]         # logical AND with &&
+[[ -e 'test1.txt' || -e 'test2.txt' ]]       # logical OR with ||
 ```
 
 Tests on numbers :
@@ -344,7 +344,7 @@ Tests on numbers :
 (( age <= 25 ))
 ```
 
-Note that the `[ ... ]` syntax ot the `test` command are sometimes used instead of `[[ ... ]]` for conditions.  
+Note that the `[ ... ]` syntax or the `test` command are sometimes used instead of `[[ ... ]]` for conditions.  
 They are similar, but should be avoided because they call external programs instead of using Bash built-in conditions.  
 As a result, they do not support regex and pattern matching, instead filename expansion applies.  
 They exist only for compatibility reasons with old code, but should no longer be used.
@@ -397,7 +397,7 @@ case <EXPRESSION> in
   <PATTERN_1>)
     # code to execute if the EXPRESSION matches PATTERN_1
     ;;
-  <PATTERN>)
+  <PATTERN_2>)
     # code to execute if the EXPRESSION matches PATTERN_2
     ;;
   *)
@@ -459,7 +459,7 @@ for my_i in <ELEMENTS>; do
     # code to execute
 done
 
-# basic example of for loop
+# basic example of a for loop
 for my_name in John Bob Alice; do
     echo $my_name  
 done
@@ -651,11 +651,11 @@ done
 We can accept options in a Bash script like `-a` or `-l`, or multiple options together like `-al`.  
 Instead of parsing manually the options provided by positional arguments (like `$1`), we can use the `getopts` command.  
 It takes a list of supported options, and a variable where it stores one of the received options.  
-Multiple calls to `getopts` will return all the provided options one by one.  
-`getopts` return exit code 0 when an option is read, and 1 when no more option can be read.
+Multiple calls to `getopts` parse all the provided options one by one.  
+`getopts` returns exit code 0 when an option is read, and 1 when no more option can be read.
 
 ```shell
-# when ran in a script called with ./script.sh -al -o
+# when ran with :   ./script.sh -al -o
 getopts 'alo' option         # option stores "a", exit code 0
 getopts 'alo' option         # option stores "l", exit code 0
 getopts 'alo' option         # option stores "o", exit code 0
@@ -666,7 +666,7 @@ getopts 'alo' option         # no more option to read, exit code 1
 The value is stored in the `$OPTARG` variable.
 
 ```shell
-# when ran in a script called with ./script -o a.txt
+# when ran with :    ./script -o a.txt
 getopts 'o:' option
 echo "$option $OPTARG"     # o a.txt
 ```
@@ -762,7 +762,7 @@ declare -a my_array=(aaa bbb ccc)      # explicitly declare an array variable
 
 echo ${my_array}                       # aaa : default to my_array[0]
 echo ${my_array[1]}                    # bbb
-echo ${my_array[3]}                    # empty string since above the amx index
+echo ${my_array[3]}                    # empty string since above the max index
 echo ${my_array[-1]}                   # ccc (negative indexes start from the end)
 
 echo ${my_array[@]}                    # aaa bbb ccc  (array expansion)

@@ -28,7 +28,7 @@ function get_json_trivia {
 
 
 #
-# Get a trivia from the API, displays it, ask the user to reply and
+# Get a trivia from the API, display it, ask the user to reply and
 # tell if the answer was correct or not
 #
 function next_trivia {

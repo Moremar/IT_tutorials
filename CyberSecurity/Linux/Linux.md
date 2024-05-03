@@ -41,7 +41,7 @@ Linux distributions are OS built from GNU/Linux and adding specific tools and so
   - **SUSE Linux Enterprise (SLE)** : aims at businesses with LTS, commercially supported with subscription model 
   - **openSUSE** : free and open-source, community-driven, sponsored by SUSE Linux 
   - **openSUSE Tumbleweed** : rolling version of openSUSE with latest software (like Fedora for Red-Hat)
-  - **openSUSE Leap** : more stable version than Tumbleweed (like CentOS for Red Hat)
+  - **openSUSE Leap** : more stable version than Tumbleweed (like CentOS for Red-Hat)
 
 
 - **Others**
@@ -72,7 +72,7 @@ sudo dnf update
 sudo dnf install gcc kernel-devel kernel-headers make bzip2 perl
 ```
 
-Some VirtualBox additions can then be installed to simplify the interaction with the host OS.  
+Some VirtualBox additions can then be installed to improve the interaction with the host OS.  
 From VirtualBox menu, click `Devices > Insert Guest Additions CD Image…`.  
 This creates a virtual CD that we can open and run `VBoxLinuxAdditions.run` from a terminal.  
 
@@ -117,374 +117,6 @@ For example, we can modify the GRUB configuration file to show the bootloader me
 
 ## Bash Shell
 
-### Bash commands
-
-- `echo <TEXT>` : Write the argument to the standard output
-  - `-n` : no line break at the end
-  - `-e` : allow escape sequences using backslash (\n, \t, colors, bold...)
-
-
-- `pwd` : print the working directory
-
-
-- `cd <DIR>` : move to a directory
-  - `cd -` : move back to the previous directory
-  - `cd ~` : move to the current user's home directory
-  - `cd /` : move to the root directory
-  - `cd ..` : move to the parent directory
-
-
-- `ls <DIR>` : list the content of a directory
-  - `-l` : detailed result (permission, owner/group, size, creation date)
-  - `-t` : sort by modification time
-  - `-r` : reverse the sort order
-  - `-a` : include hidden files and directories
-  - `-A` : same as `-a` but exclude implied `.` and `..`
-  - `-h` : display the size in human-readable format (K/M/G)
-  - `-S` : sort by file size
-  - `--color={auto|always|never}` : use colors for the output
-
-
-- `tree <DIR>` : display a directory as a tree structure
-
-
-- `touch <FILE>` : create an empty file, or update the modification time if the file exists
-
-
-- `basename <FILE>` : show the base name of the file (without the full path) 
-
-
-- `dirname <FILE>` : show the directory of the file 
-
-
-- `file <FILE>` : give details about a file (file type and size on disk)
-
-
-- `mkdir <DIR>` : create an empty directory
-  - `-p` : create parent directories if needed, and no error if the directory already exists
-
-
-- `mv <SRC> <DEST>` : move and/or rename a file or directory
-
-
-- `cp <SRC> <DEST>` : copy a file or directory
-  - `-r` : recursive copy of a directory
-
-
-- `rm <FILE>` : permanently remove a file or directory
-  - `-r` : recursive removal of a directory
-  - `-f` : do not ask for confirmation
-
-
-- `rmdir <DIR>`: remove an empty directory
-
-
-- `diff <FILE> <FILE>` : show the different lines between 2 files
-
-
-- `find <DIR>` : list files and folders matching filter conditions
-  - `-type {f|d}` : list only files/directories
-  - `-mtime -7` : filter on files/directories modified in the last 7 days
-  - `-size +10M` : filter on files/directories bigger than 10M
-  -  `-name result*` : filter on a regex on the file or directory name
-  - `-delete` : delete the matching files/directories
-
-
-- `cat <FILE>` : display the content of a file in the console
-
-
-- `head <FILE>` / `tail <FILE>` : display the first/last 10 lines of a file or stdin in the console
-  - `-n 5` : specify the number of lines to display
-  - `-c 5` : specify the number of bytes to read instead
-
-
-- `less <FILE>` : print a page of a text file (b/f to go one page backwards/forwards)
-  - `b` : move backwards to the previous page
-  - `f` : move forwards to the next page
-  - `50p` : navigates to 50% of the text
-  - `=` : display info about the current position
-  - `-N` : show line numbers
-  - `/hello` : look forwards for a string in the file
-  - `?hello` : look backwards for a string in the file
-  - `q` : quit the file
-
-
-- `wc <FILE>` : count the number of lines, words and bytes
-  - `-l` : only show the number of lines
-  - `-w` : only show the number of words
-  - `-c` : only show the number of bytes
-
-
-- `du <FILE>` : display disk usage for a file or directory
-  - `-s` : only show a summary
-  - `-h` : human-readable units using K/M/G (by default it uses blocks)
-  - `-m` : set the unit to Mb
-
-
-- `nano <FILE>` : basic command-line text editor
-
-
-- `sort <FILE>` : sort the content in a file (or from stdin)
-  - `-r` : reverse the order
-  - `-n` : sort according to numerical order
-  - `-k 5` : sort according to the 5th column
-  - `-u` : unique values (no duplicates)
-  - `-R` : sort in a random order (useful for quizz options for example)
-
-
-- `uniq` : remove duplicate lines on a sorted input
-  - `-d` : only keep the duplicates
-
-
-- `grep <PATTERN> <FILE>` : look for a pattern in a file or in stdin
-  - `-F` : interpret the pattern as a fixed string instead of the default Basic Regular Expression (BRE)
-  - `-E` : enable Extended Regular Expression (ERE) instead of the default BRE 
-  - `-P` : enable Pearl-Compatible Regular Expression (PCRE) instead of the default BRE
-  - `-i` : case-insensitive matching
-  - `-n` : show the line number of the match
-  - `-o` : only show the matching part, not the full line
-  - `-r` : recursive search in sub-directories
-  - `-c` : count the number of lines in which the pattern is found (each line counts only once)
-  - `-s` : suppress errors about non-existent files or missing permissions 
-  - `-l` : only show the name of the files that have a match
-  - `-q` : check if a pattern is present, exit with code 0 if present, else 1
-  - `--color` : highlight the match in color  
-  Basic Regular Expression allows the use of the following meta-characters :
-  - `.` : any single character except newline
-  - `^` : beginning of the line
-  - `$` : end of the line
-  - `\ ` : escape characters that have a special meaning in the regular expression, like `\.`, `\^`, `\$`...
-  - `*` : quantifier for 0 or more occurrences of the previous letter or block
-  - `[aeiou]` : character class, that matches any letter in the square brackets
-  - `[a-zA-Z]` : range class, that matches any character in the range
-  - `[^abc]` : negating class, that matches any character that is not included in the character or range class
-  - `[[:digit:]]` : named character class, also : `lower`, `upper`, `alpha`, `alnum`, `blank` (space and tab)
-  - `\([a-z][0-9]\)` : character group using backslash-brackets, used to set a quantifier to a group    
-  ERE extends BRE, it is mostly compatible with BRE and adds new matching syntax and quantifiers :
-  - `([a-z][0-9])` : simpler syntax for character group (only incompatibility with BRE)
-  - `(aaa|bbb)` : alternation, matches one of the 2 alternatives
-  - `?` : quantifier for 0 or 1 occurrence of the previous letter or block`
-  - `+` : quantifier for 1 or more occurrences of the previous letter or block
-  - `{3}` : quantifier to match a block repeated exactly 3 times
-  - `{3,5}` : quantifier to match a block repeated 3 to 5 times
-  - `\<` and `\>` : indicate the beginning or the end of a word (`\<f` matches words starting with 'f')   
-  PCRE extends ERE and is not available on all implementations of `grep`, but is usually included in the GNU implementation.  
-  PCRE is the regex engine used by most programming languages.
-  - `\d` : matches any digit, equivalent of `[0-9]` or `[[:digit:]]`
-  - `\D` : matches any non-digit character
-  - `\s` : matches any whitespace character (space, tab, newline...)
-  - `\S` : matches any non-whitespace character
-  - `\w` : matches any word character (lower/upper-case letter, digit or underscore)
-  - `\W` : matches any non-word character
-  - `\d+(?= days)` : look-ahead, matches any number that is followed by " days"
-  - `\d+(?! days)` : negative look-ahead, matches any number that is not followed by " days"
-  - `(?<=still )\d+` : look-behind, matches any number that follows "still "
-  - `(?<!still )\d+` : negative look-behind, matches any number that does not follow "still "
-
-
-- `tr <CHAR> <CHAR>` : replace a character by another in the input file or stream
-  - `tr ab km` : replace all 'a' by 'k' and all 'b' by 'm'
-  - `tr -s ab km` : same as above
-  - `tr a-z A-Z` : make a string upper-case
-  - `tr -d ab` : delete all the 'a' and 'b' characters in the input
-  - `tr -d [:alpha:]` : delete all letters, other selectors include `digit`, `alnum`, `lower`, `upper`...
-
-
-- `rev <STR>` : reverse a string
-
-
-- `cut <FILE>` : extract from a file or stdin a part of the input
-  - `-b 1-10` : bytes mode, extracts bytes 1 to 10
-  - `-c 1-10` : characters mode, extract the characters 1 to 10
-  - `-d ' ' -f 2` : field mode, use a space delimiter and extract the 2nd field
-
-
-- `sed <FILE>` : run sed-specific commands on the input file or stdin (delete/insert/replace lines)
-  - `s/hello/hi/g` to replace all occurrences of hello by hi
-  
-
-- `tee <FILE>` : send the output both to a file and to stdout (stream redirection allows only one of the 2)
-  - `-a` to append instead of replacing the output file
-
-
-- `date +<FORMAT>` : display the current date in a specific format
-  - `%H` : hour (24h)
-  - `%I` : hour (12h)
-  - `%p` : AM or PM
-  - `%M` : minute
-  - `%S` : second
-  - `%T` : 24h format time, equivalent to `%H:%M:%S`
-  - `%m` : month
-  - `%d` : day
-  - `%Y` : year
-
-
-- `time <CMD>` : measure the time that a command takes to run
-
-
-- `gzip <FILE>` : compress a file by gzip compression (GNU zip) with extension `.gz`
-  - `-k` : also keep the original file (by default it may remove it)
-  - `-v` : verbose mode
-  - `-d` : decompress a gzip compressed file (can also use the `gunzip` command instead)
-
-
-- `bzip2 <FILE>` : compress a file by bzip2 compression with extension `.bz2`, slower and more efficient than gzip
-  - `-k` : also keep the original file (by default it may remove it)
-  - `-v` : verbose mode
-  - `-d` : decompress a bzip2 compressed file (can also use the `bunzip2` command instead)
-
-
-- `xz <FILE>` : compress a file by LZMA compression with extension `.xz`, most advanced compression
-  - `-k` : also keep the original file (by default it may remove it)
-  - `-v` : verbose mode
-  - `-d` : decompress a xz compressed file (can also use the `unxz` command instead)
-  - `-e` : extreme compression, take more CPU to compress even more efficiently
-
-
-- `tar czvf <FOLDER>` : create or extract a compressed tar archive.
-  - `-c` : create a new archive
-  - `-x` : extract an archive
-  - `-z` : compress/decompress an archive with gzip
-  - `-j` : compress/decompress an archive with bzip2
-  - `-J` : compress/decompress an archive with xz
-  - `-v` : verbose mode
-  - `-f <NAME>` : specify the name of the archive to create/extract
-  - `-C <FOLDER>` : specify the name of the folder to extract the archive into
-  - `-t` : list the content of an archive
-```shell
-tar -cvf data.tar ./data           # create an archive
-tar -czvf data.tgz ./data          # create a compressed archive (gzip)
-tar -tf data.tgz                   # list the content of an archive
-tar -xzvf data.tgz                 # decompress an archive
-```
-
-
-- `history` : show the history of commands executed in this terminal  
-  Bash history is persistent and stored in the `~/.bash_history` file.  
-  We can control the history file and history size with variables `HISTFILE` and `HISTSIZE`.   
-  - `-c` : clear the command history
-  - `-d 150` : delete command history entry at position 150
-```shell
-!!               # execute the most recent command in the history
-!150             # execute the command in the history at position 150
-!-3              # execute the 3rd most recent command in the history
-!cd              # execute the most recent command that starts with "cd"
-!?cd?            # execute the most recent command that contains "cd"
-```
-
-- `flock mylock.txt <CMD>` : take an exclusive lock (create the lock file if needed) and run a command once the lock is obtained
-  - `-n` : if the lock is already taken, exit immediately instead of waiting for the lock
-  - `-E 0` : return status when exiting due to the `-n` flag (0 for OK status)
-
-
-- `which <CMD>` : show the full path of a shell command
-  - `-a` : print all matching executables (not only the first)
-
-
-- `ping <IP>` : send ICMP packet to an IP to test the connection
-
-
-- `man <CMD>` : display the manual of a command
-
-
-- `sudo <CMD>` : run a command as superuser, require user password and the user must be allowed to use sudo
-
-
-- `watch <CMD>` : run a command periodically in the terminal
-  - `-n 3` : run the command every 3 seconds
-
-
-- `echo '1.5 + 2.3' | bc` : basic calculator, evaluate a math string and return the result of the operation
-
-
-- `source <SCRIPT>` : run a script in the current context (so variables defined in the script persist)
-
-
-- `awk '<PATTERN> { <ACTION> }' <FILE>` : text-processing tool and programming language, used mostly with CSV files and tabular data.  
-  It has a rich language, but is being replaced by Python for complex text analysis.  
-  It processes a file line by line, and executes the action if the line matches the pattern.  
-  It breaks the lines into column (with space delimiter by default) and makes each column available with parameters $1, $2 ...
-```shell
-awk '/aaa/' file                             # print all lines containing "aaa" (action omitted so by default print the entire line)
-awk '$2 > 10' file                           # print all lines where the 2nd column is a number bigger than 10
-awk '{ print $2 }' file                      # print the 2nd column for each line (pattern omitted so by default every line matches)
-awk -F ',' '{ print $2 }' file               # print the 2nd column for each line for a comma-separated file
-awk '{ sum += $1 } END { print sum }' file   # sum the first column of each line of a file and print this sum
-```
-
-
-- `wget http://example.com/file.zip` : non-interactively download a file from an URL and save it in the current directory.  
-  wget can download an entire website and pause/resume downloads (which curl cannot), but it cannot upload data. 
-  - `-O <FILE_NAME>` : specify the name of the file saved locally
-  - `-c` : resume an interrupted download from where it stopped
-  - `-b` : run the download in the background and output in a log file instead of the standard output of the terminal
-  - `-q` : quiet mode, do not generate any output
-  - `-i <TXT_FILE>` : provide an input .txt file with the list of files to download
-  - `-r` : recursive download, to download links in the target website or sub-folders of the target folder
-  - `-p` : download all website pre-requisites like stylesheets, scripts, images... (used when downloading a website)
-  - `-k` : converts links in the downloaded website to reference the local files
-  - `-l 5` : set the maximum recusion level to 5
-  - `-A jpg` : limit the links followed in the recursion to accept only specific extensions (jpg only here)
-
-
-- `curl <OPTIONS> <URL>` : fetch and display web pages or API content, supporting multiple protocols (HTTP, HTTPS, FTP, SFTP...)  
-  It takes a URL-encoded string as URL, and displays the response in stdout.   
-  It must be installed with `sudo apt install curl`  
-  `curl 'https://www.example.com/api.php' -G --data-urlencode 'param1=New York' --data-urlencode 'param2=aaa'`
-  - `-v` : verbose
-  - `-o <FILE>` : save output to a file
-  - `-s` : silent mode (do not show errors or progress bar)
-  - `-G` : force an HTTP GET request (default to POST if `--data` or `--data-urlencode` is provided)
-  - `-d <DATA>` : send the data to a POST request
-  - `--data-urlencode <DATA>` : same as `-d` but perform URL-encoding on the data (to replace every space by `%20` for example)
-  - `--fail` : on HTTP failure, curl exits with failure code 22 instead of creating the output returned by the server
-
-
-- `md5sum <FILE>` : calculate the MD5 hash of a file
-
-
-- `shasum -a 1 <FILE>` : calculate the SHA-1 hash of a file, we can also use variations of SHA-2.  
-  SHA algo-specific commands also exist : `sha224sum`, `sha256sum`, `sha512sum` ...
-```shell
-shasum file.txt                             # calculate the SHA-1 hash of the file
-shasum -a 1 file.txt                        # same (explicitly specify SHA-1 instead of defaulting it)
-sha1sum file.txt                            # same, using the SHA-1 specific command
-sha256sum file.txt                          # calculate the SHA-256 hash of the file
-echo "<MD5_HASH> <FILE>" | shasum --check   # check if the hash in the input is valid
-```
-
-
-- `jq` : command-line JSON parser to parse and retrieve fields in JSON files.  
-  It must be installed with `sudo apt install jq`
-```shell
-cat file.json | jq                                # pretty-print the JSON file
-                                                  #  -r : raw string (does not include color code)
-                                                  #  -c : compact (on a single line instead of pretty-print) 
-cat file.json | jq '.name'                        # print the value of the "name" property
-cat file.json | jq '[.name, .age]'                # print an array with the values of the name and age properties
-cat file.json | jq '.hobbies[0].name'             # print the name of the first hobby inside the hobbies array property
-cat file.json | jq '.hobbies[].name'              # print the name of each hobby inside the hobbies array property
-cat file.json | jq '.hobbies[]' | jq '.[].name'   # same, but using multiple linked calls to jq
-cat file.json | jq '.hobbies | length'            # print the length of the hobbies array using the length operator
-```
-
-
-- `hostname` : display the hostname of the machine, to reach it from the local network (with the `.local` suffix) 
-
-
-- `lsb_release -a` : display Linux distribution info (name, version, code name...)
-
-
-- `screen` : open a virtual terminal in the background, and connect the local terminal to it.  
-             It looks like a normal terminal, but it has created a session that other users can interact with.  
-             It is very useful to create a shared terminal for debugging remotely with a colleague.
-  - `screen -list` : list all existing screen sessions
-  - `screen -x <SESSION_NAME>` : join an existing session, so we can enter commands and see anything happening on the terminal
-  - `Ctrl-A Ctrl-D` : detach from the session (keep the session alive in the background)
-  - `exit` : terminate the session and detach all terminals that joined it
-             
-
-
 
 ### Command Combination and Redirection
 
@@ -507,7 +139,7 @@ while IFS= read -r line ; do
   echo "Processing line : $line"
 done <<< "$input"                     # use a multi-line string as input for the while loop
 
-# pipes
+# pipe : the first command is executed in the main shell, and the second in a subshell using its output as input
 ls | wc -l
 
 # we can redirect stderr to stdout if we want the next command to use it as input
@@ -621,7 +253,7 @@ echo \" \' \* \\
 echo '"'
 
 # the -e option allows to interpret the special characters
-echo "aa\nbb\ncc"       # print uninterpreted string "aa\nbb\ncc"
+echo "aa\nbb\ncc"       # print uninterpreted string "aa\nbb\ncc" (zsh would interpret \n)
 echo -e "aa\nbb\ncc"    # print aa, bb and cc on 3 lines
 
 # we can define a variable with the $'...' construct to interpret the characters
@@ -644,7 +276,7 @@ echo "Lines:" `ls | wc -l`
 In Bash, unlike most programming languages, single quotes and double quotes do not indicate strings.  
 They are simply used to control the type of shell expansion that Bash should perform.  
 Single quotes disable word splitting, escaping and all shell expansion.  
-Double quotes disable word splitting and some expansions (tilde, *, ?), but allow escaping and variable expansion.
+Double quotes disable word splitting and some expansions (tilde, *, ?), but allow escaping, variable expansion and command expansion.
 
 ```shell
 echo $PWD/*.txt             # variable expansion and globbing : a.txt b.txt
@@ -920,7 +552,7 @@ sudo dpkg -r neofetch                                # uninstall a package (by p
 
 #### apt
 
-apt build on top of dpkg, it can download the requested packages from registered repositories and manage dependencies.  
+apt builds on top of dpkg, it can download the requested packages from registered repositories and manage dependencies.  
 `apt-get` is the older and more stable version of it, and both are compatible (they share config files and package format).  
 
 The list of available package versions is not automatically kept up-to-date by the `apt` package manager.  
@@ -945,19 +577,19 @@ We can add a **PPA** (Personal Package Archive), which is a repository from pers
 The `add-apt-repository` command configures the additional repository and adds the public key of the repository to the trusted keys.
 
 ```shell
-sudo apt update             # update the list of packages that can be upgraded
-sudo apt list --upgradable  # list packages that can be upgraded
-sudo apt upgrade            # upgrade packages that can be upgraded (install additional dependencies if needed)
-                            # packages that require the removal of other packages are not upgraded
-sudo apt full-upgrade       # upgrade all packages, even those requiring to remove some existing packages
-sudo apt autoremove         # remove old dependencies that are no longer needed
+sudo apt update               # update the list of packages that can be upgraded
+sudo apt list --upgradeable   # list packages that can be upgraded
+sudo apt upgrade              # upgrade packages that can be upgraded (install additional dependencies if needed)
+                              # packages that require the removal of other packages are not upgraded
+sudo apt full-upgrade         # upgrade all packages, even those requiring to remove some existing packages
+sudo apt autoremove           # remove old dependencies that are no longer needed
 
-sudo apt install <PKG>      # install a package
-sudo apt remove <PKG>       # remove a package
+sudo apt install <PKG>        # install a package
+sudo apt remove <PKG>         # remove a package
 
-sudo apt show <PKG>         # display info about a package (size, dependencies, description...)
+sudo apt show <PKG>           # display info about a package (size, dependencies, description...)
 
-sudo apt install -f         # let apt resolve dependencies conflicts by installing/upgrading/removing dependencies 
+sudo apt install -f           # let apt resolve dependencies conflicts by installing/upgrading/removing dependencies
 
 sudo apt add-apt-repository ppa:ondrej/php              # register a 3rd party repository
 sudo apt add-apt-repository --remove ppa:ondrej/php     # deregister a 3rd party repository 
@@ -969,23 +601,28 @@ Integrity of files installed by apt can be checked with the `debsums` command :
 - `-l` : list packages that do not have checksum info
 
 Some useful packages to install are :
-- `git` : most popular version control system for code and configuration files
-- `wireshark` : networking traffic analyzer
-- `zsh` : advanced Unix shell (alternative to Bash)
-- `wget` : command-line tool to download files from the Internet
-- `firewalld` : popular Linux firewall on top of `iptables` or `nftables` backend
-- `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
-- `imagemagick` : image editor and image format convertor
-- `nmap` : network scanner (machines and open ports)
 - `apache2` : HTTPD Apache web server
-- `links` : in-terminal web browser (useful to see if a web server is reachable for example)
-- `gparted` : Gnome Partition Editor GUI
-- `smartmontools` : SMART protocol support for physical drive health monitoring
-- `lvm2` : Logical Volume Manager to abstract multiple physical disks behind a single logical volume
-- `debsums` : used to compare the checksum of deb packages to ensure they were not tampered with
 - `cmake` : cross-platform build system generator
-- `neofetch` : system info script printing distribution logo and info on terminal
 - `cmatrix` : infinite program simulating the display from the Matrix in the terminal
+- `debsums` : compare the checksum of deb packages with the ones stored in metadata to ensure they were not tampered with
+- `dialog` : in-shell popup tool used in Bash scripts
+- `firewalld` : popular Linux firewall on top of `iptables` or `nftables` backend
+- `git` : most popular version control system for code and configuration files
+- `gparted` : Gnome Partition Editor GUI
+- `htop` : interactive process viewer (improvement of top)
+- `imagemagick` : image editor and image format convertor
+- `links` : in-terminal web browser (useful to see if a web server is reachable for example)
+- `lvm2` : Logical Volume Manager to abstract multiple physical disks behind a single logical volume
+- `neofetch` : system info script printing distribution logo and info on terminal
+- `nmap` : network scanner (machines and open ports)
+- `openssh-server` : SSH server to accept incoming SSH connections
+- `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
+- `shellcheck` : Bash script validation tool
+- `smartmontools` : SMART protocol support for physical drive health monitoring
+- `wget` : command-line tool to download files from the Internet
+- `wireshark` : networking traffic analyzer
+- `zenity` : GUI popup tool used in Bash scripts
+- `zsh` : advanced Unix shell (alternative to Bash)
 
 
 ### RHEL-based distributions (Fedora, CentOS, Red-Hat Entreprise Linux)
@@ -1252,7 +889,7 @@ This allows communication between different terminal sessions for example by red
 ### User configuration
 
 User information are stored over multiple files :
-- `/etc/passwd` : contain username, user ID, primary group ID, user description, home directory, user shell ...
+- `/etc/passwd` : contain username, user ID, primary group ID, user description, home directory, user shell ... (not the password!)
 - `/etc/shadow` : encrypted user passwords and password aging information (requires root privilege)
 - `/etc/group` : contain each group and all its member users
 
@@ -1269,6 +906,8 @@ passwd -S                  # show current user username, password type, update t
 passwd                     # change password for the current user (prompt for the password)
 sudo passwd -S user1       # show password info for a specific user
 sudo passwd user1          # change password for a specific user
+sudo passwd -d user1       # remove the password for user1 from /etc/shadow, disabling password-based authentication
+                           # this is often done on the root user to prevent login as root (use sudo instead)
 
 sudo passwd -l user1       # lock a user account
 sudo passwd -u user1       # unlock a user account
@@ -1300,7 +939,7 @@ It is a good practice to prevent to log as the root user, by deleting and lockin
 It requires the user password, and the user must be explicitly allowed to perform the `sudo` command.  
 The allowed sudoers are stored in the `/etc/sudoers` file.  
 
-When a `sudo` command is executed and the user password is provided, a session is created for 15min.   
+When a `sudo` command is executed and the user password is provided, a session is created for 15 min.   
 When this session is expired, the next `sudo` command will require again the user password.  
 We can force the expiration of the session with `sudo -k`.  
 We can start a shell in sudo mode with `sudo -s`, so all commands executed in it have an implicit sudo.
@@ -1390,9 +1029,11 @@ chmod 764 a.txt      # give rwx permissions to the owner, rw permissions to the 
 chmod 777 a.txt      # give rwx access to the owner, the group and other users
 chmod 777 -R dirA/   # give rwx access to all users for all files and directories inside a directory
 
-chown root:group1 a.txt      # change the owner and group of a file
+chown root:group1 a.txt      # change the owner and group of a file (need to be the file owner or root)
 chown root:group1 -R dirA/   # change the owner and group of all files and directories in a directory
 ```
+
+#### Umask
 
 New created files and directories have the owner and the group of the user who created them.  
 Their permissions are decided by a base, from which we subtract the **umask**.  
@@ -1404,10 +1045,15 @@ The umask can be modified in the current shell, or set in `~/.bashrc` to be pers
 To have it applied even in GUI sessions, we can modify its default value in the `/etc/logins.def` config file.  
 The fields to edit are `UMASK` and `USERGROUPS_ENAB`.
 
+```shell
+umask             # show the umask
+umask 022         # set the umask
+```
+
 #### Sticky Bit
 
 By default, any user with write and execute permission in a directory can delete or rename files.  
-Directories support a **sticky bit**, that prevents deletion and renaming for non-owner users.  
+Directories support a **sticky bit**, that limit file deletion and renaming to root, directory owner and file owner.  
 The sticky bit can be specified in the umask.  
 The sticky bit has no effect anymore on files.  
 The sticky bit is shown with `ls -l` at the position of the other users `x` permission.  
@@ -1415,12 +1061,10 @@ When the sticky bit is set, it shows `t` instead of `x` or `T` instead of `-`.
 The sticky bit is used for the `/tmp` directory, so every user can read and write but not delete other user's files.
 
 ```shell
-umask             # show the umask
-umask 022         # set the umask
-umask 0022        # set the umask with a default sticky bit of 0
+umask 0022              # set the umask with a default sticky bit of 0
 
-chmod +t a.txt       # set the sticky bit
-chmod 1777 a.txt     # set permission and the sticky bit (see below)
+chmod +t mydir          # set the sticky bit
+chmod 1777 mydir        # set permission and the sticky bit (see below)
 ```
 
 #### SUID and SGID
@@ -1452,7 +1096,8 @@ chmod g+s my_bin      # set the SGID bit
 A process is an independent execution unit managed by the Linux kernel.  
 It has its own resources (CPU, memory, opened files, network connections...) that it does not share with other processes.  
 
-When a process in a shell exits, its exit code is available via the `$?` special variable, with `echo $?`.
+When a process in a shell exits, its exit code is available via the `$?` special variable, with `echo $?`.  
+The exit code is 0 on success, and any other value on failure (usually 1).
 
 
 ### Process monitoring 
@@ -1542,7 +1187,7 @@ The most popular signal types are :
 - **SIGCONT** (continue) : tell the kernel to resume a process that was previously stopped
 
 ```shell
-kill -l                         # show all available signals
+kill -l                         # show all available signals and their ID
 
 kill 1234                       # send a SIGTERM signal to process 1234 (default signal)
 kill -s SIGTERM 1234            # explicitly send a SIGTERM signal
@@ -1704,6 +1349,8 @@ systemctl start <UNIT>         # start a unit
 systemctl stop <UNIT>          # stop a unit
 systemctl restart <UNIT>       # restart a unit
 systemctl reload <UNIT>        # reload the unit configuration
+
+systemctl daemon-reload        # reload all service configurations (and remove remnants of old services)
 
 systemctl cat <UNIT>           # show the configuration file of the unit
 ```
@@ -1931,8 +1578,8 @@ help                             # show available commands
 quit                             # quit the parted shell
 
 print devices                    # show existing disks
-print partitions                 # show existing partitions on the selected disk
 select /dev/sdb                  # select a disk
+print partitions                 # show existing partitions on the selected disk
 rm 1                             # remove partition 1 on the selected disk
 mklabel gpt                      # create a partition table on the selected disk (wipe all partitions on it)
 mkpart primary ext4 2048s 1000   # create a partition with ext4 FS of 1GB
@@ -2298,7 +1945,7 @@ If we connect again later to this server, the fingerprint received from the serv
 If they do not match, a warning is shown, as it could mean we are victim of a man-in-the-middle attack.
 
 When SSH is configured between a client and a server, it also allows the use of SFTP.  
-SFTP us used in the same way as FTP to transfer files between client and server, and is secured by SSH.  
+SFTP is used in the same way as FTP to transfer files between client and server, and is secured by SSH.  
 ```shell
 scp <USERNAME>@<SERVER>:<FILE_TO_COPY> <LOCAL_DESTINATION>
 ```
@@ -2461,7 +2108,7 @@ sudo apt install phpmyadmin
 ```
 During the installation wizard, we select Apache2 (with Spacebar) to auto-generate the phpMyAdmin config.  
 We can see that it created the file `/etc/apache2/conf-available/phpmyadmin.conf`.  
-Once install, we restart the web server with `sudo systemctl restart apache2`.  
+Once installed, we restart the web server with `sudo systemctl restart apache2`.  
 We can then access the phpMyAdmin management interface at URL : `http://localhost/phpmyadmin`
 
 To avoid the phpMyAdmin web interface to be compromised, we can add `Require local` in the config file to limit access to localhost connection.
@@ -2700,5 +2347,4 @@ convert dog.jpg -crop 300x200+200+10 output.jpg         # crop a piece of an ima
 # create a montage with 2 tiles (1 image per line and 2 per column)
 # each tile has size 300x200 and tiles are separated by 5 pixels spacing
 montage dog1.jpg dog2.jpg -geometry 300x200+5+5 -tile 1x2 output.log
-
 ```
