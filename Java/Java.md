@@ -73,23 +73,98 @@ byte myByte = Byte.MAX_VALUE;
 myByte = (byte) (myByte / 2);      // cast required, otherwise Java considers the expression as an int
 ```
 
+
 ### Java built-in classes
+
+
+#### Primitive type wrappers
 
 Each of the primitive type has a corresponding Java built-in wrapper class exposing constants and methods.  
 The wrapper classes are : `Byte`, `Short`, `Integer`, `Long`, `Float`, `Double`, `Character`, `Boolean`
 
-Java also has built-in classes for commonly used data types :
-- `BigDecimal` : used for floating point objects that need exact precision (float and double truncate the result)
-- `String` : immutable sequence of characters, that can include unicode characters
+
+#### String
+
+The `String` class represents an immutable sequence of characters, that can include unicode characters.
 
 ```java
-String myStr = "This cost 10\u0024 or more!";    // \u0024 is the unicode representation of '$'
-myStr = "I am " + 10 + " years old";             // String supports the + operator with an integer or double
-myStr = new String("Hi");                        // instanciate string by constructor with the "new" keyword
+String myStr = "This cost 10\u0024 !";      // \u0024 is the unicode representation of '$'
+myStr = new String("Hi");                   // instanciate string by constructor with the "new" keyword
 
-int a = Integer.parseInt("1234");                // parse a string to an int
-double a = Double.parseDouble("1.234");          // parse a string to a double
+int a = Integer.parseInt("1234");           // parse a string to an int
+double a = Double.parseDouble("1.234");     // parse a string to a double
+
+// description methods
+myStr.length();
+myStr.charAt(0);
+myStr.indexOf('a');
+myStr.lastIndexOf('a');
+myStr.isEmpty();
+myStr.isBlank();                            // since JDK 11, true if the string contains only whitespaces
+
+// comparison methods
+myStr.equals("aaa");                        // test equality (case-sensitive)
+myStr.equalsIgnoreCase("aaa");              // test equality (case-insensitive)
+myStr.contains("aaa");
+myStr.endsWith("aaa");
+myStr.startsWith("aaa");
+
+// modification methods
+myStr.trim();                               // remove leading and trailing whitespaces (space, tab, newline)
+myStr.strip();                              // since Java 11, similar to trim() but remove more unicode whitespaces
+myStr.stripLeading();
+myStr.stripTrailing();
+myStr.toLowerCase();
+myStr.toUpperCase();
+myStr.concat("AAA");
+String.join(" / ", "A", "B", "C");          //  A / B / C
+myStr.repeat(3);                            // since Java 11
+myStr.replace("aa", "bb");                  // replace all occurences of a string by another
+myStr.replaceAll("[aeiou]", "X");           // replace all occurences of a regex by a string
+myStr.replaceFirst("[aeiou]" "X");          // replace first occurence of a regex by a string
+myStr.substring(2, 4);                      // return substring from index 2 (inclusive) to index 4 (exclusive)
 ```
+
+We can use the `StringBuilder` class for a mutable string object.  
+Unlike the `String` variants, all modifications on StringBuilder (concatenation, upper case...) are performed in-place.  
+StringBuilder methods return a self-reference, to allow method chaining.
+
+```java
+StringBuilder builder = new StringBuilder("Hello");
+builder.append(" World")              // Hello World
+       .deleteCharAt(4)                 // Hell World
+       .insert(4, " of a")              // Hell of a World
+       .replace(10, 15, "Day")          // Hell of a Day
+       .reverse()                       // yaD a fo lleH
+       .setLength(3);                   // yaD
+
+System.out.println(builder);            // call the toString() method that creates a String
+```
+
+Since JDK 15, Java introduced `text blocks` with triple double-quotes for formatted multi-line strings :
+```java
+String blockStr = """
+    To buy :
+      \u2022 Tomatoes 
+      \u2022 Potatoes """;
+```
+
+Strings can also be formatted to replace placeholders with values :
+```java
+int age = 13;
+double grade = 12.5;
+
+// concatenation with the + operator (supported for integer and double)
+String myStr = "Age: " + age + "  Grade: " + grade;
+
+// formatting
+String formatted1 = String.format("Age: %d  Grade: %.2f", age, grade);   // Age: 13  Grade: 12.50
+String formatted2 = "Age: %d  Grade: %.2f".formatted(age, grade);        // Age: 13  Grade: 12.50
+```
+
+#### BigDecimal
+
+BigDecimal is used for floating point objects that need exact precision (float and double truncate the result).
 
 
 ## Control Flow
@@ -207,4 +282,126 @@ Scanner scanner = new Scanner(new File(myPath));    // scanner reading from a fi
 System.out.print("Your name: ");
 String name = scanner.nextLine();
 ```
+
+
+## OOP (Object-Oriented Programming)
+
+### Classes
+
+Classes in Java are organized into logical groups called **packages**, defined by the `package` statement.  
+When its package is not specified, a class belongs to the default package.
+
+A top-level class can have 2 access modifiers :
+- `public` to allow any class to access it
+- no access modifier to limit access to classes in the same package
+
+Instance fields and methods also have an access modifier :
+- `public` to allow access to any class
+- `protected` to allow access only to classes in the same package **or subclasses in any package**
+- `private` to not allow access to any class
+- no modifier (package-access) to allow access only to classes in the same package
+
+Instance fields of primary types are defaulted to 0 / 0.0 / false when not initialized.  
+Instance fields of class types are defaulted to null when not initialized.
+
+An object is instantiated with the `new` keyword, it creates an instance and returns a reference to the object.  
+If we assign this object to another variable, then both variables are references pointing to the same object in memory.
+
+```java
+public class Person {
+
+    // constructors
+    public Person() {             // default constructor
+        this("?", "?", false);    // constructor chaining, must be the 1st instruction in the constructor
+    }
+    
+    public Person(String firstName, String lastName, boolean status) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.status = status;
+    }
+    
+    // instance fields
+    private String firstName;
+    private String lastName;
+    private boolean single = true;         // default value
+    
+    // getters
+    public String getFirstName() { return firstName; }
+    public String getLastName()  { return lastName; }
+    public boolean isStatus()    { return status; }
+
+    // setters (allow parameter validation before assignment)
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public void setLastName(String lastName)   { this.lastName = lastName; }
+    public void setStatus(boolean status)      { this.status = status; }
+            
+    // instance method
+    public void describe() {
+        System.out.println(firstName + " " + lastName);
+    }
+    
+    // override method from the Object class
+    @Override
+    public String toString() {
+        return "Person{" + firstName + ", " + lastName + ", " + status + "}";
+    }
+}
+
+// instanciate the class
+Person person = new Person();       // use the "new" keyword to get a reference on a new instance 
+Person person2 = person;            // person2 is a reference to the same object in memory
+```
+
+### Inheritance
+
+All Java classes inherit implicitly from the `java.lang.Object` class.  
+
+The `super` keyword is used to call the constructor or methods of the parent class.
+
+```java
+public class Person {
+    protected String name;                         // protected access so sub-classes can access it
+    public Person(String name) { this.name = name; }
+    public String getName() { return name; }
+    public String setName(String name) { this.name = name; }
+    public String toString() { return "Person{" + name + "}"; }
+}
+
+public class Student extends Person {
+    private int grade;
+    public Student(String name, int grade) {
+        super(name);                                 // call parent class constructor
+        this.grade = grade; 
+    }
+    public int getGrade() { return grade; }
+    public String setGrade(int grade) { this.grade = grade; } 
+    
+    @Override                                        // Annotation (optional but helps compiler and reader) 
+    public String toString() {
+        return "Student{" + name + ", " + grade + "}";
+    }
+}
+```
+
+### Records
+
+Java classes come with a lot of boilerplate code : constructor, getters, setters.  
+Many Java classes are POJOs (Plain Old Java object) with no logic, just constructors, getters and setters.  
+Since JDK 14, Java introduced the `record` keyword to define immutable POJOs without all the boilerplate code.
+
+A record is a special type of data structure designed for immutable POJOs, like objects read from a database.  
+Java auto-generates the constructor, getters and toString() override method.  
+Records are immutable so they do not have setters, the only way to set the fields is via the constructor.
+
+```java
+// declare a record
+public record Student(String name, String section, int grade) {}
+
+// instantiate a record
+Student student = new Student("Bob", "A", 13);
+System.out.println(student.name());                   // auto-generated getter
+System.out.println(student);                          // auto-generated toString()
+```
+
 
