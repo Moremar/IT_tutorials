@@ -40,6 +40,23 @@ It evaluates declarations, statements, and expressions as they are entered and i
 
 ## Basics
 
+### Basic program
+
+```java
+// specify the package of the class
+package com.example;
+
+// each Java file should define a class
+public class ExampleMain {
+
+    // a program needs an entry-point main() method to run
+    // it takes a parameter of type String[] (array) or String... (elision) to store the program arguments
+    public static void main(String[] args) {
+        System.out.println("Running...");
+    }
+}
+```
+
 ### Primitive types
 
 Java supports 8 primitive data types that are not classes.  
@@ -117,6 +134,7 @@ myStr.stripTrailing();
 myStr.toLowerCase();
 myStr.toUpperCase();
 myStr.concat("AAA");
+myStr.split("-");
 String.join(" / ", "A", "B", "C");          //  A / B / C
 myStr.repeat(3);                            // since Java 11
 myStr.replace("aa", "bb");                  // replace all occurences of a string by another
@@ -162,10 +180,101 @@ String formatted1 = String.format("Age: %d  Grade: %.2f", age, grade);   // Age:
 String formatted2 = "Age: %d  Grade: %.2f".formatted(age, grade);        // Age: 13  Grade: 12.50
 ```
 
+#### Arrays
+
+Arrays are instances of a built-in class that inherits from Object and has a single field called `length`.
+
+```java
+int[] myArray;                           // array declaration 
+int myArray[];                           // alternative syntax (to avoid)
+int[] myArray = new int[4];              // array declaration and instanciation (size required and fixed)
+int[] myArray = new int[]{1, 2, 3, 4};   // array declaration, instanciation and initialization
+int[] myArray = {1, 2, 3, 4};            // alternative syntax, only allowed in delaration
+myArray = new int[]{1, 2, 3, 4};         // existing array assignment
+myArray = { 1, 2, 3, 4 }; // NOT VALID!
+
+myArray[1] = 100;
+myArray.length;                          // array length
+myArray.getClass().getSimpleName();      // int[]
+
+// for loop on an array 
+for (int item : myArray) {
+  System.out.println(item);
+}
+```
+
+The `java.util.Arrays` class offers some useful methods to manipulate arrays.  
+Methods like search or sort algorithms are overloaded for all basic types and for Object.
+
+```java
+myArray.toString();                        // [I@27974e9a   (array of int at a specific address)
+Arrays.toString(myArray);                  // [1, 2, 3]     (call toString() on each item)
+Arrays.deepToString(myArray);              // [1, 2, 3]     (call Arrays.toString() on each item)
+
+Arrays.fill(myArray, 5);                   // set all items of the array to 5 in-place
+
+Arrays.sort(myArray);                      // sort the array in-place in ascending order
+
+Arrays.binarySearch(myArray, 2);           // index of the item in a SORTED array by binary search
+                                           // if not found, return -1 * insertion index (index where the item would be)
+
+Arrays.copyOf(myArray, 15);                // shallow copy of the array (truncate or pad with 0 to reach target size 15)
+
+Arrays.equals(myArray, myArray2);           // test content equality between 2 arrays
+```
+
+We can declare multi-dimensional arrays like matrices using nested arrays :
+```java
+// 2D square matrix
+int[][] myMatrix = { {1, 2, 3}, {4, 5, 6}, {7, 8, 9} };
+
+// 2D array with lines of different size
+int[][] myMatrix = { {1}, {2, 3}, {4, 5, 6} };
+
+// define a 2D square matrix without initializing it
+int[][] myMatrix = new int[3][3];
+
+// define a 2D array of int with 3 lines of variable length
+int[][] myMatrix = new int[3][];
+```
+
+#### Random
+
+The `java.util.Random` class exposes a pseudo-random numbers generator.
+
+```java
+Random random = new Random();
+random.nextInt();                 // pseudo-random integer in [0, MAX_INT] (max_INT = 2^32 = 4.2M)
+random.nextInt(10);               // pseudo-random integer in [0, 9]
+random.nextDouble();              // pseudo-random double in [0.0, 1.0[
+random.nextDouble(10.0);          // pseudo-random double in [0.0, 10.0[
+```
+
 #### BigDecimal
 
 BigDecimal is used for floating point objects that need exact precision (float and double truncate the result).
 
+
+### Type inference
+
+
+Local variable inference war introduced with Java 10 with the `var` keyword to improve readability.  
+It infers the type at compile-time, and is allowed only when the compiler can deduce the type from the assigned value.
+```java
+var movie = new Movie("Interstellar");
+```
+
+To check the runtime-type of an object we can use the `getClass()` method.  
+We can also test if an object is an instance of a class using the `instanceof` operator :
+```java
+boolean isPerson1 = myObj.getClass().getSimpleName().equals("Person");    // true if class is Person
+boolean isPerson2 = myObj instanceof Person;                              // true if class is Person or derived
+
+// syntax added in Java 16 to automatically cast an object with instanceof
+if (myObj instanceof Person myPerson) {
+    myPerson.doSomething();
+}
+```
 
 ## Control Flow
 
@@ -289,7 +398,9 @@ String name = scanner.nextLine();
 ### Classes
 
 Classes in Java are organized into logical groups called **packages**, defined by the `package` statement.  
-When its package is not specified, a class belongs to the default package.
+When its package is not specified, a class belongs to the default package.  
+A common practice is to start the package name with `com.<COMPANY_NAME>`.  
+The fully qualified name of a class must be unique (the class name must be unique within its package).
 
 A top-level class can have 2 access modifiers :
 - `public` to allow any class to access it
@@ -306,6 +417,9 @@ Instance fields of class types are defaulted to null when not initialized.
 
 An object is instantiated with the `new` keyword, it creates an instance and returns a reference to the object.  
 If we assign this object to another variable, then both variables are references pointing to the same object in memory.
+
+Methods take basic type parameters by value and class parameters by reference.  
+This means that a method can modify all original class objects received as parameters.
 
 ```java
 public class Person {
