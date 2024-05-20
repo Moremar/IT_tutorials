@@ -1,10 +1,12 @@
 # Java Tutorial
 
+
 ## Installation
 
 Install the latest LTS JDK from [https://www.oracle.com/java/technologies/](https://www.oracle.com/java/technologies/) 
 
 Install Intellij IDEA to edit Java code.
+
 
 ## Java Components
 
@@ -32,15 +34,15 @@ It provides a runtime for the same Java application to run on various hardware a
 It is the main component behind the "Write Once, Run Anywhere" Java philosophy.  
 The JVM manages memory allocation and garbage collection.
 
+
 ### JShell
 
 The JShell is an interactive tool introduced in JDK 9 for learning the Java and prototyping Java code.  
 It is a Read-Evaluate-Print Loop tool (REPL) started from the command-line with the `jshell` command.  
 It evaluates declarations, statements, and expressions as they are entered and immediately shows the results.  
 
-## Basics
 
-### Basic program
+## Basic program
 
 ```java
 // specify the package of the class
@@ -57,7 +59,7 @@ public class ExampleMain {
 }
 ```
 
-### Primitive types
+## Primitive types
 
 Java supports 8 primitive data types that are not classes.  
 Each primitive data type has a corresponding wrapper class that provides constants and methods.
@@ -91,16 +93,15 @@ myByte = (byte) (myByte / 2);      // cast required, otherwise Java considers th
 ```
 
 
-### Java built-in classes
+## Java built-in classes
 
-
-#### Primitive type wrappers
+### Primitive type wrappers
 
 Each of the primitive type has a corresponding Java built-in wrapper class exposing constants and methods.  
 The wrapper classes are : `Byte`, `Short`, `Integer`, `Long`, `Float`, `Double`, `Character`, `Boolean`
 
 
-#### String
+### String
 
 The `String` class represents an immutable sequence of characters, that can include unicode characters.
 
@@ -180,7 +181,7 @@ String formatted1 = String.format("Age: %d  Grade: %.2f", age, grade);   // Age:
 String formatted2 = "Age: %d  Grade: %.2f".formatted(age, grade);        // Age: 13  Grade: 12.50
 ```
 
-#### Arrays
+### Arrays
 
 Arrays are instances of a built-in class that inherits from Object and has a single field called `length`.
 
@@ -238,7 +239,7 @@ int[][] myMatrix = new int[3][3];
 int[][] myMatrix = new int[3][];
 ```
 
-#### Random
+### Random
 
 The `java.util.Random` class exposes a pseudo-random numbers generator.
 
@@ -250,13 +251,151 @@ random.nextDouble();              // pseudo-random double in [0.0, 1.0[
 random.nextDouble(10.0);          // pseudo-random double in [0.0, 10.0[
 ```
 
-#### BigDecimal
+### BigDecimal
 
 BigDecimal is used for floating point objects that need exact precision (float and double truncate the result).
 
 
-### Type inference
+### Lists
 
+Java defines the `List` interface that exposes common methods for classes implementing it :
+- get the list size
+- add an item
+- remove an item
+- check if the list is empty
+- check if an element is in the list
+- get the index of an item
+- sort the list
+- turn the list into an array
+- get the item at a specific position
+
+Different implementations of this interface have different complexity for each operation.
+
+The `List` interface and its implementations are generic : we can specify the class of its items (default to Object).  
+The items must be class objects, they cannot be primitive types.  
+To use primitive types, we need to use **boxing** to use their wrapper class instead (the `Integer` class for example).
+```java
+Integer myInteger = Integer.valueOf(10);          // manual boxing (int -> Integer)
+Integer myInteger = new Integer(10);              // deprecated boxing
+Integer myInteger = 15;                           // auto-boxing (preferred)
+
+int myInt = myInteger.intValue();                 // manual unboxing (Integer -> int)
+int myInt = myInteger;                            // auto-unboxing (preferred)
+```
+
+#### ArrayList
+
+The `ArrayList` class implements the `List` interface by using an array in memory.  
+The array has a capacity, and a new array is created if more capacity becomes required.  
+It can be seen as a resizable array, which the built-in array type does not allow.
+
+```java
+ArrayList<String> myList = new ArrayList<>();     // no need to specify the String type in the <>
+
+String[] myArr = { "A", "B" };
+List<String> myList = List.of(myArr);                      // create an immutable list from an array
+List<String> myList = Arrays.asList(myArr);                // create a fixed-sized mutable list from an array
+ArrayList<String> myArrayList = new ArrayList<>(myList);   // create an ArrayList from an immutable list
+ArrayList<String> myArrayList = new ArrayList<>(           // common way to initialize an ArrayList
+    List.of("AAA", "BBB")
+);   
+
+myList.size();                                    // get the number of items in the list
+myList.get(0);                                    // get item at a specific index
+myList.toString();                                // [aaa, BBB]  (no need for a utils class to print the items)
+
+myList.add("BBB");                                // add an item at the end of the list
+myList.add(0, "AAA");                             // add an item at a specific index
+myList.addAll(List.of("CCC", "DDD"));             // add multiple items at the end of the list
+myList.set(0, "aaa");                             // replace the item at a specific index
+
+myList.remove(0);                                 // delete the item at a specific index
+myList.remove("Item 1");                          // delete the item with a specific value
+myList.removeAll(List.of("AAA", "BBB"));          // remove multiple elements by value
+myList.clear();                                   // remove all elements
+
+myList.contains("AAA");
+myList.indexOf("AAA");
+myList.lastIndexOf("AAA");
+
+myList.sort(Comparator.naturalOrder());           // sort according to a comparator
+                                                  // it relies on the class to implement the Comparable interface           
+myList.sort(Comparator.reversedOrder());
+
+var myArr = myList.toArray();                    // get a Object[] from the list  
+var myList = Arrays.asList(myArr);               // get an ArrayList wrapper above an array to use ArrayList methods
+                                                 // we can sort or modify items but not add or remove items
+```
+
+#### LinkedList
+
+The `LinkedList` class is another implementation of the `List` interface using a double-ended linked list.  
+It is more efficient than an `ArrayList` to add/remove elements as it does not need to shift elements or resize the array.  
+It is less efficient to access elements at specific positions, as it needs to traverse the entire list.
+
+The `LinkedList` class also implements the `Deque` interface, that can be used for FIFO and LIFO data structures.  
+
+```java
+LinkedList<String> myList = new LinkedList<>();
+
+myList.add("Bob");                         // add an item at the end of the list
+myList.addLast("Alice");                   // same
+myList.offer("Alice");                     // same (for Deque interface)
+myList.offerLast("Tom");                   // same
+myList.addFirst("John");                   // add an item at the front of the list
+myList.offerFirst("Jane");                 // same
+myList.push("Mary");                       // same (stack language)
+
+myList.remove(2);                          // remove by index
+myList.remove("John");                     // remove by value
+myList.remove();                           // remove the front element of the list
+myList.removeFirst();                      // same
+myList.pop();                              // same (stack language)
+myList.poll();                             // same but allow null (queue language)
+myList.pollFirst();                        // same
+myList.removeLast();                       // remove the back element of the list
+myList.pollLast();                         // same but allow null
+
+myList.get(3);                             // get at a given index
+myList.getFirst();                         // get the first item
+myList.element();                          // same (queue language)
+myList.peek();                             // same but allow null (stack language)
+myList.peekFirst();                        // same
+myList.getLast();                          // get the last item
+myList.peekLast();                         // same but allow null (stack language)
+```
+
+
+## Iterators
+
+The `Iterator` interface defines an object offering a convenient way to traverse an iterable collections.  
+`ListIterator` is a specialized implementation to iterate over a list.  
+
+`Iterator` can iterate forwards only, and exposes the following methods :
+- `hasNext()` : true if there are more items to iterate on
+- `next()` : value of the next item
+- `remove()` : remove the current item
+
+`ListIterator` adds some methods :
+- `hasPrevious()` : true if there are more items before the current iterator
+- `previous()` : value of the previous item
+- `add(item)` : add an item at the iterator position
+
+```java
+LinkedList<String> myList = new LinkedList<>();
+myList.add("AAA");
+myList.add("BBB");
+myList.add("CCC");
+
+ListIterator it = myList.listIterator();
+while (it.hasNext()) {
+    System.out.println(it.next());
+}
+```
+
+
+
+## Type inference
 
 Local variable inference war introduced with Java 10 with the `var` keyword to improve readability.  
 It infers the type at compile-time, and is allowed only when the compiler can deduce the type from the assigned value.
@@ -496,6 +635,35 @@ public class Student extends Person {
         return "Student{" + name + ", " + grade + "}";
     }
 }
+```
+
+### Enums
+
+```java
+public enum DayOfWeek {
+    MON, TUE, WED, THU, FRI, SAT, SUN
+}
+
+DayOfWeek day = DayOfWeek.WED;
+day.name();                                   // get the enum value label
+day.ordinal();                                // get the enum value index in its enum class
+
+DayOfWeek[] allDays = DayOfWeek.values();     // array of all enum values 
+```
+
+An enum is a special class where each enum value is an instance of the class.  
+It is possible to define custom methods inside an enum :
+```java
+public enum DayOfWeek {
+    MON, TUE, WED, THU, FRI, SAT, SUN;
+    
+    public boolean isWeekend() {
+        return this == SAT || this == SUN;
+    }
+}
+
+DayOfWeek day = DayOfWeek.SAT;
+boolean isWeekend = day.isWeekend();
 ```
 
 ### Records
