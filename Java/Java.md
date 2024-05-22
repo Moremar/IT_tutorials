@@ -95,6 +95,7 @@ myByte = (byte) (myByte / 2);      // cast required, otherwise Java considers th
 
 ## Java built-in classes
 
+
 ### Primitive type wrappers
 
 Each of the primitive type has a corresponding Java built-in wrapper class exposing constants and methods.  
@@ -394,6 +395,56 @@ while (it.hasNext()) {
 ```
 
 
+### Enums
+
+```java
+public enum DayOfWeek {
+    MON, TUE, WED, THU, FRI, SAT, SUN
+}
+
+DayOfWeek day = DayOfWeek.WED;
+day.name();                                   // get the enum value label
+day.ordinal();                                // get the enum value index in its enum class
+
+DayOfWeek[] allDays = DayOfWeek.values();     // array of all enum values 
+```
+
+An enum is a special class where each enum value is an instance of the class.  
+It is possible to define custom methods inside an enum :
+```java
+public enum DayOfWeek {
+    MON, TUE, WED, THU, FRI, SAT, SUN;
+    
+    public boolean isWeekend() {
+        return this == SAT || this == SUN;
+    }
+}
+
+DayOfWeek day = DayOfWeek.SAT;
+boolean isWeekend = day.isWeekend();
+```
+
+
+### Records
+
+Java classes come with a lot of boilerplate code : constructor, getters, setters.  
+Many Java classes are POJOs (Plain Old Java object) with no logic, just constructors, getters and setters.  
+Since JDK 14, Java introduced the `record` keyword to define immutable POJOs without all the boilerplate code.
+
+A record is a special type of data structure designed for immutable POJOs, like objects read from a database.  
+Java auto-generates the constructor, getters and toString() override method.  
+Records are immutable so they do not have setters, the only way to set the fields is via the constructor.
+
+```java
+// declare a record
+public record Student(String name, String section, int grade) {}
+
+// instantiate a record
+Student student = new Student("Bob", "A", 13);
+System.out.println(student.name());                   // auto-generated getter
+System.out.println(student);                          // auto-generated toString()
+```
+
 
 ## Type inference
 
@@ -612,6 +663,9 @@ All Java classes inherit implicitly from the `java.lang.Object` class.
 
 The `super` keyword is used to call the constructor or methods of the parent class.
 
+Methods in the base class can be overridden in the child class with the `@Override` annotation.  
+Methods marked with the `final` modifier cannot be overridden by child classes.
+
 ```java
 public class Person {
     protected String name;                         // protected access so sub-classes can access it
@@ -637,53 +691,38 @@ public class Student extends Person {
 }
 ```
 
-### Enums
+### Abstraction and Interfaces
 
-```java
-public enum DayOfWeek {
-    MON, TUE, WED, THU, FRI, SAT, SUN
-}
+Class hierarchy allows the abstraction of concrete classes under a common base class.  
+Java offers **abstract classes** and **interfaces** to represent this abstraction.
 
-DayOfWeek day = DayOfWeek.WED;
-day.name();                                   // get the enum value label
-day.ordinal();                                // get the enum value index in its enum class
+An abstract class uses the `abstract` modifier, it is a class that has at least one abstract method.  
+An abstract method uses the `abstract` modifier, it is a method that has a signature but no concrete body.  
+An abstract class can be extended, but not instantiated, because it is not fully implemented.  
+An abstract class can have a constructor that is called by the child classes.
 
-DayOfWeek[] allDays = DayOfWeek.values();     // array of all enum values 
-```
+An interface is an abstract class that has only abstract methods and no fields.  
+It only consists of a set of methods that child classes need to implement.  
+Fields of an interface are interface-level constants (static public and final), no need to use those keywords explicitly.  
+Methods of an interface are public and abstract by default, so no need to explicitly write it.
 
-An enum is a special class where each enum value is an instance of the class.  
-It is possible to define custom methods inside an enum :
-```java
-public enum DayOfWeek {
-    MON, TUE, WED, THU, FRI, SAT, SUN;
-    
-    public boolean isWeekend() {
-        return this == SAT || this == SUN;
-    }
-}
+A Java class can only extend a single class, but it can implement any number of interfaces.  
 
-DayOfWeek day = DayOfWeek.SAT;
-boolean isWeekend = day.isWeekend();
-```
+An interface can extend another interface (adding abstract methods to it) but cannot implement an interface.  
+An interface can be implemented by a class, a record or an enum.  
 
-### Records
+Until JDK8, interfaces could only have abstract public methods.  
+This caused a common problem : when we want to add a method to an interface, all classes implementing it must be updated.  
+Java 8 introduced **concrete default methods**, to specify a default behavior for a method, and only relevant implementation can override it.
 
-Java classes come with a lot of boilerplate code : constructor, getters, setters.  
-Many Java classes are POJOs (Plain Old Java object) with no logic, just constructors, getters and setters.  
-Since JDK 14, Java introduced the `record` keyword to define immutable POJOs without all the boilerplate code.
+Java 8 also introduced **static methods on interfaces**, that can be called using the interface name as identifier, for example `Comparator.naturalOrder()`.  
+This avoids creating a separate helper class to contain these static methods.
 
-A record is a special type of data structure designed for immutable POJOs, like objects read from a database.  
-Java auto-generates the constructor, getters and toString() override method.  
-Records are immutable so they do not have setters, the only way to set the fields is via the constructor.
+JDK9 introduced **concrete private methods**, both static and non-static, that can be used only from concrete methods in the interface.
 
-```java
-// declare a record
-public record Student(String name, String section, int grade) {}
 
-// instantiate a record
-Student student = new Student("Bob", "A", 13);
-System.out.println(student.name());                   // auto-generated getter
-System.out.println(student);                          // auto-generated toString()
-```
+
+
+
 
 
