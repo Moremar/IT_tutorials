@@ -143,6 +143,9 @@ myStr.replace("aa", "bb");                  // replace all occurences of a strin
 myStr.replaceAll("[aeiou]", "X");           // replace all occurences of a regex by a string
 myStr.replaceFirst("[aeiou]" "X");          // replace first occurence of a regex by a string
 myStr.substring(2, 4);                      // return substring from index 2 (inclusive) to index 4 (exclusive)
+
+String.format("%-15s %d", name, age)        // static method to format a string
+"%-15s %d".formatted(name, age)             // instance method to format a string (since Java 13)
 ```
 
 We can use the `StringBuilder` class for a mutable string object.  
@@ -366,6 +369,18 @@ myList.getLast();                          // get the last item
 myList.peekLast();                         // same but allow null (stack language)
 ```
 
+### Comparable and Comparator
+
+`Comparable<T>` is an interface that allows to compare an instance with an object of the same class or another class.  
+It contains only the `compareTo(T)` method.
+
+It is used by `List<E>` for example when calling the sort function.  
+We can only sort a list of objects from a class that implements Comparable.
+
+`Comparator<T>` is another interface that allows to compare 2 objects of the same type.  
+It only contains the `compare(T, T)` method.  
+Comparators are often created to offer multiple comparison logics for 2 objects of the same class.  
+Common examples are `Comparator.naturalOrder()` and `Comparator.reverseOrder()`. 
 
 ## Iterators
 
@@ -721,8 +736,88 @@ This avoids creating a separate helper class to contain these static methods.
 JDK9 introduced **concrete private methods**, both static and non-static, that can be used only from concrete methods in the interface.
 
 
+## Generic Types
 
+Generic types allow to define a template that can apply to multiple underlying classes or types.  
+For example `List<E>` is a generic interface.  
+When instanciating a generic type, we need to specify its parametrized type, for example `List<String>`.  
 
+Classes, interfaces and records can be generic.  
+A method can also be generic.
 
+A generic type can specify one or more parametrized types.  
+Parametrized types can be forced to extend or implement a specific class with the `extends` keyword.
 
+```java
+class Team<T extends Player>  {
+    private String teamName;
+    private List<T> teamMembers = new ArrayList<>();
+    
+    public Team(String n) {
+        name = n;
+    }
+    
+    public addTeamMember(T t) {
+        teamMembers.add(t);
+    }
+    
+    [...]
+}
+```
+
+Note that `List<Dog>` does not extends `List<Animal>` even if `Dog` extends `Animal`.  
+This is a problem if we have a method that expects a parameter of type `List<Animal>`.   
+To address this issue, we can use a **generic method** that takes a parameter of type `List<T>`.  
+Alternatively, we can use a **wildcard parameter** in the method.
+
+```java
+// generic method
+public static <T extends Animal> void printAnimals(List<T> animals) {
+    for (T animal : animals) {
+        System.out.println(animal);
+    }
+}
+
+// wildcard parameter
+public static void printAnimals(List<? extends Animal> animals) {
+    for (T animal : animals) {
+        System.out.println(animal);
+    }
+}
+
+List<Animal> animals = new ArrayList<>();
+List<Dog> dogs = new ArrayList<>();
+
+// we can call the generic method or the wildcard method with a list of animals or any of its subtypes
+printAnimals(animals);
+printAnimals(dogs);
+```
+
+The compiler performs **type erasure** when compiling code using generic types.  
+It means that it replaces the generic type by Object or by the upper bound if specified with a `extends` keyword.  
+This can create some conflicts between methods that have the same type erasure.  
+For example, these 2 methods cannot be defined at the same time, because after type erasure they have the same signature :
+```java
+// method on a list of strings
+public void print(List<String> strings) {
+    [ ... ]
+}
+
+// method on a list of integers
+public void print(List<Integer> numbers) {
+    [ ... ]
+}
+
+// instead of the 2 above methods with same erasure, we can use a single method with a wildcard
+// if we need different logic for String and Integer we use instanceof
+public void print(List<?> list) {
+    for (var item : list) {
+        if (item instance of String s) {
+            [ ... ]
+        } else if (item instance of Integer i) {
+            [ ... ]
+        }
+    }
+}
+```
 
