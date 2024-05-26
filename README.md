@@ -9,5 +9,6 @@ This repository gathers notes about many technologies I have studied :
 - **Node.js + Express** : Javascript backend framework for web apps and REST APIs (covers also GraphQL)
 - **Python** : notes on some popular Python libraries
 - **Docker + Kubernetes** : Application containers platform and its orchestration framework
+- **Java** : Java concepts and popular libraries
 
 Preparation notes for the CompTIA Network+ and Security+ exams are under the **CyberSecurity** folder.
