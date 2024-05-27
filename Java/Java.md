@@ -42,7 +42,7 @@ It is a Read-Evaluate-Print Loop tool (REPL) started from the command-line with 
 It evaluates declarations, statements, and expressions as they are entered and immediately shows the results.  
 
 
-## Basic program
+## Basic Program
 
 ```java
 // specify the package of the class
@@ -259,6 +259,8 @@ random.nextDouble(10.0);          // pseudo-random double in [0.0, 10.0[
 
 BigDecimal is used for floating point objects that need exact precision (float and double truncate the result).
 
+
+## Java Collections
 
 ### Lists
 
@@ -734,6 +736,197 @@ Java 8 also introduced **static methods on interfaces**, that can be called usin
 This avoids creating a separate helper class to contain these static methods.
 
 JDK9 introduced **concrete private methods**, both static and non-static, that can be used only from concrete methods in the interface.
+
+### Nested Classes
+
+There are 4 types of nested classes in Java :
+
+- **Static Nested Class**
+  - declared in the class body
+  - accessed through the class name identifier
+  - the outer class and inner class can access each-other's private attributes
+  - static nested classes are inherited by subclasses (so we can access them using a subclass identifier)
+  - it can be used to define a Comparator specific to a class for example
+```java
+public class Student {
+    public static class StudentComparator<T extends Student> implements Comparator<Student> {
+        @Override
+        public int compare(Student s1, Student s2) {
+            return s1.name.compareTo(s2.name);
+        }
+    }
+    private String name;
+    private Student(String name) { this.name = name; }
+}
+
+var comparator = new Student.StudentComparator<Student>();
+```
+
+
+- **Instance Class**
+  - declared in the class body
+  - accessed through an instance of the  class
+  - usually instance classes are not accessed from outside the outer class
+  - if the outer and inner class have a field with the same name, we access the outer one with `Outer.this.name`
+```java
+public class Student {
+    public class StudentComparator<T extends Student> implements Comparator<Student> {
+        @Override
+        public int compare(Student s1, Student s2) {
+            return s1.name.compareTo(s2.name);
+        }
+    }
+    private String name;
+    private Student(String name) { this.name = name; }
+}
+
+var comparator = (new Student("AAA")).new StudentComparator<Student>();
+```
+
+
+- **Local Class**
+  - declared within a method body
+  - no access modifier
+  - not accessible from outside the method
+  - can access private fields of the enclosing class
+```java
+public static void sortByName(List<Student> students) {
+    class NameComparator implements Comparator<Student> {
+        @Override
+        public int compare(Student s1, Student s2) {
+            return s1.getName().compareTo(s2.getName());
+        }
+    }
+    sort(new NameComparator());
+}
+```
+
+
+- **Anonymous Class**
+  - unnamed class
+  - declared and instantiated in the same statement
+  - use the `new` keyword, then the name of the class to extend or an interface to implement
+  - used a lot less since Java 8 introduced lambda expressions
+```java
+students.sort(new Comparator<Student>() {
+    @Override
+    public int compare(Student s1, Student s2) {
+        return s1.getName().compareTo(s2.getName());
+    }    
+});
+```
+
+
+## Lambda Function
+
+A Lambda function is an anonymous function with a simplified syntax.  
+
+A **functional interface** is an interface with exactly one abstract method.  
+It can use the `@FunctionalInterface` annotation to make it explicit.  
+Java comes with many built-in functional interfaces, like `Comparator<T>` or `Comparable<T>`.
+
+Functional interfaces are perfect targets for lambda functions.  
+Many methods use functional interfaces for their method parameters.  
+Instead of providing an instance of a functional interface, we can provide a lambda, and Java infers the method and the parameter types.
+```java
+students.sort((s1, s2) -> s1.getName().compareTo(s2.getName()));   // lambda replacing Comparator<Student>
+```
+
+Lambda functions can use variables of the outer scope only if they are final or effectively final (assigned only once).
+
+Functional interfaces often include default methods to chain method calls.  
+It allows to combine multiple transformations into a single instance of the functional interface :
+```java
+// chaining with the UnaryOperator functional interface
+UnaryOperator<String> upper = String::toUpperCase;
+var combined = upper
+        .andThen(s -> s + " Jr.")
+        .andThen(s -> s + " " + new Random().nextInt(10))
+        .andThen(s -> s.split(" "));
+System.out.println(Arrays.toString(combined.apply("Tom")));   // [ "TOM", "Jr.", "7" ]
+
+// chaining with the Predicate functional interface
+Predicate<String> check = s -> s.contains("t");
+var combinedCheck = check
+        .or(s-> s.equalsIgnoreCase("DEFAULT"))
+        .and(s -> s.endsWith("s"))
+        .negate();
+System.out.println(combinedCheck.test("Hello"));
+```
+
+### Java built-in Functional Interfaces
+
+- `Consumer<T> ` : defines `void accept(T)`
+  - represent an operation accepting a single input and returning no result
+  - the processing of the method is expected to use side-effects, like updating a DB or sending a message.
+  - can be used for example in the `forEach()` method of a list
+  - its variant with 2 parameters is called `BiConsumer<T, U>`
+  ```java
+  students.forEach((s) -> { System.out.println(s); });
+  students.forEach(s -> System.out.println(s));          // variant with simplified syntax
+  students.forEach(System.out::println);                 // variant with a function reference instead of lambda
+  ```
+
+
+- `Runnable` : defines `void run()`
+  -  represent a task that can run asynchronously and returns no value
+  - often used when creating a new thread
+  ```java
+  Thread thread = new Thread(() -> { System.out.println("New thread running") });
+  thread.start();
+  ```
+
+
+- `Callable<T>` : defines `T call()`
+  -  represent a task that can run asynchronously and returns a value
+  - often used when creating a new thread
+  - similar to Runnable but with a return value
+  ```java
+  Callable<Integer> callable = () -> 42;
+  FutureTask<Integer> futureTask = new FutureTask<>(callable);
+  Thread thread = new Thread(futureTask);
+  thread.start();
+  Integer res = futureTask.get();     // wait for the result
+  ```
+
+
+- `Comparable<T>` : defines `compareTo(T)`
+  - define an ordering between instances of a class
+  - used by the sort methods of many data structures like lists and arrays
+  ```java
+  List<Person> friends = new ArrayList<>(Arrays.asList(
+      new Person("John", 25),
+      new Person("Lea", 23),
+      new Person("Jade", 31),
+  ));
+  Collections.sort(friends);
+  ```
+  
+
+- `Predicate<T>` : defines `boolean test(T)`
+  - define a test on instances of a class that can be either true or false
+  - used for filtering objects in collections
+  - its variant with 2 parameters is called `BiPredicate<T, U>`
+  ```java
+  List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
+  Predicate<Integer> isEven = num -> num % 2 == 0;
+  list.removeIf(isEven);
+  ```
+
+
+- `Function<T, R>` : defines `R apply(T)`
+  - represent an operation on one object returning an object
+  - variant with the parameter and the return value of the same class is `UnaryOperator<T>`
+  - variant with 2 parameters is `BiFunction<T, U, R>`
+  - variant with 2 parameters of the same class and a return value of the same class is `BinaryOperator<T>`
+
+
+- `Supplier<T>` : defines `T get()`
+  - represent a factory that takes no argument and returns an object
+  ```java
+  Supplier<Integer> randomIntSupplier = () -> new Random().nextInt(100);
+  System.out.println("Random number: " + randomIntSupplier.get());
+  ```
 
 
 ## Generic Types
