@@ -262,6 +262,12 @@ BigDecimal is used for floating point objects that need exact precision (float a
 
 ## Java Collections
 
+The Collections framework offers interfaces and implementations to manipulate common groups of objects.  
+
+The `Collection` interface exposes some methods for common functionalities (add, remove, clear, contain, iterator...).  
+The `List`, `Set` and `Queue` interfaces implement the `Collection` interface.  
+The `Map` interface does not, but is still part of the Collections framework.
+
 ### Lists
 
 Java defines the `List` interface that exposes common methods for classes implementing it :
@@ -300,7 +306,7 @@ ArrayList<String> myList = new ArrayList<>();     // no need to specify the Stri
 
 String[] myArr = { "A", "B" };
 List<String> myList = List.of(myArr);                      // create an immutable list from an array
-List<String> myList = Arrays.asList(myArr);                // create a fixed-sized mutable list from an array
+List<String> myList = Arrays.asList(myArr);                // create a list view from an array (fixed-sized mutable)
 ArrayList<String> myArrayList = new ArrayList<>(myList);   // create an ArrayList from an immutable list
 ArrayList<String> myArrayList = new ArrayList<>(           // common way to initialize an ArrayList
     List.of("AAA", "BBB")
@@ -329,7 +335,7 @@ myList.sort(Comparator.naturalOrder());           // sort according to a compara
 myList.sort(Comparator.reversedOrder());
 
 var myArr = myList.toArray();                    // get a Object[] from the list  
-var myList = Arrays.asList(myArr);               // get an ArrayList wrapper above an array to use ArrayList methods
+var myList = Arrays.asList(myArr);               // get an ArrayList view of an array to use ArrayList methods
                                                  // we can sort or modify items but not add or remove items
 ```
 
@@ -369,6 +375,187 @@ myList.peek();                             // same but allow null (stack languag
 myList.peekFirst();                        // same
 myList.getLast();                          // get the last item
 myList.peekLast();                         // same but allow null (stack language)
+```
+
+### Sets
+
+The `Set` interface defines common methods on sets, like `add`, `remove`, `contains` or `clear`.  
+We can check if an item is in a set, but we cannot retrieve a specific element from a set, like a `get()` in the List interface.  
+However we can iterate on all elements.
+
+Sets cannot accept duplicates.  
+To decide if an object is already in the set, it first checks its hashcode, and if found it checks equality with the `equals` method.  
+By default, the `equals` method from `Object` checks memory address equality, we can override it to check fields equality.
+
+#### HashSet
+
+`HashSet` is the best performing implementation of the `Set` interface.    
+It stores elements in a `Hashmap` under the hood, that uses the `hashcode` method of the `Object`.  
+It offers O(1) performance to add/remove elements and check if an element is contained in the set.  
+
+```java
+Set<Integer> mySet = new HashSet<>();
+mySet.add(1);
+mySet.addAll(Arrays.asList(2, 3, 4));          // set union
+mySet.retainAll(Arrays.asList(2, 3, 4));       // set intersection
+mySet.removeAll(Arrays.asList(2, 3, 4));       // set asymetric difference
+mySet.remove(2);
+boolean myBool = mySet.contains(3);
+```
+
+#### LinkedHashSet
+
+The `LinkedHashSet` class extends `HashSet`, and all its methods are the same.  
+A LinkedHashSet is a set that maintains the insertion order of its elements.  
+When iterating over its elements, they will be processed in insertion order.
+
+#### TreeSet
+
+The `TreeSet` class implements the `SortedSet` interface offering `first()`, `last()`, comparators...   
+It also implements the `NavigableSet` interface with methods `lower(a)`, `higher(a)`, `floor(a)`, `ceiling(a)`...  
+
+A TreeSet is a collection sorted by the natural order of its elements (or by a custom comparator).  
+It uses a binary search tree (B-tree) to keep its elements in order.  
+Insertion complexity is O(logN), while it is O(1) for other set implementations, because it needs to insert the element in the B-tree.  
+
+```java
+NavigableSet<Integer> myTreeSet = new TreeSet<>();
+myTreeSet.add(1);
+myTreeSet.add(2);
+myTreeSet.add(3);
+myTreeSet.first();           // smallest value in set
+myTreeSet.last();            // highest value in set
+myTree.pollFirst();          // smallest value in set and remove it from the set
+myTree.pollLast();           // highest value in set and remove it from the set
+
+myTreeSet.floor(2);          // highest element in the set lower or equal to a value
+myTreeSet.lower(2);          // highest element in the set lower than a value
+myTreeSet.ceiling(2);        // smallest element in the set higher or equal than a value
+myTreeSet.higher(2);         // smallest element in the set higher than a value
+
+myTreeSet.subset(1, 2);      // subset of all elements between a value (inclusive) and another value (exclusive)
+myTreeSet.headSet(2);        // subset of all elements lower than a value
+myTreeSet.tailSet(2);        // subset of all elements higher or equal to a value
+```
+
+#### EnumSet
+
+We can create a set of enums, but Java has the `EnumSet` class that is optimized for this scenario.  
+It is automatically sorted by the enum values.  
+It is abstract and is instantiated via factories.  
+It supports all methods from the `Set` interface.
+
+It uses under the hood a bit-vector where each bit represents if an enum value is in the set or not.  
+If the enum has up to 64 values, the `RegularEnumSet` class is used with a single 64-bit integer bit-vector.  
+If the enum has more values, a `JumboEnumSet` is used instead.
+
+```java
+enum WeekDay { MON, TUE, WED, THU, FRI, SAT, SUN }
+
+List<WeekDay> workDays = new ArrayList(List.of(WeekDay.MON, WeekDay.TUE, WeekDay.WED, WeekDay.THU, WeekDay.FRI));
+EnumSet<WeekDay> myEnumSet = EnumSet.copyOf(workDays);                 // create EnumSet from list of enums
+EnumSet<WeekDay> myEnumSet = EnumSet.allOf(WeekDay.class);             // create EnumSet from enum class
+EnumSet<WeekDay> myEnumSet = EnumSet.complementOf(myEnumSet);          // create EnumSet from values not in another EnumSet
+EnumSet<WeekDay> myEnumSet = EnumSet.range(WeekDay.MON, WeekDay.FRI);  // create EnumSet from values range
+
+myEnumSet.forEach(System.out::println);               // iterate on all elements of the EnumSet
+```
+
+### Maps
+
+The `Map` interface does not extend the `Collection` interface, but is part of the Java collection framework.  
+
+#### HashMap
+
+`HashMap` is the most common implementation of the `Map` interface, with unsorted key/value pairs.  
+
+Some methods provide a **view** on the keys, values and entries of the map : `keyset()`, `values()` and `entrySet()`.  
+Modifying these views does modify the underlying map.
+
+```java
+Map<String, Integer> myMap = new HashMap<>();
+myMap.put("Bob", 12);
+myMap.put("Alice", 15);
+myMap.putIfAbsent("Alice", 15);          // only put the value if not already in the map
+myMap.get("Bob");                        // access the value for a key (null if not found)
+myMap.getOrDefault("Bob", 0);            // access the value for a key (default value if not found)
+boolean deleted = myMap.remove("Bob");   // delete an item by key
+
+// iterate on the map
+myMap.forEach((k, v) -> System.out.println(k + " : " + v));
+
+// add a value in the map by applying a function to the key and the existing value
+myMap.compute("Bob", (k, v) -> k % 2 == 0 ? 0 : 1);
+
+// same as compute() but only apply if the key is absent/present in the map
+myMap.computeIfAbsent("Bob", k -> k.length() % 2 == 0 ? 0 : 1);
+myMap.computeIfPresent("Bob", (k, v) -> k.length() % 2 == 0 ? 0 : 1);
+
+// set the value if the key is absent, else apply a function to the old and new values
+myMap.merge(""Bob", 3, Integer::sum);
+
+// views on the keys, values and entries of the map
+Set<String>                     myKeys    = myMap.keySet();
+Collection<Integer>             myVals    = myMap.values();
+Set<Map.Entry<String, Integer>> myEntries = myMap.entrySet();
+myKeys.remove("Bob");                                      // remove the element from myMap
+myEntries.removeIf(entry -> entry.getValue() % 2 != 0);    // remove the elements from myMap
+```
+
+#### LinkedHashMap
+
+`LinkedHashMap` extends `HashMap` and keeps the key/value pairs sorted by insertion order.  
+Its methods are the same as `HashMap`, but the iteration order is different.
+
+#### TreeMap
+
+`TreeMap` implements the `SortedMap` interface and keeps the key/value pairs sorted.  
+It makes use of a binary search tree (B-tree) to maintain the order, so the insertion has O(logN) complexity.
+
+`TreeMap` implements `NavigableMap`, that exposes methods similar to `NavigableSet` : `headMap`, `tailMap`, `submap`, `firstEntry`, `lastEntry` ...
+
+#### EnumMap
+
+We can create a map with enum keys, but Java has the `EnumMap` class that is optimized for this scenario.  
+Unlike `EnumSet`, it is not abstract and can be instantiated directly.  
+It is naturally ordered by the values of the enum.  
+It supports all methods from the `Map` interface.
+
+```java
+enum WeekDay { MON, TUE, WED, THU, FRI, SAT, SUN }
+
+Map<WeekDay, String[]> employeeMap = new EnumMap<>(WeekDay.class);     // empty EnumMap
+employeeMap.put(WeekDay.MON, new String[]{ "Bob", "Alice" });
+employeeMap.put(WeekDay.WED, new String[]{ "Bob" });
+
+employeeMap.forEach((k, v) -> System.out.println(k + " : " + Arrays.toString(v)));
+```
+
+
+### Collections class
+
+The `Collections` class contains some helper methods on collections.  
+It pre-dates the support of static and default methods in interfaces, and now some of its functionalities are implemented in the interfaces.  
+
+```java
+List<Double> myList;
+myList = Collections.emptyList();
+myList = Collections.singletonList(2.5);
+myList = Collections.nCopies(10, 2.5);           // create a list with a single value repeated multiple times
+myInt = Collections.frequency(myList, 2.5);      // number of occurrences of a value in the collection
+
+Collections.shuffle(myList);                     // in-place shuffle
+Collections.reverse(myList);                     // in-place reverse
+Collections.rotate(myList, 3);                   // in-place rotation of a specific shift (negative to shift left)
+Collections.swap(myList, i, j);                  // in-place swap of 2 elements
+Collections.sort(myList);                        // in-place sort of a list of Comparable (now replaced by the interface method)
+Collections.sort(myList, myComparator);          // in-place sort of a list with a custom comparator
+
+myBool = Collections.binarySearch(myList, 2.5, myComparator);   // search in a sorted list (similar to the method in Arrays)
+myBool = Collections.disjoint(myList, myList2);                 // true if the 2 lists have no element in common
+
+myDouble = Collections.min(myList, myComparator); 
+myDouble = Collections.max(myList, myComparator); 
 ```
 
 ### Comparable and Comparator
