@@ -42,6 +42,16 @@ It is a Read-Evaluate-Print Loop tool (REPL) started from the command-line with 
 It evaluates declarations, statements, and expressions as they are entered and immediately shows the results.  
 
 
+### Java Decompiler
+
+The Java decompiler is a utility tool provided with the JDK with the `javap` executable.  
+It analyzes a `.class` file and lists all the classes with their fields and methods.
+
+```commandline
+javap -p out/production/Playground/Person.class
+```
+
+
 ## Basic Program
 
 ```java
@@ -556,6 +566,11 @@ myBool = Collections.disjoint(myList, myList2);                 // true if the 2
 
 myDouble = Collections.min(myList, myComparator); 
 myDouble = Collections.max(myList, myComparator); 
+
+// Unmodifiable views of collections (cannot add, remove, update, sort elements...)
+Collections.unmodifiableList(myList);
+Collections.unmodifiableSet(mySet);
+Collections.unmodifiableMap(myMap);
 ```
 
 ### Comparable and Comparator
@@ -601,6 +616,8 @@ while (it.hasNext()) {
 
 ### Enums
 
+An enum is a special class where each enum value is an instance of the class.  
+
 ```java
 public enum DayOfWeek {
     MON, TUE, WED, THU, FRI, SAT, SUN
@@ -615,6 +632,7 @@ DayOfWeek[] allDays = DayOfWeek.values();     // array of all enum values
 
 An enum is a special class where each enum value is an instance of the class.  
 It is possible to define custom methods inside an enum :
+
 ```java
 public enum DayOfWeek {
     MON, TUE, WED, THU, FRI, SAT, SUN;
@@ -627,6 +645,31 @@ public enum DayOfWeek {
 DayOfWeek day = DayOfWeek.SAT;
 boolean isWeekend = day.isWeekend();
 ```
+
+We can specify a constructor for an enum class, which must be private and gets called for each value of the enum.  
+This is useful if we want to add some fields to the enum, we can pass them to the constructor :
+
+```java
+public enum GenerationE {
+    GEN_Z(2001, 2020),
+    MILLENIAL(1981, 2000),
+    GEN_X(1961, 1980),
+    BABY_BOOMER(1941, 1960);
+    
+    private final int startYear;
+    private final int endYear;
+    
+    GenerationE(startYear, endYear) {
+        this.startYear = startYear;
+        this.endYear = endYear;
+    }
+    
+    public int getStartYear() { return this.startYear; }
+    public int getEndYear() { return this.endYear; }
+}
+```
+Under the hood, an enum is just a class extending the `java.lang.Enum` class, with a static final field for each enum value.  
+This can be observed with the `javap` Java disassembler, along with its constructor, fields, and methods.
 
 
 ### Records
@@ -649,6 +692,27 @@ System.out.println(student.name());                   // auto-generated getter
 System.out.println(student);                          // auto-generated toString()
 ```
 
+### Sealed classes
+
+Since Java 17, the `sealed` modifier can be used for classes and interfaces, bother outer and inner.  
+It allows to limit the classes that can extend this class or interface.  
+
+It requires the `permits` keyword to specify which classes can extend the class.  
+Subclasses need to be explicitly listed, and must be in the same package.  
+Subclasses also need to be either `final`, `sealed` or `non-sealed`.
+
+```java
+public sealed class Person permits Student {
+    [ ... ]
+}
+
+public final class Student extends Person {
+    [ ... ]
+}
+```
+
+The only case a sealed class does not need to permit its subclass is if the subclass is a nested class of the sealed class.  
+This is only true if there are no other permitted subclasses : it there are, the nested class must be listed along with them.
 
 ## Type inference
 
@@ -861,6 +925,40 @@ Person person = new Person();       // use the "new" keyword to get a reference 
 Person person2 = person;            // person2 is a reference to the same object in memory
 ```
 
+#### Class Initializer Block
+
+A class can have one or more class initializer blocks.  
+They are blocks of code directly specified in the class definition, that get executed before any constructor code.  
+They can be used to initialize default fields values for example.
+
+We can also specify one or more static initializer blocks.  
+They get executed only once at the first class reference, in the order they appear in the code.
+
+```java
+class Person {
+
+    private String name;
+    private int age;
+    
+    // static initializer block
+    static {
+        System.out.println("In the static initializer block");
+    }
+    
+    // instance initializser block
+    {
+        System.out.println("In the instance initializer block");
+        this.name = "Bob";
+        this.age = 20;
+    }
+    
+    Person() {}
+    Person(String name) { this.name = name; }
+    Person(String name, int age) { this.name = name; this.age = age; }
+}
+```
+
+
 ### Inheritance
 
 All Java classes inherit implicitly from the `java.lang.Object` class.  
@@ -869,6 +967,11 @@ The `super` keyword is used to call the constructor or methods of the parent cla
 
 Methods in the base class can be overridden in the child class with the `@Override` annotation.  
 Methods marked with the `final` modifier cannot be overridden by child classes.
+
+Static methods in the base class can be hidden in the child class by defining a static method with the same name.  
+When called on an instance, the static method of the reference type (declared type, not effective type) is used.  
+It is recommended to always call static methods via their class name, not via an instance.  
+Making a static method `final` prevents child classes to hide it (but that usually suggests a bad design).
 
 ```java
 public class Person {
