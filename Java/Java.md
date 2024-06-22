@@ -269,6 +269,29 @@ random.nextDouble(10.0);          // pseudo-random double in [0.0, 10.0[
 
 BigDecimal is used for floating point objects that need exact precision (float and double truncate the result).
 
+### Optional
+
+`Optional<T>` is a generic class that represents an object that can have a value or no value.  
+It is often used as a return type when the absence of value is a valid outcome.  
+Optionals are instantiated using the `Optional.of(T)` and `Optional.ofNullable()` factory methods.  
+
+```java
+Optional<String> myOptional = Optional.empty();             // create an empty optional
+Optional<String> myOptional = Optional.of("Hello");         // create an optional from a non-null value
+Optional<String> myOptional = Optional.ofNullable(null);    // create an optional from a possibly null value
+
+myOptional.isEmpty();
+myOptional.isPresent();
+myOptional.get();              // get the underlying value (throws if the optional is empty)
+myOptional.orElse("EMPTY");    // get the underlying value if present, else a default value
+
+myOptional.ifPresent(s -> System.out.println(s));      // execute a lambda only if the optional has a value
+myOptional.ifPresent(System.out::println);             // same using a method reference
+myOptional.ifPresentOrElse(                            // execute a different lambda if the optional has a value or not
+        System.out::println,
+        s -> System.out.println("EMPTY"));
+```
+
 
 ## Java Collections
 
@@ -1304,3 +1327,145 @@ public void print(List<?> list) {
 }
 ```
 
+
+## Java Streams
+
+Streams are a feature introduced with Java 8 to compute successive operations on a data set.  
+Streams are a mechanism to define a sequence of operations before actually executing them.
+
+Streams do not contain any data, they take as input a data source (a collection, an input file, a database query result...).  
+They are similar in their purpose to a SQL query, defining how to transform, filter and order data.
+
+Streams implement the `Stream<T>` generic interface, exposing methods like `map()`, `filter()`, `sorted()`, `reduce()` ...  
+The stream operations make heavy use of functional interfaces and lambdas.  
+A combination of these operations is called a **stream pipeline**.  
+It helps to write readable code, by specifying what operations to perform and letting Java decide the implementation.
+
+Most operations in a stream pipeline are intermediate operations, that return a Stream object, so they can be chained.  
+The last operation needs to be a terminal operation, like `forEach()`, `toList()` or `reduce()`.
+
+```java
+List<Integer> ints = new ArrayList<>(25);
+for (int i = 0; i < 26; i++) {
+    ints.add(i);
+}
+
+// create a pipeline with intermediate operations that do not get executed yet
+var pipeline = ints.stream()
+        .distinct()
+        .filter(i -> i % 2 != 0)
+        .map(i -> i * 10)
+        .sorted()
+        .limit(5);
+        
+// call a terminal operation on the pipeline so the entire pipeline gets processed
+var result = pipeline.toList();
+```
+
+Streams are lazy, they are evaluated on source data only when a terminal operation is called.  
+Stream computation is optimized : before execution, the stream implementation checks the entire workflow and optimizes it as it wants.  
+It guarantees the final result, but not the intermediate steps to reach it (it may discard, combine or reorder some steps for performance).
+
+A stream can only be consumed once, we cannot call multiple times a terminal operation on the same stream pipeline.
+
+### Stream Sources
+
+Multiple sources can be used by a stream :
+
+- **collections** : with the `stream()` instance method in the `Collection` interface
+
+- **arrays** : with the `Arrays.stream(arr)` static method
+
+- **individual objects** : with the `Stream.of(obj1, obj2, ...)` static method
+
+- **2 streams** : with the `Stream.concat(stream1, stream2)` static method
+
+- **range of values** : with the `Stream.range(startVal, endVal)` static method
+
+- **generator method** : with the `Stream.generate(provider)` static method to generate an infinite number of elements, that can be limited later :
+```java
+Random random = new Random();
+Stream.generate( () -> random.nextInt(5) )      // infinite sequence of random numbers between 0 and 4
+      .filter(i -> i % 2 == 1)                  // keep only odd numbers
+      .limit(10)                                // stop the infinite stream after 10 values post-filter
+      .forEach(System.out::print);  
+```
+
+- **iterative method** : with the `Stream.iterate(seed, unaryOp)` static method to generate an infinite number of elements starting with a seed and
+  generating all following elements by applying a unary function on it
+```java
+InStream.iterate(1, i -> i + 2)             // infinite sequence of odd integers 
+        .limit(10)                          // stop the infinite stream after 10 values
+        .forEach(System.out::println);
+        
+InStream.iterate(1, i -> i < 100, i -> i + 2)     // stream with a predicate that stops as soon as it returns false 
+        .forEach(System.out::println);
+```
+
+### Intermediate Stream Operations
+
+Intermediate stream operations apply on a stream and return a stream, potentially with a different underlying element type.  
+They can be chained to apply successive transformations and filtering to the source data.
+
+#### Filtering
+
+- `distinct()` : discard duplicate elements in the stream
+- `filter(predicate)` : discard elements for which the predicate returns false
+- `takeWhile(predicate)` : end the stream as soon as the predicate returns false
+- `dropWhile(predicate)` : skip all elements until the predicate returns false
+- `limit(n)` : end the stream after n elements
+- `skip(n)` : skip the first n elements
+
+#### Operations on all elements
+
+- `map(function)` : apply a function to all elements of the stream (can change the stream underlying element type)
+- `flatMap(function)` : similar to `map()` but the function returns a stream and `flatMap()` returns a single combined stream (not a stream of streams)
+- `peek(consumer)` : execute a function on each element of the stream without changing the stream
+- `sorted()` : sort all elements of the stream (can take a comparator, for ex when the underlying class does not implement Comparable)
+
+
+### Terminal Stream Operations
+
+A stream is only consumed when a terminal operation is executed on it.  
+The terminal operation does not return a stream.  
+After a terminal operation is called on a stream, the stream is consumed and can no longer be used.
+
+- `allMatch(predicate)` : true if the predicate is true for all elements of the stream
+- `noneMatch(predicate)` : true if the predicate is false for all elements of the stream
+- `anyMatch(predicate)` : true if the predicate is true for at least one element of the stream
+- `findAny(predicate)` : return an optional element for which the predicate is true
+- `findFirst(predicate)` : return the optional first element for which the predicate is true
+- `toArray()` : create an array with all elements of the stream
+- `toList()` : create a list with all elements of the stream
+- `count()` : size of the stream
+- `max()` : optional max element of the stream
+- `min()` : optional min element of the stream
+- `sum()` : sum of elements in the stream
+- `summaryStatistics()` : statistics object with the count, sum, min, max and average of elements of the stream
+- `forEach(function)` : apply a function to elements of the stream
+- `reduce(binaryOp)` : reduce the elements in the stream by applying the reduce function to elements 2 by 2
+- `collect(collector)` : use a collector in the `Collectors` utility class to return a mutable data structure, for example `Collectors.toList()`
+```java
+// use a built-in collector to return a mutable set (from the Collectors utility class)
+Random random = new Random();
+var numbers = Stream.generate(() -> random.nextInt(100))
+                    .limit(20)
+                    .collect(Collectors.toSet());
+
+// other built-in collector to generate a hashmap of lists, grouping fields by a function
+var numbers = Stream.generate(() -> random.nextInt(100))
+                    .limit(20)
+                    .collect(Collectors.groupingBy(i -> i % 5));
+
+// define a custom collector by providing 3 lambdas :
+// - a supplier : Supplier implementation to create the empty result container (could be StringBuilder, a collection...)
+// - an accumulator : BiConsumer implementation to specify how to add one element to the result container
+// - a combiner : BiConsumer implementation to specify how to merge two partial result containers
+// In this example we define a custom collector that stores the stream elements in a tree set (with ordering)
+var numbers = Stream.generate(() -> random.nextInt(100))
+                    .limit(20)
+                    .collect(
+                        TreeSet::new,            // supplier
+                        TreeSet::add,            // accumulator
+                        TreeSet::addAll          // combiner
+                    );
