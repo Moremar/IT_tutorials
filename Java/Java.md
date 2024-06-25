@@ -34,13 +34,11 @@ It provides a runtime for the same Java application to run on various hardware a
 It is the main component behind the "Write Once, Run Anywhere" Java philosophy.  
 The JVM manages memory allocation and garbage collection.
 
-
 ### JShell
 
 The JShell is an interactive tool introduced in JDK 9 for learning the Java and prototyping Java code.  
 It is a Read-Evaluate-Print Loop tool (REPL) started from the command-line with the `jshell` command.  
-It evaluates declarations, statements, and expressions as they are entered and immediately shows the results.  
-
+It evaluates declarations, statements, and expressions as they are entered and immediately shows the results.
 
 ### Java Decompiler
 
@@ -253,21 +251,283 @@ int[][] myMatrix = new int[3][3];
 int[][] myMatrix = new int[3][];
 ```
 
+### Math
+
+The `java.util.Math` package contains common mathematic operations :
+```java
+// methods overloaded for multiple types (int, double, long...)
+Math.abs(50);
+Math.max(12, 13);
+Math.min(12, 13);
+
+// methods for double
+Math.sqrt(12);
+Math.pow(2, 3);      // 2^3
+Math.floor(10.2);
+Math.ceil(10.2);
+Math.round(10.2);
+
+Math.random();    // random double between 0 and 1
+
+Math.PI;          // double value of Pi
+
+// Method to prevent a numeric overflow by throwing an exception
+// usual increment/decrement functions silently overflow
+int i = Integer.MAX_VALUE;
+i = Math.incrementExact(i);              // throw an ArithmeticException dur to integer overflow
+```
+
 ### Random
 
 The `java.util.Random` class exposes a pseudo-random numbers generator.
 
 ```java
-Random random = new Random();
-random.nextInt();                 // pseudo-random integer in [0, MAX_INT] (max_INT = 2^32 = 4.2M)
-random.nextInt(10);               // pseudo-random integer in [0, 9]
-random.nextDouble();              // pseudo-random double in [0.0, 1.0[
-random.nextDouble(10.0);          // pseudo-random double in [0.0, 10.0[
+Random random = new Random();       // random generator
+Random random = new Random(1234);   // random generator with a specific seed (so the randomness is fixed)
+
+random.nextInt();                   // pseudo-random integer in [Inger.MIN_VALUE, Integer.MAX_VALUE] ( +/- 2^32 = 4.2M)
+random.nextInt(10);                 // pseudo-random integer in [0, 9]
+random.nextInt(10, 20);             // pseudo-random integer in [10, 19]
+random.nextDouble();                // pseudo-random double in [0.0, 1.0[
+random.nextDouble(10.0);            // pseudo-random double in [0.0, 10.0[
+
+// random streams
+random.ints()                       // unlimited stream of nextInt()
+random.ints(5)                      // stream of 5 elements of nextInt()
+random.ints(10, 20)                 // unlimited stream of nextInt(10, 20)
+random.ints(5, 10, 20)              // stream of 5 elements of nextInt(10, 20)
 ```
 
 ### BigDecimal
 
-BigDecimal is used for floating point objects that need exact precision (float and double truncate the result).
+BigDecimal is an immutable class used for floating point objects that need exact precision (float and double truncate the result).  
+
+A BigDecimal is stored internally as :
+- the unscaled value : a BigInteger containing all the known digits
+- the scale : the number of decimal digits in the unscaled value
+- the precision : total number of known digits
+
+```java
+BigDecimal bd1 = new BigDecimal("12345.6789")     // constructor from a string
+BigDecimal bd2 = BigDecimal.valueOf(0.2)          // constructor from a double, MUST BE AVOIDED AS IT MAY LOSE PRECISION
+
+bd.unscaledValue();       // 123456789
+bd.scale();               // 4
+bd.precision();           // 9
+
+bd = bd.setScale(2, RoundingMode.FLOOR);     // change the scale of the BigNumber (possible data loss if the scale was bigger)  
+
+// operations on BigDecimal
+bd1.abs();
+bd1.max(bd2);
+bd1.add(bd2);
+bd1.multiply(bd2);
+bd1.divide(bd2);
+```
+
+When performing operations on BigDecimal, some operations may throw an exception because the result is not representable as a BigDecimal.  
+In that case, we should specify a **MathContext** that describe how to round the result to make it fit in a BigDecimal :
+- `MathContext.UNLIMITED` : default MathContext, throws if the result has infinite decimals
+- `MathContext.DECIMAL32` : round the result to fit a float (7 digits precision)
+- `MathContext.DECIMAL64` : round the result to fit a double (16 digits precision)
+- `MathContext.DECIMAL128` : round the result to fit twice the size of a double (34 digits precision)
+- `new MathContext(60, RoundingMode.HALF_UP)` : custom MathContext with 60 digits precision
+
+```java
+BigDecimal bd1 = new BigDecimal("10");
+BigDecimal bd2 = new BigDecimal("3.0");
+bd1.divide(bd2);                            // throw an error because 10/3 has infinite digits
+bd1.divide(bd2, MathContext.UNLIMITED);     // same error, with explicit MathContext
+bd1.divide(bd2, MathContext.DECIMAL128);    // return 3.333333333333333333333333333333333 (34 digits)
+```
+
+### Dates and Time
+
+The `java.time` package contains multiple classes to manipulate dates and times.
+
+- `LocalDate` : an immutable date without a timezone (year / month / day)
+- `LocalTime` : an immutable time without a timezone (hour / minute / second / nanosecond)
+- `LocalDateTime` : an immutable date and time without a timezone (year / month / day / hour / minute / second / nanosecond)
+- `ZonedDateTime` : an immutable date and time with a timezone
+- `Instant` : a specific instant in the timeline, represented by its epoch seconds (seconds from `LocalDate.EPOCH`) and additional nanoseconds.  
+
+Those classes all implement the `Temporal` interface that exposes calculation methods.
+
+Some date and time related enums are also exposed :
+- `DayOfWeek` : `MONDAY`, `TUESDAY` ...
+- `Month` : `JANUARY`, `FEBRUARY`...
+- `ChronoField` : `DAY_OF_WEEK`, `SECOND_OF_DAY` ... (implement the `TemporalField` interface)
+- `ChronoUnit` : `DAYS`, `HOURS`, `MINUTES`, `WEEKS`, `YEARS` ... (implement the `TemporalUnit` interface)
+
+#### LocalDate
+
+`LocalDate` replaces the old `Date` class used before Java 8.
+
+```java
+LocalDate date = LocalDate.now();
+LocalDate date = LocalDate.of(2024, 12, 31);
+LocalDate date = LocalDate.parse("2024-12-31");
+
+date.getYear();
+date.getMonth();
+date.getDay();
+date.getDayOfWeek();
+date.asStartOfDay();       // create a LocalDateTime on that day at 00:00:00
+date.atTime(14, 30, 0);    // create a LocalDateTime on that day at 14:30:00
+date.isLeapYear();
+
+// we can use a TemporalField to access a specific field of the date
+System.out.println(date.get(ChronoField.YEAR));
+System.out.println(date.get(ChronoField.DAY_OF_YEAR));
+
+// the withXXX methods return a new date by changing a specific value (since LocalDate is immutable)
+date.withYear(2000);
+date.withDayOfMonth(15);
+date.with(ChronoField.DAY_OF_MONTH, 15);    // same but using a TemporalField
+
+// operations to add/remove time to a date
+date.plusYears(2);
+date.plusMonths(2);
+date.plusDays(2);
+date.plus(2, ChronoUnit.DAYS);
+date.minusDays(5);
+
+// compare dates together
+date.isBefore(date2);
+date.isAfter(date2);
+date.equal(date2);
+date.compareTo(date2);    // 1 (bigger), 0 (equal) or -1 (smaller)
+
+date.daysUntil(date2);                         // stream of all dates up to date2
+date.daysUntil(date2, Period.ofDays(7));       // stream of all dates up to date2 by a 7 days interval
+```
+
+#### LocalTime
+
+```java
+LocalTime time = LocalTime.now();
+LocalTime time = LocalTime.of(14, 30);                  // 14:30
+LocalTime time = LocalTime.of(14, 30, 0, 0);            // 14:30:00.0000
+LocalTime time = LocalTime.parse("14:30:00.0000");      // 14:30
+
+time.getHour();
+time.get(ChronoField.HOUR_OF_DAY);
+
+time.plusHours(2);
+time.plus(2, ChronoUnit.HOURS);
+```
+
+#### LocalDateTime
+
+```java
+LocalDateTime dateTime = LocalDateTime.now();
+LocalDateTime dateTime = LocalDateTime.of(2024, 7, 12, 14, 30)        // 2024-07-12 14:30
+LocalDateTime dateTime = LocalDateTime.parse("2022-05-10T15:30:45");
+
+dateTime.getHour();
+dateTime.get(ChronoField.HOUR_OF_DAY);
+
+dateTime.plusHours(2);
+dateTime.plus(2, ChronoUnit.HOURS);
+
+dateTime.format(DateTimeFormatter.ISO_DATE_TIME);        // date time formatting : 2024-07-12T14:30:00
+```
+
+#### Instant
+
+```java
+Instant instant = Instant.now();
+Instant instant = Instant.ofEpochSecond(1651395600, 12345678);
+
+instant.getEpochSecond();
+instant.getNano();
+
+instant.get(ChronoField.MILLI_OF_SECOND);
+instant.get(ChronoField.NANO_OF_SECOND);
+```
+
+#### ZoneId
+
+The `ZoneId` class provides timezone related information.  
+It replaces the old `Timezone` class used before Java 8.
+
+```java
+ZoneId.systemDefault();                // default system timezone, for ex "Asia/Tokyo"
+ZoneId.getAvailableZoneIds();          // set of all available timezones
+
+ZoneId.of("Asia/Tokyo");               // factory to create the ZoneId instance for a timezone
+```
+
+### Locale
+
+The `Locale` class represents a geographical location with its language conventions.  
+It is used to offer a different behavior based on the location of the user.  
+
+A simple locale only has a language and a country, for example `en_US`.  
+More complex locales can have extensions, or be a variant of another locale.
+
+It can be used for date formatting, number formatting, or display text in the language of the user.
+
+```java
+Locale locale = Locale.getDefault();
+Locale locale = Locale.JAPAN;
+Locale locale = Locale.forLanguageTag("ja");
+
+// format a date with a locale
+LocalDateTime now = LocalDateTime.now();
+DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+                                               .withLocale(locale);
+String formattedDateTime = now.format(formatter);        // 2 juin 2024, 16:51:09
+
+// format a number with a locale (digits and decimal separator vary per country)
+NumberFormat formatter = NumberFormat.getNumberInstance(locale);
+formatter.format(12345.6789);   // "12,345.679" with Locale.JAPAN, "12 345.6789" with Locale.FRANCE ...
+
+// currency with a locale
+Currency currency = Currency.getInstance(locale);
+currency.getDisplayName();                             // Euro, Yen ...
+currency.getCurrencyCode();                            // EUR, JPY ...
+currency.getSymbol();                                  // €, ￥ ...
+
+// currency amount with a locale
+NumberFormat formatter = NumberFormat.getCurrencyInstance(locale);    // currency formatter
+formatter.format(12345.6789);   // "￥12,346" with Locale.JAPAN, "12 345,68 €" with Locale.FRANCE ...
+```
+
+#### ResourceBundle
+
+`ResourceBundle` is an abstract class used to manage locale-specific resources in an application.  
+It is often used to display text in the user's language in forms, button labels, menu items...  
+It can technically also contain other data formats, like images or audio components.
+
+The most common way to use ResourceBundle is with a bundle of properties files (a base one, and one for each supported language).  
+All files of the bundle start with the same base name, have an optional suffix for the language, and the `.properties` extension.  
+
+IntelliJ's project editor supports natively the creation of bundles with : _create a resources folder > right-click it > New > Resource Bundle_  
+We can then add the resources folder to Java's path with : _right-click > mark directory as > resources root_  
+IntelliJ has a `Resource Bundle Editor` plugin to easily edit the labels in all languages at the same time.
+ 
+_CustomLabels_fr.properties_
+```
+# label literals
+yes = oui
+no = non
+save = sauvegarder
+edit = editer
+```
+
+```java
+ResourceBundle rb = ResourceBundle.getBundle("CustomLabels", Locale.FRANCE);
+
+rb.getBaseBundleName();           // CustomLabels
+rb.getClass().getName();          // java.util.PropertyResourceBundle
+rb.keySet();                      // [yes, no, save, edit]
+rb.getString("save");             // sauvegarder
+```
+
+We are not limited to properties files for ResourceBundle.  
+We can extend the `ListResourceBundle` class to expose any type of data, not only strings.
+
 
 ### Optional
 
