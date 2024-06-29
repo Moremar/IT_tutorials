@@ -1705,6 +1705,7 @@ After a terminal operation is called on a stream, the stream is consumed and can
 - `forEach(function)` : apply a function to elements of the stream
 - `reduce(binaryOp)` : reduce the elements in the stream by applying the reduce function to elements 2 by 2
 - `collect(collector)` : use a collector in the `Collectors` utility class to return a mutable data structure, for example `Collectors.toList()`
+
 ```java
 // use a built-in collector to return a mutable set (from the Collectors utility class)
 Random random = new Random();
@@ -1729,3 +1730,148 @@ var numbers = Stream.generate(() -> random.nextInt(100))
                         TreeSet::add,            // accumulator
                         TreeSet::addAll          // combiner
                     );
+```
+
+
+## Regular Expressions
+
+Regex can be used with strings to search, replace or split on matches.
+
+Useful regex patterns include :
+- `\\d` : digit
+- `\\w` : letter, digit or underscore
+- `\\R` : end of line (both Linux and Windows)
+- `\\s` : whitespace (space, tab, new line)
+- `\\p{<PROPERTY>}` : match specific built-in properties
+  - `\\p{L}` : any letter from any language
+  - `\\p{Punct}` : any ASCII punctuation
+  - `\\p{Digit}` : same as `\\d`
+  - `\\p{Lower}` : same as `[a-z]`
+  - `\\p{Upper}` : same as `[A-Z]`
+  - `\\p{Alpha}` : same as `[a-zA-Z]`
+  - `\\p{Alnum}` : same as `\\w` or `[a-zA-Z0-9_]`
+- `.*` : any number of characters (greedy expression : matches as many characters as possible)
+- `.*?` : any number of characters (reluctant expression : stops matching as soon as it can)
+
+We can use a **back-reference** in a regex to reference an earlier group of the regex.  
+For example the regex `<(h\\d)>.*</\\1>` can match HTML headers with their opening and closing tags.  
+
+### Regex with String
+
+```java
+String str = "beautiful";
+String regex = "[aiueo]{3,5}";
+boolean match = str.matches(regex);                  // false (must be entire match)
+boolean match = str.matches(".*" + regex + ".*");    // true
+
+String str = "I have 2 kids, 3 dogs and 11 cats.";
+String regex = "[0-9]+";
+String replaced = str2.replaceFirst(regex, "X");    // replace first match
+String replaced = str2.replaceAll(regex, "X");      // replace all matches
+String[] splitted = str2.split(regex);              // split string on matches
+
+String paragraph = """
+        This is line 1.
+        This is line 2.
+        And this is line 3.
+        """;
+var lines = paragraph.split("\\R");
+var words = paragraph.split("\\s");
+```
+
+### Regex with Scanner
+
+The `Scanner` uses a regex to specify how it tokenizes its input.  
+By default, it splits at every whitespace, so the `next()` method returns each word.  
+We can modify this regex to split on lines for example (to mimic the behavior of `nextLine()`).
+
+```java
+// search each scanned line for a regex
+String regex = "\\d+";
+Scanner scanner = new Scanner(paragraph);
+while (scanner.hasNext()) {
+    System.out.println(scanner.findInLine(regex));    // print first match of the regex in the line
+    scanner.nextLine();
+}
+
+// change the scanner delimiter regex
+Scanner scanner = new Scanner(paragraph);
+scanner.useDelimiter("\\R");
+while (scanner.hasNext()) {
+    System.out.println(scanner.next());    // print each line instead of each word
+}
+```
+
+### Regex with a Pattern and a Matcher
+
+Java also has a `Pattern` class that allows to compile a regex string into a re-usable pattern.  
+That is especially useful if we are using the same regex multiple times.  
+It also exposes a lot more regex features than the String class, for example the capture of groups.
+
+A `Matcher` object is instantiated from a pattern and a string to match.  
+This object has a state that keeps track of how much it has matched so far.
+
+```java
+// use the Pattern.matches() static method for a one-time match, similar to String.matches() 
+String regex = "\\d{2}";
+String sentence = "I have 12 dogs and 28 cats";
+boolean m = Pattern.matches(regex, str);
+
+// define a re-usable Pattern object
+Pattern pattern = Pattern.compile(regex);
+Matcher matcher = pattern.matcher(sentence);
+boolean m = matcher.matches();  // matches the entire string
+matcher.start();                // start index of the match (throw if no match)
+matcher.end();                  // end index of the match (throw if no match)
+
+matcher.reset();                // reset the matcher state
+matcher.lookingAt();            // match from the start but not necessarily until the end, and uses a reluctant match if specified
+matcher.find();                 // match the pattern anywhere in the string (not only at the start like matches() and lookingAt())
+
+// iterate on successive matches with find()
+matcher.reset();
+while (matcher.find()) {
+    System.out.println("Match found between position " + matcher.start() + " and " + matcher.end());
+}
+
+// replace one or more matches
+Pattern nbPattern = Pattern.compile("\\d{2}");
+Matcher nbMatcher = nbPattern.matcher("06 12 34 56 78");
+String replacedOne = nbMatcher.replaceFirst("XX");        // XX 12 34 56 78
+String replacedAll = nbMatcher.replaceAll("XX");          // XX XX XX XX XX
+
+// group capture
+// group 0 always exists when there is a match, it is the entire matched subsequence
+// group 1 and later are the groups captured with brackets
+Pattern datePattern = Pattern.compile("(\\d{4})/(\\d{2})/(\\d{2})");
+Matcher dateMatcher = datePattern.matcher("Birthday: 2024/06/01");
+if (dateMatcher.find()) {
+    String fullMatch = dateMatcher.group();
+    String year = dateMatcher.group(1);
+    String month = dateMatcher.group(2);
+    String day = dateMatcher.group(3);    
+ }
+ 
+ // named group, to access it by name instead of index
+Pattern pattern = Pattern.compile("Age : (?<age>\\d+) - Gender : (?<gender>[MF])");
+Matcher matcher = pattern.matcher("Name : Bob - Age : 28 - Gender : M");
+if (matcher.find()) {
+    String age = matcher.group("age");
+    String gender = matcher.group("gender");
+ }
+ 
+ // get the match results as a stream
+String paragraph = """
+        "Name : Bob - Age : 28 - Gender : M"
+        "Name : Alice - Age : 18 - Gender : F"
+        "Name : Jane - Age : 23 - Gender : F"
+        """;
+Pattern pattern = Pattern.compile("Age : (?<age>\\d+) - Gender : (?<gender>[MF])");
+Matcher matcher = pattern.matcher(paragraph);
+matcher.results().forEach(match -> {
+    System.out.println(match.namedGroups());
+    System.out.println(match.group("age"));
+    System.out.println(match.group("gender"));
+});
+```
+
