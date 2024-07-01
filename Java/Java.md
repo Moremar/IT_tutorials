@@ -1101,13 +1101,49 @@ do {
 
 ## Exception Handling
 
+Java has checked and unchecked exceptions that extend the `Exception` class.  
+Checked exceptions that a function may throw are specified in the function signature.  
+Any function calling such a function needs to handle the exception either with try/catch or by adding the exception to its signature.
+
+On the other hand, unchecked exception extend `RuntimeException` and are not specified in the function signature.  
+They can still be caught in a try/catch block by their exception class or one of its parents.
+
+Common checked exceptions are :
+- `IOException` failure in an I/O operation (reading a file, stream, database ...)
+- `ParseException` : failure to parse an object from a string
+- `InterruptedException` : interruption of a thread while waiting
+- `ClassNotFoundException` : attempt to access a class by reflection that was not loaded
+
+Common unchecked exceptions are :
+- `NullPointerException` : attempt to access a method or field on a null reference
+- `IllegalArgumentException` : when an argument is not valid for a function (negative integer, date in the future...)
+- `IndexOutOfBoundsException` : illegal index access in a data structure
+
 ```java
 try {
     System.console().readLine("Your name: ");   // throw a NullPointerException when run in IntelliJ IDEA
 } catch (NullPointerException e) {
     System.out.println("No console available.");
+} finally {
+    // code to execute even on exception
 }
 ```
+
+If a class implements `Closeable` or `AutoCloseable`, it can use the try-with-resource structure.  
+The variable is declared in the `try` instruction, and closed automatically after it.
+
+```java
+try (FileReader reader = new FileReader("test.txt")) {
+    // do something
+} catch (FileNotFoundException | NullPointerException e) {       // can have multiple exception types in a catch block
+    throw new RuntimeException(e);
+} catch (Exception e) {
+    throw new RuntimeException(e);
+}
+```
+
+Note that a try/catch or try-with-resource structure can have multiple catch blocks.  
+They are evaluated in the order they appear in the code, and must be ordered from the most specific to the most specific exception.
 
 
 ## User Input
