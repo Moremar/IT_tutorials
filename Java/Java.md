@@ -193,6 +193,16 @@ String formatted1 = String.format("Age: %d  Grade: %.2f", age, grade);   // Age:
 String formatted2 = "Age: %d  Grade: %.2f".formatted(age, grade);        // Age: 13  Grade: 12.50
 ```
 
+The `StringJoiner` class can be used to join multiple strings with a custom delimiter, prefix and suffix :
+
+```java
+StringJoiner joiner = new StringJoiner(", ", "[", "]");
+joiner.add("item_1");
+joiner.add("item_2");
+joiner.toString();
+```
+
+
 ### Arrays
 
 Arrays are instances of a built-in class that inherits from Object and has a single field called `length`.
@@ -1170,6 +1180,361 @@ String name = scanner.nextLine();
 ```
 
 
+## File Manipulation
+
+### java.io (legacy package)
+
+The `java.io` package has been available since Java 1, and is now considered legacy.  
+It is still usable, but it has limited functionalities and does not handle well exceptions.
+
+The `File` class gives access to a file handler to perform OS-like operations.  
+It is just a file handle, so it does not open/close the file on disk.  
+This must not be confused with a file resource, that represents the actual data inside the file.
+
+```java
+File file = new File("");                  // file handle to the execution folder
+File file = new File("docs/test.txt");     // file handle to a given file (relative path)
+File file = new File("/docs/test.txt");    // file handle to a given file (absolute path)
+
+file.exists();
+file.isDirectory();
+file.isFile();
+file.getAbsolutePath();
+file.listFiles();                          // array of File objects if the file is a directory
+
+file.canRead();
+file.canWrite();
+file.canExecute();
+
+file.createNewFile();                      // return a success boolean
+file.delete();                             // return a success boolean
+
+// rename a file (deprecated, use Path instead)
+File oldFile = new File("old.txt");
+File newFile = new File("new.txt");
+if (oldFile.exists()) {
+    boolean success = oldFile.renameTo(newFile);
+}
+```
+
+The `FileReader` class implements the `AutoCloseable` interface via its abstract parent class `Reader`.  
+By default it reads integers from a file, corresponding to the char value of each character in the file.  
+It uses a buffer to read multiple integers from the file at each physical disk read to improve performance.
+```java
+// read data from a file int by int
+try (FileReader reader = new FileReader("test.txt")) {
+    int data;
+    while ( (data = reader.read()) != -1 ) {
+        System.out.println( (char) data );
+    }
+} catch (IOException e) {
+    e.printStackTrace();
+}
+
+// read data from a file as an array of char
+try (FileReader reader = new FileReader("test.txt")) {
+    char[] data = new char[1000];
+    int charsRead;
+    while ( (charsRead = reader.read(data)) != -1 ) {
+        String content = new String(data, 0, charsRead);
+        System.out.println( "%s (%d chars)", content, charsRead );
+    }
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+Java uses the `InputStream` interface to represent a stream or characters or bytes.  
+The `FileInputStream` is the implementation for bytes coming from a file.  
+Its `read()` method corresponds to a physical read, so it is usually wrapped in a `BufferedInputStream` for efficiency.  
+The `FileReader` class uses an `InputStream` under the hood to read the content of the file.
+
+```java
+// use a BufferedReader to improve efficiency by reducing physical reads
+// read data from a file as an array of char
+try (BufferedReader reader = new BufferedReader(new FileReader("test.txt"))) {
+
+    // read lines one by one
+    String line;
+    while ( (line = reader.readLine()) != null ) {
+        System.out.println( line );
+    }
+    
+    // read all lines at once as a stream (from Java 8)
+    reader.lines().forEach(System.out::println);
+    
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+We can also use a `Scanner` to read a file, exposing the same methods as when reading from `System.in`.  
+`Scanner` has many overloaded constructors, including ones taking as input a `File`, `Path`, `FileReader`...  
+It them leverages the new classes in `system.nio` package under the hood.
+
+```java
+try (Scanner scanner = new Scanner(new File("test.txt))) {
+    while (scanner.hasNextLine()) {
+        System.out.println(scanner.nextLine());
+    }
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+To write a file, we use an implementation of the `Writer` interface, among the multiple variations available :
+- `PrintWriter` : exposes the `write` method to add a string, and the `println` method that appends a system-specific newline and flushes
+- `FileWriter` : exposes the `write` method to add a string
+- `BufferedWriter` : better performance to wrtie large amounts of text to a file, can wrap other writer types
+
+```java
+try (PrintWriter writer = new PrintWriter("test.txt")) {
+    writer.println(line1);
+    writer.println(line2);
+    writer.printf("%-12d", 13);        // print a number with a fixed size (the - means left-aligned)
+}
+```
+
+### java.nio (new package)
+
+The `java.nio` package was added in Java 7 to make file manipulation easier.  
+It supports asynchronous file IO operations, symbolic links, better file locking...  
+It should be used instead of `java.io` in every application using Java 7+.
+
+The `Path` interface is the successor of the `File` class for file handlers.  
+The `Paths` class exposes the `Paths.get(str)` static method to create a Path instance.  
+Since Java 11, we can use an interface static method instead with `Path.of(str)`.
+
+The `Files` class exposes some static methods to manipulate files (create, delete, read, write, check metadata...).  
+Many of those methods use a `Path` parameter to specify the file to manipulate.
+
+```java
+Path path = Paths.get("docs/test.txt");           // before Java 11
+Path path = Path.of("docs/test.txt");             // since Java 11
+
+path.getFileName();
+path.getParent();
+path.isAbsolute();
+path.toAbsolutePath();
+path.getRoot();                                    // root of the absolute path (like / on Linux or C:\ on Windows)
+path.getName(i);                                   // i-th folder name of an absolute path
+
+Files.isReadable(path);
+Files.isWritable(path);
+Files.isExecutable(path);
+
+
+// rename / copy / delete a file
+Path newPath = Path.of("new.txt");
+try {
+    Files.copy(path, newPath);
+    Files.move(path, newPath);
+    Files.delete(newPath);
+}
+
+Files.exists(path);
+Files.createFile(path);                           // return void, exception on failure
+Files.createDirectory(path);                      // create one level of directory (the parent directory must exist)
+Files.createDirectories(path);                    // create one or more level of directories
+Files.delete(path);                               // throw IOException on failure (file does not exist, non-empty dir...)
+Files.deleteIfExists(path);
+Files.readAttributes(path);                       // map of attributes (size, creation time last access time, is directory...)
+
+
+// write a string to a file
+Files.writeString(path, """
+    First Line.
+    Second Line.""");
+
+// write a string to a file with options
+Files.writeString(path, "hello",
+    StandardOpenOption.CREATE,                    // create the file if needed
+    StandardOpenOption.APPEND);                   // append instead of replacing
+
+// writes all strings in an iterable
+Files.write(path, iterableObj);
+
+// read from a file
+Files.readString(path);                           // get the entire file as a string
+Files.readAllBytes(path);                         // get the entire file as an array of bytes
+Files.readAllLines(path);                         // get all lines of a file
+Files.lines(path);                                // get all lines of a file as a stream
+```
+
+Some methods return a stream of Path instances, and must be used with try-with-resource to ensure that they get closed :
+- `Files.list(path)` : stream of files and directories contained in a given directory (`ls` or `dir` command)
+- `Files.walk(path, depth)` : similar to `Files.list(path)` but recursive for depth > 1 (depth-first traversal)
+- `Files.find(path, depth, predicate)` : similar to `Files.walk(path, depth)` but filters the stream on a predicate
+- `Files.newDirectoryStream(path, glob)` : similar, but uses a GLOB to filter instead of a predicate (for example `*.txt`)
+
+```java
+// print the content of a folder
+try (Stream<Path> paths = Files.list(path)) {
+    paths.forEach(System.out::println);
+} catch (IOException e) {
+    e.printStackTrace();
+}
+
+// print the content of a folder and all its sub-folders up to a depth of 3
+try (Stream<Path> paths = Files.walk(path, 3)) {
+    paths.forEach(System.out::println);
+} catch (IOException e) {
+    e.printStackTrace();
+}
+
+// print all files (and not directories) in a folder and all its sub-folders up to a depth of 3
+try (Stream<Path> paths = Files.find(path, 3, (path, attributes) -> Files.isRegularFile(path))) {
+    paths.forEach(System.out::println);
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+The `Files.walkFileTree()` is an alternative to `Files.walk()` for file traversal.  
+Instead of returning a stream, it traverses files and folders in a folder and apply a visitor during irs traversal.  
+Overriding the visitor methods exposes a hook during file visit, before/after directory visit and on file visit failure.
+
+```java
+// define a file visitor class that performs an action during the traversal
+private static class CustomFileVisitor extends SimpleFileVisitor<Path> {
+
+    @Override
+    public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+        System.out.println("Traversing file " + path.getFileName());
+        return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) throws IOException {
+        System.out.println("Before traversal of directory " + path.getFileName());
+        return FileVisitResult.CONTINUE;
+    }
+}
+
+// traverse the files using this visitor
+FileVisitor<Path> visitor = new CustomFileVisitor();
+try {
+    Files.walkFileTree(path, visitor);
+} catch (IOException e) {
+    e.printStackTrace();
+}
+```
+
+### Random Access Read/Write
+
+Usually files are read or written from the beginning to the end, but we may sometimes need to write or read a binary file at specific offsets.  
+This is possible with the `RandomAccessFile` that uses a **file pointer** to keep track of its location in the file.  
+It behaves like a large array of bytes where we can read or write any byte.
+
+Random access files can be used together with an index, to easily retrieve rows in a big files without scanning the entire file.  
+The index can be at the beginning of the file, at the end of the file or in a separate file.  
+
+A common structure for the index is :
+- the row count (4-byte integer)
+- the map of record ID (8-byte long) and their position in the file (8-byte long)
+
+For fixed-size rows, the index is sometimes not needed if we can use the row ID instead.
+
+```java
+// write a binary file with RandomAccessFile
+try (RandomAccessFile file = new RandomAccessFile("test.dat", "rw")) {
+    file.seek(4);              // move the file pointer to position 4 (beginning of the 5th byte of the file)
+    file.writeUTF("Hello");    // write a string to the file (and move the file pointer to the next byte)
+    file.writeInt(2);          // write an int to the file (and move the file pointer to the next byte)
+    file.writeInt(222222);     // write a long to the file (and move the file pointer to the next byte)
+}
+
+// read a binary file with RandomAccessFile
+try (RandomAccessFile file = new RandomAccessFile("test.dat", "r")) {
+    String str = file.readUTF();    // read a string from the file (and move the file pointer to the next byte)
+    int i = file.readInt();         // read an int from the file (and move the file pointer to the next byte)
+    long l = file.readInt();        // read a long from the file (and move the file pointer to the next byte)
+}
+```
+
+### Serialization
+
+Primitive types can be written to files using the `DataOutputStream` class.  
+It wraps another output stream (for example a `BufferedOutputStream` or directly a `FileOutputStream`).  
+It allows to write primitive types and let the underlying output stream write the bytes to the file.  
+
+```java
+try ( DataOutputStream dataStream = new DataOutputStream(
+                new BufferedOutputStream( new FileOutputStream("test.txt") ) ) ) {
+                
+    // write primitive types
+    dataStream.writeInt(12);
+    dataStream.writeLong(123456789);
+    dataStream.writeBoolean(true);
+    dataStream.writeChar('Z');
+    dataStream.writeFloat(1.5);
+    dataStream.writeDouble(3.14);
+    dataStream.writeUTF("Hi friend");
+    
+    dataStream.size();      // total size of data written to the output data stream (in bytes)
+}
+```
+
+The equivalent to read primitive types from a file is the `DataInputStream` class :
+
+```java
+try ( DataInputStream dataStream = new DataInputStream(Files.newInputStream("test.txt")) ) {
+                
+    // read primitive types
+    dataStream.readInt();
+    dataStream.readLong();
+    dataStream.readBoolean();
+    dataStream.readChar();
+    dataStream.readFloat();
+    dataStream.readDouble();
+    dataStream.readUTF();
+    
+    dataStream.size();      // total size of data written to the output data stream (in bytes)
+}
+```
+
+The `Serializable` interface is used to mark the classes that can be serialized to a file.  
+It does not include any method, and only means that the class can be serialized by copying its fields.  
+All non-static fields of a serializable class must be serializable.
+
+Serializable objects can be written to files with the `writeObject(o)` method of the `ObjectOutputStream` class.  
+They can then be read from the file using the `readObject(o)` method of the `ObjectInputStream` class.  
+This avoids to write/read manually all the primitive fields of the class.
+
+Java computes under the hood a serial version ID for each class that implements the Serializable interface.  
+This serial version ID is included in each serialized object of that class.  
+When deserializing, Java ensures that the serial version ID in the serialized object corresponds to the class we are deserializing.  
+If the class definition has changed (additional field, field type modification...) then the class has a different serial version ID.  
+This causes an exception during deserialization.
+
+The serial version ID generated automatically by Java may not be compatible between JVMs.  
+For objects serialized in a JVM to be deserializable in another JVM, we can specify the serial version ID manually.  
+We can set its version to any long, as long as it is different from all our other serializable classes and changes when the class structure is updated.
+```java
+private final static long serialVersionUID = 1L;
+```
+
+We can override the methods that Java uses to serialize and deserialize objects of a class.  
+This can either enrich the default behavior, or completely replace it.  
+We can also use the `serialVersionUID` field to have a different logic depending on the serialized version, to add inter-version compatibility.
+
+```java
+// example of an override of readObject(stream) that only enriches the default deserialization 
+@Serial
+private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+    stream.defaultReadObject();     // populate the fields by Java default deserialization
+    myValid = myInt > 5;            // custom logic to modify the fields    
+}
+
+// example of an override of writeObject(stream) that uses a custom serialization
+@Serial
+private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.writeInt(myInt);
+    stream.writeUTF(myName);    
+}
+```
+
+
 ## OOP (Object-Oriented Programming)
 
 ### Classes
@@ -1855,6 +2220,10 @@ boolean m = Pattern.matches(regex, str);
 
 // define a re-usable Pattern object
 Pattern pattern = Pattern.compile(regex);
+
+// split the strings by a pattern as a stream
+pattern.splitAsStream(sentence);
+
 Matcher matcher = pattern.matcher(sentence);
 boolean m = matcher.matches();  // matches the entire string
 matcher.start();                // start index of the match (throw if no match)
