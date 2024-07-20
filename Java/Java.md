@@ -562,6 +562,24 @@ myOptional.ifPresentOrElse(                            // execute a different la
         s -> System.out.println("EMPTY"));
 ```
 
+### Future
+
+The `Future` interface represents the result of an asynchronous computation (remote call, database access, long computation...).  
+It has no value originally, and at some point in the future it will be assigned a value.  
+It is used by asynchronous functions to immediately return a handle on the future result of their ongoing calculation.
+
+We rarely instantiate a `Future` ourselves, instead we obtain it when calling a long-running operation.
+
+```java
+Future<Integer> futureInt = getLongRunningOperationResult();
+
+futureInt.isDone();            // true if the result is available
+futureInt.isCancelled();       // true if the result was cancelled
+
+futureInt.get();               // block until the result is available and return it
+futureInt.get(timeout, unit);  // same as get() but throws a TimeoutException if the timeout is reached
+futureInt.cancel();            // interrupt the running thread
+```
 
 ## Java Collections
 
@@ -1534,6 +1552,36 @@ private void writeObject(ObjectOutputStream stream) throws IOException {
 }
 ```
 
+### WatchService
+
+The `WatchService` interface allows to monitor directories and files for changes.  
+It can be used to update file lists in a file manager when files are created, modified, or deleted.
+
+```java
+WatchService watchService = FileSystems.getDefault().newWatchService();
+
+// register a folder to watch for events
+Path dirToWatch = Paths.get("path/to/directory");
+dirToWatch.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+
+// poll for events in a blocking way with the take() method
+WatchKey watchKey;
+while ((watchKey = watchService.take()) != null) {
+
+    // perform an action on each event
+    watchKey.pollEvents().forEach(event -> {
+        System.out.println(event.kind());
+        System.out.println(event.context());
+    });
+    
+    // need to reset the watchKey so we can continue monitoring for further changes
+    watchKey.reset();
+}
+
+// when no longer used we should close it so it can release its resources
+watchService.close();
+```
+
 
 ## OOP (Object-Oriented Programming)
 
@@ -2041,7 +2089,7 @@ Multiple sources can be used by a stream :
 
 - **2 streams** : with the `Stream.concat(stream1, stream2)` static method
 
-- **range of values** : with the `Stream.range(startVal, endVal)` static method
+- **range of values** : with the `IntStream.range(startVal, endVal)` static method
 
 - **generator method** : with the `Stream.generate(provider)` static method to generate an infinite number of elements, that can be limited later :
 ```java
@@ -2133,6 +2181,32 @@ var numbers = Stream.generate(() -> random.nextInt(100))
                     );
 ```
 
+### Parallel Streams
+
+Java streams can easily be configured to run in parallel with the `parallel()` method.  
+This will leverage the multiple cores available to the program to parallelize the work.  
+Behind the hood, it uses a fork-join thread pool.
+
+A parallel stream is not always faster than its sequential version.  
+The parallelization comes with an additional overhead for thread management, memory management, data source splitting...  
+
+Some operations also do not work with parallel streams, for example operations on sorted input.  
+If we sort data in a parallel stream, it will no longer be sorted when merged back together.
+
+A good practice is to use sequential streams by default, at least for development.  
+If a section of code needs to be more performant, we can run benchmarks with a parallel stream to evaluate if it makes sense.
+
+```java
+IntStream.rangeClosed(1, 100_000_000)
+         .parallel()                     // turn the stream into a parallel stream
+         .reduce(0, Integer::sum);       // reduce into the sum
+
+// if we reduce by adding an initial non-zero value, it no longer work with aprallel streams !!
+// this is because each worker will add the initial value, so it will be included multiple times !
+IntStream.rangeClosed(1, 100_000_000)
+         .parallel()                     // turn the stream into a parallel stream
+         .reduce(5, Integer::sum);       // the value "5" will be added multiple times ! (once for each worker)
+```
 
 ## Regular Expressions
 
@@ -2280,3 +2354,292 @@ matcher.results().forEach(match -> {
 });
 ```
 
+
+## Concurrency and Multi-Threading
+
+A **process** (or application) is a unit of execution with its own memory space (heap).  
+A process cannot access the heap of another process.
+
+A **thread** is a single unit of execution within a process.  
+Every process has at least one thread (the main thread), and can spawn others to parallelize its processing.  
+Every thread of a process shares the same heap memory.  
+Each thread also has its own stack, for the variables and methods defined during its execution.
+
+The `Thread` class implements the `Runnable` interface, and exposes static methods to access and operate on the current thread :
+```java
+Thread thread = Thread.currentThread();
+
+thread.getId();
+thread.getName();
+thread.getPriority();    // 1 to 10, drives how they get scheduled
+thread.getState();
+thread.getThreadGroup();
+thread.isAlive();
+
+thread.setName("my-thread");
+thread.setPriority(Thread.MAX_PRIORITY);
+
+Thread.sleep(1000);      // pause the current thread for 1 sec
+```
+
+### Thread Creation
+
+There are multiple ways to create a thread :
+- extend the `Thread` class and instantiate this subclass
+- create a new instance of `Thread` passing it a `Runnable` object (usually a lambda)
+- use an executor to create some threads
+
+```java
+// Create a subclass of Thread
+public class CustomThread extends Thread {
+    @Override
+    public void run() {
+        for (int i = 0; i < 10; i++) {
+            System.out.println(i);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
+CustomThread thread = new CustomThread();
+thread.run();                                // start the thread synchronously (blocking the main thread, in real code we never call it like this)
+thread.start();                              // start the thread asynchronously (not blocking the main thread)
+
+
+// Create a Runnable instance to construct the Thread
+Thread customThread = new Thread(() -> {
+        for (int i = 0; i < 10; i++) {
+            System.out.println(i);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();     // re-interrupt the thread
+            }
+        }
+});
+```
+
+### Thread Management
+
+#### Join and Interrupt
+
+```java
+CustomThread thread = new CustomThread();
+thread.start();
+
+// interrupt a running thread
+thread.interrupt();
+
+// waits for a specific threat to complete
+try {
+    thread.join();
+} catch (InterruptedException e) {
+    e.printStackTrace();
+}
+
+// can do an action depending on if the thread we waited for was interrupted or not
+if (thread.isInterrupted()) {
+    System.out.println("My custom thread was interrupted.");
+} else {
+    System.out.println("My custom thread completed.");
+}
+```
+
+The heap is shared between threads, so objects instantiated in the parents can be shared by multiple threads.  
+This can lead to tricky problems, because the order of operations between parallel threads is undefined.  
+
+Thee **Java Memory Model** is a specification of rules and behaviors to follow when working with threads :
+- atomicity of operations
+- synchronization (control of resource access by threads) 
+
+When multiple threads access the same object or field, Java can optimize the code to provide a copy of the object in each thread.  
+This can lead to errors if a thread is expecting a change from another thread on a shared object.  
+For this situation, Java introduced the `volatile` modifier for a field, to specify it can be modified by multiple threads.  
+This forces Java to read and write it from the main memory instead of a thread-specific cache memory.
+
+#### Synchronize and Intrinsic Lock
+
+The `synchronized` keyword can be used as a modifier of a method.  
+Multiple threads cannot execute synchronized methods at the same time on the same instance.
+
+Every object in Java has an intrinsic lock (or monitor lock), that is used by the `synchronized` mechanism.  
+When a thread wants to execute a synchronized method for an instance, it takes the intrinsic lock on that instance.  
+Other threads have to wait for it to release the lock before they can execute a synchronized method on that same instance.
+
+This makes the synchronized methods body atomic from a thread perspective.
+
+Instead of making an entire method `synchronized`, we can define a `synchronized` block that locks on a specific object.  
+Multiple threads can go through the synchronized block at the same time, as long as they process different values of this object.  
+We can synchronize on `this` (equivalent of a synchronous method) or any other object, like a specific field of the instance for example.
+
+```java
+synchronized (this.name) {
+    // act on the name in a thread-safe way
+}
+```
+
+A lock can only be obtained on an object, not on a primitive type.  
+If we want to lock on a primitive type (for example a price field of type double) we can create a dedicated lock object.  
+The lock object can be of type `Object` since we only use it for its intrinsic lock.
+
+Note that locks on objects is Java uses **re-entrant synchronization**.  
+This means that a thread that already has a lock can enter another synchronized block on the same lock.
+
+The `Object` class also exposes the `wait`, `notify` and `notifyAll` methods to work with locks.  
+- `wait()` : release the object lock and go to sleep until it gets awakened by a notify call
+- `notify()` : wake up one random thread that is waiting for this lock
+- `notifyAll()` : wake up all threads that are waiting for this lock
+
+The `wait()` instruction should always be in a while loop to check if the condition we were waiting for is true.  
+It is possible that the thread was awakened for an unrelated reason, so we should not assume that because we are awake the condition is true.
+
+#### Java Lock Interface
+
+The intrinsic lock has some limitations :
+- no fairness (any thread can get the lock once released, not necessarily the one that requested it first)
+- no way to test if the lock is already taken
+- no way to interrupt a blocked thread
+- no way to debug by examining the lock state
+- exclusive lock (not 2 objects can take it at the same time)
+
+Since Java 5, we can use the `Lock` interface in `java.util.concurrent` package, that exposes the methods :
+- `lock()` : obtain the lock (block the thread until it gets the lock)
+- `lockInterruptibly()` : similar to `lock()` but allows the thread to be interrupted while waiting
+- `tryLock()` : obtain the lock if it is free at time of invocation
+- `tryLock(timeout)` : wait up to the given timeout to obtain the lock
+- `unlock()` : release the lock (must be called in a `finally` block every time we use a `lock()` or `tryLock()`)
+
+The `ReentrantLock` class is the main implementation of the `Lock` interface.  
+It offers the same concurrency as the intrinsic lock, with extended capabilities.
+
+```java
+public class ObjectUsingLock {
+    Lock lock = new ReentrantLock();
+    
+    public void doWork() {
+        lock.lock();
+        try {
+            // do something
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+```
+
+The `ReadWriteLock` interface provides a way to allow multiple threads to read as long as no thread is writing.  
+It maintains 2 `Lock` objects internally (a read lock and a write lock) that can be accessed with `readLock()` and `writeLock()`.  
+Its implementation is the `ReentrantReadWriteLock` class.
+
+
+### Executor Service
+
+Manual management of the threads using the `Thread` class can be complex and cause scalability issues.  
+Java introduced the `ExecutiorService` interface to simplify thread management.  
+An executor service uses a thread pool to reduce the cost of thread creation.  
+Threads are created in the thread pool at the executor creation, and new tasks queued and picked up by the next available thread.  
+It makes efficient use of the multiple cores of the machine to execute the threads in parallel.
+
+An executor takes some `Runnable` or `Callable` tasks to execute, assigns them to a thread and execute them.
+
+Multiple implementations of the `ExecutorService` interface are available in the `Executors` factory :
+- `Executors.newSingleThreadExecutor()` : executor with a single thread, so the tasks are done sequentially
+- `Executors.newFixedThreadPool(3)` : executor with a fixed number of threads in its pool
+- `Executors.newCachedThreadPool()` : executor with a variable number of threads in its pool (grow or shrink with tasks load)
+- `Executors.newScheduledThreadPool()` : variation of the cached thread pool with a mechanism to schedule tasks to run at certain time
+
+Main methods of the executor service are :
+- `execute(runnable)` : execute a `Runnable` task, it returns no result  
+- `submit(callable)` : execute a `Callable` task, it returns a `Future` result
+- `invokeAll(callableList)` : execute all `Callable` tasks and return the list of `Future` results
+- `invokeAny(callableList)` : execute all `Callable` tasks and return the result (not a `Future`) of one that succeeded
+- `shutdown()` : graceful shutdown, continue the execution of on-going tasks but stop accepting new ones
+- `shutdownNow()` : brutal shutdown, immediately stops on-going tasks
+- `awaitTermination()` : block until the completion of all on-going tasks
+
+We usually don't need to customize the threads used by the executors.  
+In case we do (to modify the thread name for example), we can create a class implementing the `ThreadFactory` interface.  
+This thread factory object can be provided to the Executors static methods when creating an executor.
+
+```java
+// instantiate an executor from the Executors factory
+var executor = Executors.newSingleThreadExecutor();
+
+// execute a Runnable
+executor.execute(() -> {
+    System.out.println("Executing Runnable in thread " + Thread.currentThread().getName());
+});
+
+// submit a Callable and get its result
+Future<Integer> future = executor.submit(() -> {
+    System.out.println("Executing a Callable in thread " + Thread.currentThread().getName());
+    return 13;
+});
+
+// shutdown the executor (otherwise the program does not stop)
+executor.shutdown();
+```
+
+Example of scheduled executor :
+
+```java
+// instantiate a scheduled executor from the Executors factory
+var executor = Executors.newScheduledThreadPool(3);
+
+// schedule a Runnable to execute in 2 seconds
+executor.schedule(
+    () -> { System.out.println("Executing..."); },
+    2,
+    TimeUnit.SECONDS
+);
+
+// schedule a Runnable to run with a fix interval of 2 seconds between each call, starting in 5 seconds
+// we get a handle on the task that can be cancelled to stop the infinite execution schedule
+var scheduledTask = executor.scheduleWithFixedDelay(
+    () -> { System.out.println("Executing..."); },
+    5,                           // initial delay
+    2,                           // delay after completion before re-executing the task
+    TimeUnit.SECONDS
+);
+
+// wait for 10 seconds and cancel the scheduled task
+Thread.sleep(10 * 1000);
+scheduledTask.cancel();
+
+// we can also schedule a task to run every 2 seconds, no matter how long it takes to run
+var scheduledTask = executor.scheduleAtFixedRate(
+    () -> { System.out.println("Executing..."); },
+    5,                           // initial delay
+    2,                           // delay between the start of 2 consecutive execution starts
+    TimeUnit.SECONDS
+);
+```
+
+Common collections (HashMap, HashSet, LinkedList, ArrayList...) are not thread-safe, because they do not have any thread-synchronization mechanism.  
+A thread can modify a collection while another one iterates on it, causing inconsistencies.  
+To use these collections across thread, we need to perform the synchronization ourselves.
+
+We can make a collection instance thread-safe by using the static synchronized wrapper in the `Collections` class.  
+This creates a wrapper that uses a lock on the entire collection for every operation :
+
+```java
+Map<Integer, String> hashMap = new HashMap<>();
+Map<Integer, String> synchronizedMap = Collections.synchronizedMap(hashMap);
+```
+
+Java also has concurrent collections, that are more fine-grain in their locking mechanism and have better performance than the synchronized wrappers : 
+- `ConcurrentHashMap`: not sorted
+- `ConcurrentSkipListMap`: sorted
+- `ConcurrentLinkedQueue`: list for frequent insertion and removal
+- `CopyOnWriteArrayList` : for read-heavy workload with rare modification
+- `ArrayBlockingQueue` : fixed-size queue that blocks when pulling on empty or offering on full array (designed for FIFO)
+
+Most common problems with multi-threading are :
+- `dead-lock` : 2 threads are blocked waiting for each other to release a resource
+- `live-lock` : 2 threads are looping infinitely waiting for the other to take action
+- `starvation` : a thread is not able to obtain the resources it needs in order to execute
