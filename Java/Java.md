@@ -581,6 +581,27 @@ futureInt.get(timeout, unit);  // same as get() but throws a TimeoutException if
 futureInt.cancel();            // interrupt the running thread
 ```
 
+### Properties
+
+The `Properties` class is a thread-safe class used to manage configuration key/value pairs.  
+It inherits from `HashTable<Object, Object>` and behaves as a map with keys and values of type String.  
+It exposes methods to read and write properties to a stream (file or memory).
+
+```java
+// create Properties from code
+Properties props = new Properties();
+
+// load Properties from a stream
+props.load(Files.newInputStream(Path.of("myapp.properties"), StandardOpenOption.READ));
+
+// read/write Properties
+props.getProperty("age");
+props.setProperty("age", "13");
+
+// write Properties to a stream
+props.store(new FileOutputStream("myapp.properties"), "My App Config");
+```
+
 ## Java Collections
 
 The Collections framework offers interfaces and implementations to manipulate common groups of objects.  
@@ -2643,3 +2664,498 @@ Most common problems with multi-threading are :
 - `dead-lock` : 2 threads are blocked waiting for each other to release a resource
 - `live-lock` : 2 threads are looping infinitely waiting for the other to take action
 - `starvation` : a thread is not able to obtain the resources it needs in order to execute
+
+
+## Database Connection
+
+### Database Installation
+
+Java can interact with most popular database vendors with the same interface.  
+It abstracts away the vendor-specific differences, so only the connection string would change from a database vendor to another.  
+
+As an example, we can work with the MySQL community edition.  
+The Windows MySQL installer can be downloaded at https://dev.mysql.com/downloads   
+Ensure you install the latest MySQL server, MySQL WorkBench (Database GUI), and optionally the MySQL Shell.  
+Configure the root password, and create a different user for daily database management.
+
+### JDBC (Java Database Connectivity)
+
+JDBC is the Java way to connect to a wide variety of databases, including relational, NoSQL and object-oriented databases.   
+It lies in the `java.sql` package (JDBC core) and `javax.sql` (API for server-side data source access).  
+It abstracts the connectivity logic under a single interface.  
+JDBC even works with spreadsheets and flat files, allowing to use SQL to interact with the files content.
+
+Each database vendor will provide a **JDBC driver**, which is an implementation of the JDBC API for its specific database.  
+This JDBC driver is usually a JAR file that can be downloaded from Maven repository or online (search for "MySQL Connectors" for example).
+
+A JDBC driver allows to :
+- connect to the database
+- execute SQL queries
+- execute stored procedures and functions
+- retrieve and process results
+- handle database exceptions
+
+#### Connection
+
+First we need to include the JAR of the JDBC driver to the project.  
+In IntelliJ, we can simply go to : `Project Structure > Libraries > + > From Maven > mysql`  
+It would display the available mysql plugins on Maven repository, for example `com.mysql:mysql-connector-j:8.4.0`  
+In a real project, we would need to add this external dependency to the Maven `pom.xml` file or to the Gradle build file.
+
+In code, there are 2 ways to get a connection to a database using JDBC :
+- the old way using a `DriverManager` connection with a connection string
+- the new way using a `DataSource` connection with either a connection string or all its individual parts
+
+The connection string format is vendor-specific, for example for mysql :
+```java
+private static final String CONN_STRING = "jdbc:mysql://localhost:3306/music";
+
+// connect using the DriverManager (from java.sql)
+// we need a try-with-resource structure to properly end the connection on exit
+try (Connection conn = DriverManager.getConnection(CONN_STRING, "user123", "password123")) {
+    // we are connected
+} catch (SQLException e) {
+    throw new RuntimeException(e);
+}
+
+// connect using the DataSource (from javax.sql)
+var dataSource = new MySqlDataSource();
+// dataSource.setURL(CONN_STRING);
+dataSource.setServerName("localhost");
+dataSource.setPort(3306);
+dataSource.setDatabaseName("music");
+
+try (Connection conn = dataSource.getConnection("user123", "password123")) {
+    // we are connected
+    
+    // metadata about the database connection
+    DatabaseMetaData metadata = conn.getMetaData();
+    
+} catch (SQLException e) {
+    throw new RuntimeException(e);
+}
+```
+
+In a real application, the server name, port, database name and credentials are usually loaded from a properties file.  
+For more security, we can also consider having the password as an env variable.
+```
+serverName=localhost
+port=3306
+databaseName=music
+user=user123
+password=password123
+```
+
+#### JDBC Statement
+
+The `Statement` interface is an interface in JDBC that allows to execute SQL queries in the underlying database.  
+The `Statement` object is created from the database connection, and must be closed (for example in a try-with-resource block).  
+To ensure compatibility with most database vendors, **ANSI SQL** should be used and vendor-specific SQL (like `LIMIT`) should be avoided.
+
+An SQL query is executed in the database with a method on the Statement object :
+- `executeQuery(String)` for a SELECT query, return a `ResultSet` instance containing the selected rows
+- `executeUpdate(String)` for DML (Data Manipulation Language) statements like INSERT / UPDATE / DELETE queries, return the number of affected rows
+- `execute(String)` can be used with both SELECT or DML queries, and return true if a ResultSet is available (SELECT)
+
+A `ResultSet` also needs to be closed, but it is automatically closed when the `Statement` is closed.  
+The `execute()` method is used when we do not know if the query is a SELECT or not, or if the query returns multiple result sets.  
+When a result set is available in the statement after query execution, we can access it with the `statement.getResultSet()` method.  
+We can also confirm the number of updated rows with the `statement.getUpdatedCount()` method.
+
+```java
+try (
+    Connection conn = dataSource.getConnection("user123", "password123");
+    Statement statement = conn.createStatement();
+) {
+    String query = "SELECT * FROM music.songs WHERE song_title LIKE '%aki%'";
+    ResultSet resultSet = statement.executeQuery(query);
+    
+    // metadata about the columns of the result (name, type, charset...)
+    resultSet.getMetadata();
+    
+    // iterate over the rows of the result
+    while (resultSet.next()) {
+          System.out.printf("%d : %s%n",
+                  resultSet.getInt("song_id"),                // access int field
+                  resultSet.getString("song_title"));         // access String field
+    }
+} catch (SQLException e) {
+    throw new RuntimeException(e);
+}
+```
+
+A single statement can be used to execute multiple SQL queries.  
+We can specify in the `executeUpdate()` method to make the generated keys available for retrieval.  
+That is useful when creating a row in a table, and then rows in other tables using its ID as a foreign key.  
+```java
+// execute an insert query and keep track of generated keys
+String query = "INSERT INTO artists(artist_name) VALUES ( 'Celine Dion' )";
+statement.executeUpdate(query, Statement.RETURN_GENERATED_KEYS);
+
+// retrieve the generated key if available
+ResultSet result = statement.getGeneratedKeys();
+int artistId = (result != null && result.next()) ? result.getInt(1) : -1;
+```
+
+#### Transactions
+
+By default, JDBC connections have auto-commit enabled, so every change is committed in the database after each query execution.  
+To commit multiple queries in a single atomic transaction, we should turn auto-commit off.  
+In that case, we must manually call the `conn.commit()` method to commit all changes to the database.
+
+```java
+// initialte a transaction
+conn.setAutoCommit(false);
+
+try {
+    // execute multiple queries in a single transaction
+    statement.executeUpdate("DELETE * FROM songs where artist_id = 13");
+    statement.executeUpdate("DELETE * FROM artists where artist_id = 13");
+    
+    // commit the transaction
+    conn.commit();
+    
+} catch (SQLException e) {
+    e.printStackTrace();
+    conn.rollback();             // rollback in case of failure            
+}
+
+// re-enable auto-commit if desired
+conn.setAutoCommit(true);
+```
+
+#### Batches
+
+The execution of a statement is a resource-intensive and time-consuming operation.  
+If we have multiple queries to execute, we can group them into a single batch to call the execution only once.  
+This only makes sense for DML queries that modify the content of the database.
+
+```java
+// include multiple queries in a batch
+statement.addBatch("DELETE * FROM songs where artist_id = 13");
+statement.AddBatch("DELETE * FROM artists where artist_id = 13");
+
+// execute the batch and get the number of affected rows for each query
+int[] results = statement.executeBatch();
+```
+
+#### Prepared Statements
+
+When executed, a statement needs to be parsed and compiled by the database server.  
+An execution plan is established to decide how the statement will be executed.  
+This operation takes time at every statement execution.
+
+If we use multiple times the same statement, we can use a `PreparedStatement` instance to compile it once and use it multiple times.  
+It can contain placeholders for parameters of different types (specified with `?` in the query string).  
+
+Prepared statements also improve security, preventing SQL injection by limiting the impact of parameters.  
+Each placeholder can only be replaced by a value of the expected type, so it eliminates the risk of unexpected SQL queries.
+
+```java
+// create a PreparedStatement with placeholders in a try-with-resource block
+String query = "INSERT INTO songs (artist_id, song_name) VALUES ( ? , ? )";
+try (PreparedStatement preparedStatement = conn.prepareStatement(query)) {
+
+    // give values to the placeholders
+    ps.setInt(1, 13); 
+    ps.setString(2, "Hell Song");
+    
+    // execute the prepared statement  
+    ResultSet resultSet1 = preparedStatement.executeQuery();
+    
+    // re-use the same prepared statement for another execution
+    ps.setInt(1, 14);
+    ps.setString(2, "Sk8er Boi");
+    ResultSet resultSet2 = preparedStatement.executeQuery();
+}
+```
+
+#### Callable Statements (Stored Procedures and Stored Functions)
+
+A stored procedure is a sequence of SQL instructions and data manipulation bundled in a reusable module.  
+It is a pre-compiled SQL group of queries stored in the database server.
+
+Stored procedures help with application performance, modularity and security.  
+For example, the database server can allow Java to execute stored procedures but prevent any other SQL query execution.
+
+The stored procedure must be created in the database server via SQL.  
+It supports IN, INOUT and OUT parameters.  
+
+For example, to create an artist and an album for this artist in the database and return a result, we can define this stored procedure :
+
+```sql
+DELIMITER //
+CREATE PROCEDURE add_album(IN artist_name VARCHAR(255), IN album_name VARCHAR(255), OUT count INT)
+BEGIN
+    DECLARE my_artist_id INT;
+
+    -- check if the artist exists
+    SELECT artist_id INTO my_artist_id FROM artists WHERE artist_name = artist_name;
+
+    -- if the artist doesn't exist, insert it
+    IF my_artist_id IS NULL THEN
+        INSERT INTO artists (artist_name) VALUES (artist_name);
+        SET my_artist_id = LAST_INSERT_ID();
+    END IF;
+
+    -- insert the album
+    INSERT INTO albums (artist_id, album_name) VALUES (artist_id, album_name);
+    
+    -- dummy return value
+    SET count = 12;
+END;
+//
+DELIMITER ;
+```
+
+JDBC supports the execution of stored procedures and the retrieval of their results with the `CallableStatement` class.  
+To execute a stored procedure we use a parametrized SQL query using the `CALL` instruction.
+
+```java
+String query = "CALL music.add_album( ? , ? , ? )";
+CallableStatement callableStatement = conn.prepareCall(query);
+
+// set the value for IN parameters
+callableStatement.setString(1, "Avril Lavigne");        // set 1st parameter of the stored procedure (artist_name)
+callableStatement.setString(2, "Let Go");               // set 2nd parameter of the stored procedure (album_name)
+
+// register the OUT parameter
+callableStatement.registerOutParameter(3, Types.INTEGER);
+
+// execute the CALL statement
+callableStatement.execute();
+
+// retrieve the OUT parameter value
+int result = callableStatement.getInt(3);
+```
+
+**Stored functions** are an alternative to stored procedures defined in the database server.  
+They always return a single value, and are designed to have no side effect and to not modify data in the database.  
+While stored procedures are used for INSERT/UPDATE/DELETE, stored functions are used for SELECT and JOIN on multiple tables.  
+Stored functions can be used directly in an SQL statement (in SELECT, WHERE or JOIN clauses).
+
+In JDBC, calling a stored function is very similar to a stored procedure with a single output parameter :
+
+```java
+// use the {} escape sequence to specify to JDBC that we execute a function and not a stored procedure
+String query = "{ ? = CALL music.count_album( ? ) }";
+CallableStatement callableStatement = conn.prepareCall(query);
+
+// register the function result
+callableStatement.registerOutParameter(1, Types.INTEGER);
+
+// set the value for the function parameters
+callableStatement.setString(2, "Avril Lavigne");        // set IN parameter of the stored function (artist_name)
+
+// execute the CALL statement
+callableStatement.execute();
+
+// retrieve the OUT parameter value
+int result = callableStatement.getInt(1);
+```
+
+#### SQLException
+
+Most exceptions thrown by the JDBC classes extend the `SQLException` class.  
+When caught, it is often useful to react in a certain way for a specific type of exception.  
+This logic can be implemented by using the SQL state (vendor-neutral) or the error code (vendor specific).  
+
+```java
+try {
+    // operations with JDBC
+} catch (SQException e) {
+    String state = e.getSQLState();
+    String errorCode = e.getErrorCode();
+    String message = e.getMessage();
+}
+```
+
+### JPA (Jakarta Persistence API) and ORM (Object-Relational Mapping)
+
+**JPA** is a specification provided by JSE (Java Standard Edition) to manage relational databases in Java.  
+Java does not have a default implementation of it, but there external **JPA providers** like **Hibernate**, **Spring JPA** or **EclipseLink**.  
+
+It makes use of the **ORM** (Object-Relational Mapping) technique to associate a Java object with a row in a database.  
+With JPA, we can interact with the database without writing any SQL code, only by using Java objects.
+
+JPA can be seen as an abstraction layer between the application code and JDBC that applies the SQL queries in the database.  
+JPA simplifies the code and database operations, and makes the code more portable across different database systems.
+
+A JPA **entity** is a class that represents a table in a relational database.  
+JPA uses annotations in the Java code to specify the underlying database table structure like `@Entity`, `@Column`, `@Id`, `@OneToMany` ...
+
+The `EntityManager` interface exposes methods to interact with the database :
+- `persist()` : make a detached instance managed by the entity manager and persistent (saved in the database)
+- `find()` : search for a row with the specified primary key and return a persistent and managed entity
+- `merge()` : update  a managed entity (changes are propagated to the database on commit)
+- `delete()` : delete the entity instance from management and delete the row from the database
+
+#### Hibernate Setup
+
+To use Hibernate (or any other JPA provider), we need the JDBC, the JPA core lib and the JPA provider classes.  
+As done previously, the JDBC is available in the Maven library `com.mysql:mysql-connector-j:8.4.0`.  
+Hibernate contains is bundled together with the JPA classes in the Maven library `org.hibernate.orm:hibernate-core:6.5.2.Final`
+
+We then need a Hibernate configuration file under `META-INF/persistence.xml` with the `<persistence>` tag.  
+It specifies the driver, database URL, user and password to use to access the underlying database.  
+The `META-INF` folder must be part of the classpath of the Java program, under the `src` directory.
+
+```xml
+ <persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+
+    <persistence-unit name="dev.lpa.music">
+
+        <properties>
+            <property name="jakarta.persistence.jdbc.driver"   value="com.mysql.cj.jdbc.Driver" />
+            <property name="jakarta.persistence.jdbc.url"      value="jdbc:mysql://localhost:3306/music" />
+            <property name="jakarta.persistence.jdbc.user"     value="demo" />
+            <property name="jakarta.persistence.jdbc.password" value="demo" />
+
+            <property name="hibernate.show_sql" value="true" />
+
+        </properties>
+
+    </persistence-unit>
+</persistence>
+```
+
+#### Hibernate Entity
+
+An entity is a POJO class with annotations for the table and fields.  
+We can create one entity for each database table that needs to be represented in Java.
+
+```java
+@Entity
+@Table(name = "artists")
+public class Artist {
+
+    // primary key
+    @Id
+    @Column(name = "artist_id")
+    private int artistId;
+
+    // simple column
+    @Column(name = "artist_name")
+    private String artistName;
+
+    // contructors (empty one required) + getters + setters
+    [ ... ]
+}
+```
+
+An `EntityManager` is an engine that maps the Java entity instances and the database rows.  
+It is the wrapper above JDBC that makes it possible to use entity instances instead of SQL code.  
+
+An entity instance obtained from the entity manager with `entityManager.fetch()` is in managed state.  
+It means that any change made to it (with setters) will be saved to the database in the next `entityManager.commit()` call.
+
+An entity instance created with the constructor is in detached state (not managed by the entity manager).  
+To make it managed, it needs to be either inserted to the database with `entityManager.persist(entity)` or updated with `entityManager.merge(entity)`.
+
+```java
+    // load the persistence.xml file from the classpath and extract a specific persistence unit details
+    try (var sessionFactory = Persistence.createEntityManagerFactory("dev.lpa.music");
+         EntityManager entityManager = sessionFactory.createEntityManager()
+    ) {
+        // start a transaction
+        var transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        // save a new entity in the database
+        entityManager.persist(new Artist("Sonata Arctica"));
+
+        // get a row from the database by ID as a Java entity
+        Artist artist = entityManager.find(Artist.class, 150);
+
+        // modifying the managed Java entity automatically updates the database on commit
+        artist.setArtistName("Stratovarius");
+
+        // delete an entity from the database
+        entityManager.remove(artist);
+
+        // commit the changes in the database
+        transaction.commit();
+
+    } catch (Exception e) {
+        // handle exception
+    }
+```
+
+#### Tables Relationship
+
+Relationships between tables is handled by Hibernate by Java annotation.  
+For example, if an `album` table has an `artist_id` foreign key referencing the `artist` table, we can create an `Album` entity, and add in the `Artist` entity :
+
+```java
+@OneToMany(cascade = CascadeType.ALL, orphanRemove = true)
+@JoinColumn(name="artist_id")
+private List<Album> albums = new ArrayList<>();
+
+public List<Album> getAlbums() {
+    return albums;
+}
+
+// method in the Artists entity to create an Album entity linked to it by the foreign key
+public addAlbum(String albumName) {
+    albums.add(new Album(albumName));
+}
+```
+
+#### JPA Queries
+
+JPA allows to build database queries from code using JPQL (Jakarta Persistence Query Language) that will build the corresponding SQL query.  
+JPQL looks a lot like SQL, but applies on entity classes instead of database tables :
+
+```java
+// select all entity instances in the Artist entity
+String jpql = "SELECT a FROM Artist a";
+var query = entityManager.createQuery(jpql, Artist.class);
+List<Artist> result = query.getResultList();
+
+// select entity instances in the Artist entity matching a filter with a name parameter
+String jpql = "SELECT a FROM Artist a WHERE a.artistName LIKE :nameParam";
+var query = entityManager.createQuery(jpql, Artist.class);
+query.setParameter("nameParam", "%tra%");
+List<Artist> result = query.getResultList();
+
+// similar but using numbered parameters
+String jpql = "SELECT a FROM Artist a WHERE a.artistName LIKE ?1";
+var query = entityManager.createQuery(jpql, Artist.class);
+query.setParameter(1, "%tra%");
+List<Artist> result = query.getResultList();
+
+// select one specific field of an entity
+String jpql = "SELECT a.artistName FROM Artist a";
+var query = entityManager.createQuery(jpql, String.class);
+List<String> result = query.getResultList();
+
+// select multiple specific fields of an entity
+String jpql = "SELECT a.artistId, a.artistName FROM Artist a";
+var query = entityManager.createQuery(jpql, Tuple.class);
+List<Tuple> result = query.getResultList();
+```
+
+We can also build a JPA query using the `CriteriaBuilder` instead of a raw string.    
+It lets us create `CriteriaQuery` instances with a builder pattern.
+
+```java
+CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+CriteriaQuery<Artist> criteriaQuery = criteriaBuilder.createQuery(Artist.class);
+Root<Artist> root = criteriaQuery.from(Artist.class);
+criteriaQuery.select(root)
+             .where(criteriaBuilder.like(root.get("artistName"), "%eta%"))
+             .orderBy(criteriaBuilder.asc(root.get("artistName")));   // add a ORDER BY clause
+var query = entityManager.createQuery(criteriaQuery);
+List<Artist> result = query.getResultList();
+```
+
+It is also possible to execute native SQL queries in the database with Hibernate, with optional placeholders :
+```java
+String sql = "SELECT * FROM artists WHERE artist_name LIKE ?1 ORDER BY artist_name ASC";
+var query = entityManager.createNativeQuery(sql, Artist.class);
+query.setParameter(1, "%eta%");
+List<Artist> result = query.getResultList();
+```
