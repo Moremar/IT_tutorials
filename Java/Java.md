@@ -3159,3 +3159,519 @@ var query = entityManager.createNativeQuery(sql, Artist.class);
 query.setParameter(1, "%eta%");
 List<Artist> result = query.getResultList();
 ```
+
+
+## Java Networking
+
+Networking is used in application development for multiple purposes :  
+- data communication in real time between the user and the application
+- distributed systems, with an application deployed across multiple servers
+- cloud computing
+- remote access and control to distributed systems
+- inter-applications communication with APIs and Web services
+
+The Java packages used for networking are :  
+- `java.net` with low-level APIs (Socket, InetAddress...) and high-level APIs (URL, URI, URLConnection...)
+- `java.net.http` (since Java 11) with high-level APIs (HttpClient, WebSocket)
+- `java.nio.channels` with the channel API (ServerSocketChannel, SocketChannel, DatagramChannel...)
+
+### Basic Client-Server Socket Communication
+
+We can create a basic server that listens to a port for a client connection, accepts it, reads input from it and sends output.
+
+```java
+// create a ServerSocket to listen on a port
+try (ServerSocket serverSocket = new ServerSocket(5588)) {
+
+    // block until a connection is established with a client on the listening port
+    try (Socket socket = serverSocket.accept()) {
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+
+        // read input from the socket and send response back
+        while (true) {
+            String received = reader.readLine();
+            if (received.equals("exit")) {
+                break;
+            }
+            writer.println("Processed input : " + received);
+        }
+    }
+} catch (IOException e) {
+    throw new RuntimeException(e);
+}
+```
+
+On the client side, we can create a `Socket` instance to connect to the server, and send and receive data through it :
+
+```java
+// create a client socket to connect to the server
+try (Socket socket = new Socket("localhost", 5588)) {
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+
+    writer.println("Line 1");
+    writer.println("Line 2");
+    writer.println("exit");
+
+    System.out.println(reader.readLine());   // Processed input : Line 1
+    System.out.println(reader.readLine());   // Processed input : Line 2
+    System.out.println(reader.readLine());   // null
+
+} catch (IOException e) {
+    throw new RuntimeException(e);
+}
+```
+
+The above server processes only a single incoming connection.  
+A common server structure is to use an infinite loop waiting for incoming connections.  
+When a client connection is established, the server instantiates a new thread and delegates the work to it.  
+This can be done with an `ExecutorService` that submits a task for every incoming connection.  
+
+```java
+public static void main(String[] args) {
+
+    // create a ServerSocket to listen on a port
+    try (ExecutorService executorService = Executors.newCachedThreadPool();
+         ServerSocket serverSocket = new ServerSocket(5588)) {
+
+        while (true) {
+            // block until a connection is established with a client on the listening port
+            Socket socket = serverSocket.accept();
+            // submit a task to the executor to handle the request
+            executorService.submit(() -> {
+                handleRequest(socket);
+            });
+        }
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+
+public static void handleRequest(Socket socket) {
+    // the handle function is in charge of closing the socket
+    try (socket;
+         BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)
+    ) {
+       while (true) {
+            String str = reader.readLine();
+            if (str.equals("exit")) { break; }
+            writer.println("Received: " + str);
+        }
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+```
+
+### Socket Channels
+
+`ServerSocket` uses blocking I/O with the `accept()` method.  
+This is fine for low volumes of connections, but is not scalable because it requires one thread per client connection.  
+A more recent approach in the `java.nio.channels` package is `ServerSocketChannel`, that uses NIO (non-blocking I/O).  
+It is a more complex API, but is preferable for applications with numerous concurrent connections requiring low-latency.
+
+A channel represents an open connection to an entity capable of input and output (file, hardware device, network socket, ...).  
+A channel is created when calling the static `open()` method on a specific channel implementation.
+
+#### NIO Buffers
+
+A `Buffer` in `java.nio` is a data container for temporary storage.  
+A buffer has a state (ready to read, ready to write, empty, full).  
+It is more memory-efficient than a simple array.  
+There is a buffer subtype for each primitive type (except boolean), for example `ByteBuffer`.  
+A buffer can be both readable or writable, and its state is changed from one to the other with the `buffer.flip()` method.
+
+```java
+ByteBuffer buffer = ByteBuffer.allocate(1024);   // set the immutable capacity
+
+buffer.put("Hello World".getBytes());   // write to the buffer
+
+buffer.capacity();        // 1024 (immutable)
+buffer.limit();           // 1024
+buffer.position();        // 11 (position of the write cursor in the buffer)
+buffer.remaining();       // 1013 (number of bytes still available in the buffer)
+
+buffer.flip();            // make the buffer readable (instead of writable)
+
+buffer.capacity();        // 1024 (immutable)
+buffer.limit();           // 11 (in read mode, the limit is set to the number of bytes available for read)
+buffer.position();        // 0 (position of the read cursor in the buffer)
+buffer.remaining();       // 11 (number of bytes still available in the buffer)
+
+// read a bytes array from the buffer and convert it to a string 
+byte[] byteArr = new byte[buffer.limit()];
+buffer.get(byteArr);
+System.out.println(new String(byteArr, StandardCharsets.UTF_8));
+
+```
+
+Channels use buffers for data transfer :  
+- the `read()` method takes a buffer as input and fills this buffer with data from the connected entity (accessed with `buffer.get()`)
+- the `write()` method takes a buffer as input (populated with `buffer.put()`) and transfered the buffered data to the connected entity
+
+#### ServerSocketChannel
+
+We can update the server code to use `ServerSocketChannel` instead of `ServerSocket`.  
+We then need to bind the socket of the created channel to the port to listen to.  
+We can configure the channels (server and client) to be non-blocking.  
+With this setup, we can keep track of all client connections, and loop through all of them infinitely.
+
+```java
+public static void main(String[] args) {
+
+    // create a server socket channel
+    try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
+        // bind the socket of the channel to the port to listen to
+        serverChannel.socket().bind(new InetSocketAddress(5588));
+        // configure the server channel so its accept() method no longer blocks
+        serverChannel.configureBlocking(false);
+        // maintain a list of all ongoing client connections
+        List<SocketChannel> clientChannels = new ArrayList<>();
+
+        while (true) {
+            // accept a connection made to this channel's socket if any
+            SocketChannel clientChannel = serverChannel.accept();
+            if (clientChannel != null) {
+                // configure the client channel so the read() method does not block
+                clientChannel.configureBlocking(false);
+                clientChannels.add(clientChannel);
+            }
+
+            // read the input received from the client on the channel into a Buffer
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+
+            // for each open client connection, read from it if available
+            for (int i = 0; i < clientChannels.size(); i++) {
+                SocketChannel channel = clientChannels.get(i);
+                int readBytes = channel.read(buffer);
+                if (readBytes > 0) {
+                    // change to read mode, so the position and limit are set to read from it
+                    buffer.flip();
+                    // send a response to the client channel
+                    channel.write(ByteBuffer.wrap("Processed : ".getBytes()));
+                    while (buffer.hasRemaining()) {
+                        channel.write(buffer);
+                    }
+                    // clear the buffer to make it usable by the next client connection
+                    buffer.clear();
+                } else if (readBytes == -1) {
+                    System.out.println("Connection with client closed");
+                    channel.close();
+                    clientChannels.remove(i);
+                }
+            }
+        }
+    } catch (IOException e) {
+        throw new RuntimeException(e);
+    }
+}
+```
+
+In the above code, we use a **polling** strategy by calling the non-blocking version of `serverChannel.accept()` and `channel.read()` in an infinite while loop.  
+Channels also support an **event-driven** strategy that avoids to actively loop when there is no activity.  
+This is implemented by the `SelectableChannel` class, that both `ServerSocketChannel` and `SocketChannel` extend.  
+Using a `Selector`, a channel can register to a specific type of events, and execute a callback when the event occurs.
+
+```java
+// create a server socket channel
+try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
+    // bind the socket of the channel to the port to listen to
+    serverChannel.socket().bind(new InetSocketAddress(5588));
+    // configure the server channel so its accept() method no longer blocks
+    serverChannel.configureBlocking(false);
+    // create a selector that contains all events triggered
+    Selector selector = Selector.open();
+    // register the server channel for the ACCEPT event
+    serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+    while (true) {
+        // blocking operation waiting for any event to occur
+        selector.select();
+        Set<SelectionKey> selectionKeys = selector.selectedKeys();
+        Iterator<SelectionKey> iterator = selectionKeys.iterator();
+
+        // loop on all events that occurred
+        while (iterator.hasNext()) {
+            SelectionKey key = iterator.next();
+            iterator.remove();
+
+            if (key.isAcceptable()) {
+                // handle ACCEPT event : a client wants to connect
+                SocketChannel clientChannel = serverChannel.accept();
+                clientChannel.configureBlocking(false);
+                // register the client channel for the READ event
+                clientChannel.register(selector, SelectionKey.OP_READ);
+            } else if (key.isReadable()) {
+                // handle READ event : data is available on a client channel
+                SocketChannel clientChannel = (SocketChannel) key.channel();
+                // read data in a byte buffer
+                ByteBuffer buffer = ByteBuffer.allocate(1024);
+                int byteRead = clientChannel.read(buffer);
+                // process this byte buffer
+                if (byteRead > 0) {
+                    buffer.flip();      // flip to read mode
+                    byte[] data = new byte[buffer.remaining()];
+                    buffer.get(data);
+                    String message = "Processed : " + new String(data);
+                    clientChannel.write(ByteBuffer.wrap(message.getBytes()));
+                } else if (byteRead == -1) {
+                    // end of connection
+                    key.cancel();
+                    clientChannel.close();
+                }
+            }
+        }
+    }
+} catch (IOException e) {
+    throw new RuntimeException(e);
+}
+```
+
+We can also use a UDP version of the sockets and channels.  
+In that case, there is no connection (so no `accept()` method), we just send and receive datagram packets.  
+The data is sent as `DatagramPacket` in UDP, instead of `InputStream` and `OutputStream` in TCP.  
+Therefore, the destination of a packet is no longer included in the connection but in each packet itself.
+
+```java
+// server side
+try (DatagramSocket serverSocket = new DatagramSocket(5588)) {
+    byte[] byteArray = new byte[1024];
+    DatagramPacket clientPacket = new DatagraPacket(byteArray, byteArray.length);  // wrapper on a byte array
+    serverSocket.receive(clientPacket);
+    String receivedMessage = new String(byteArray, clientPacket.getLength());
+}
+
+// client side
+try (DatagramSocket clientSocket = new DatagramSocket()) {
+    byte[] byteArray = "Hello World".getBytes();
+    DatagramPacket clientPacket = new DatagraPacket(       // wrapper on a byte array
+            byteArray, byteArray.length,
+            InetAddress.getLocalHost(), 5588);             // destination of the datagram  
+    clientSocket.send(clientPacket);
+}
+```
+
+### High-level Networking
+
+The `URI` class represents a resource of any kind by location or by name (email address, webpage, relative file path...).
+
+The `URL` class represents a specific type of URI for resources in the world wide web.  
+We can create a `URL` that does not actually reference an existing object, it would only fail when we try to access it.
+
+It is common when we work with a website to define :  
+- a base URI that contains the host, port and domain that is a valid URL
+- some relative URIs from the base URI to access various pages and resources on the website  
+
+In that case, when the website location changes, only the base URI needs to be updated.
+
+```java
+URI uri = URI.create("http://user123:pwd123@host123:5588/api/products?type=1#free");
+
+uri.getScheme();        // http
+uri.getUserInfo();      // user123:pwd123
+uri.getHost();          // host123
+uri.getPort();          // 5588
+uri.getPath();          // api/products
+uri.getQuery();         // type=1
+uri.getFragment();      // free
+
+uri.toURL();            // convert a URI into a URL (throw if not a valid URL)
+
+// resolve a URI from a base and a relative URI
+URI uriBase = URI.create("http://www.example.com");
+URI uriRelative = URI.create("api/products");
+URI uriCombined = uriBase.resolve(uriRelative);
+
+// read a web URL content as a stream
+InputStream urlStream = url.openStream();
+try (BufferedReader reader = new BufferedReader(new InputStreamReader(urlStream))) {
+    String line;
+    while ((line = reader.readLine()) != null) {
+        System.out.println(line);
+    }
+}
+
+// open a connection manually without the openStream() shortcut to allow customization of the connection
+URLConnection connection = url.openConnection();
+connection.getContentType();        // content type + charset
+connection.getHeaderFields();       // HTTP headers
+connection.connect();               // actually connects to the remote URL
+connection.getInputStream();        // return the same input stream as url.openStream()
+
+// use a HttpURLConnection instead of a URLConnection to use HTTP-specific methods
+HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+connection.setRequestMethod("GET");
+connection.setRequestProperty("User-Agent", "Firefox");     // custom header
+connection.setReadTimeout(5000);
+connection.getResponseCode();          // call the connect() method to get the response code
+connection.getResponseMessage();
+```
+
+### HTTP server
+
+HTTP traffic is the most common in modern networking, so Java 11 introduced `HttpServer` to simplify HTTP networking.  
+This should be preferred over lower-level `Socket` and `Channel` classes for HTTP-only traffic.
+
+We define a `HttpContext` that maps the queried URIs to the handlers to execute for each URI.
+
+```java
+// HTTP Server
+HttpServer server = HttpServer.create(new InetSocketAddress(5588), 0);
+server.createContext("/", httpExchange -> {
+    String method = httpExchange.getRequestMethod();
+    URI uri = httpExchange.getRequestURI();
+    String body = new String(httpExchange.getRequestBody().readAllBytes());  // useful for POST queries
+    byte[] bytes = "<html><body><h1>TEST<h1></body></html>".getBytes();      // response content
+    httpExchange.sendResponseHeaders(HTTP_OK, bytes.length);
+    httpExchange.getResponseBody().write(bytes);
+    httpExchange.close();
+});
+server.start();
+
+// Client side, use a HttpURLConnection to make it a POST request with a custom body
+URL url = URI.create("http://localhost:5588/").toURL();
+HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+conn.setRequestMethod("POST");
+conn.setDoOutput(true);         // required to include a body in a POST request
+conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+String body = "name=Bob&age=23";
+conn.setRequestProperty("Content-Length", String.valueOf(body.getBytes().length));
+DataOutputStream outputStream = new DataOutputStream(conn.getOutputStream());
+outputStream.writeBytes(body);
+outputStream.flush();
+outputStream.close();
+```
+
+Instead of `HttpURLConnection`, Java 11 introduced `HttpClient` that makes the client-side more user-friendly.  
+`HttpClient` also supports HTTP 2, which `HttpURLConnection` does not.
+
+```java
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+        .POST(HttpRequest.BodyPublishers.ofString("name=Bob&age=23"))
+        .uri(URI.create("http://localhost:5588/"))
+        .header("User-Agent", "Chrome")
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .timeout(Duration.ofSeconds(30))
+        .build();
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+System.out.println(response.statusCode());
+System.out.println(response.headers());
+System.out.println(response.body());
+```
+
+The `HttpClient` can use `sendAsync()` instead of `send()` to return a `CompletableFuture` that gets completed asynchronously. 
+
+### WebSocket
+
+With the client-server architecture, only the client can initiate the communication, and the server responds.  
+If the client is waiting for a result to be available on the server, it needs to regularly sends a request to check if it is ready.  
+Websocket is an alternative to the client-server architecture allowing bi-directional communication.  
+This is a better design for chats or collaborative tools where the server needs to push data to the client.
+
+The Websocket protocol requires a special handshake when the connection is established.  
+When a client connects to the server, it sends a GET request to upgrade the connection from HTTP to WebSocket.  
+
+Java has a `WebSocket` class in the `java.net.http` package that implements a WebSocket on client-side.  
+This means that we can create a WebSocket client with native Java only.
+
+To implement a WebSocket server, we can use the external library `org.java_websocket` available on Maven Repository.  
+It exposes the `WebSocketServer` class that can be extended to create a custom WebSocket server.  
+Its methods take a `WebSocket` object as parameter, but it is a class from the `org.java_websocket` package (not the same as client-side).  
+
+For example, we can create a WebSocket server to implement a simple chat application.  
+It accepts client connections, gets the name of each connected client, and broadcasts its messages to other clients.
+
+```java
+// Web Server implementation extending the WebSocketServer class from the org.java_websocket library
+static class MyWebSocketServer extends WebSocketServer {
+
+    Map<String, String> myConnectedUsers = new HashMap<>();
+
+    public MyWebSocketServer() {
+        super(new InetSocketAddress(5588));
+    }
+
+    @Override
+    public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
+        System.out.println("onOpen" + webSocket.getRemoteSocketAddress());
+        String name = webSocket.getResourceDescriptor().split("=")[1];
+        myConnectedUsers.put(webSocket.getRemoteSocketAddress().toString(), name);
+        broadcastToOthers(webSocket, name + " joined the chat.");
+    }
+
+    @Override
+    public void onClose(WebSocket webSocket, int i, String s, boolean b) {
+        System.out.println("onClose " + webSocket.getRemoteSocketAddress());
+    }
+
+    @Override
+    public void onMessage(WebSocket webSocket, String s) {
+        System.out.println("onMessage " + webSocket.getRemoteSocketAddress() + " : " + s);
+        String currentUserName = myConnectedUsers.get(webSocket.getRemoteSocketAddress().toString());
+        broadcastToOthers(webSocket, "%s : %s".formatted(currentUserName, s));
+    }
+
+    @Override
+    public void onError(WebSocket webSocket, Exception e) {
+        System.out.println("onError " + e.getMessage());
+    }
+
+    @Override
+    public void onStart() {
+        System.out.println("onStart");
+    }
+
+    public void broadcastToOthers(WebSocket webSocket, String message) {
+        var connections = new ArrayList<>(getConnections());
+        connections.remove(webSocket);
+        System.out.println("WIll broadcast : " + message);
+        broadcast(message, connections);
+    }
+}
+
+public static void main(String[] args) {
+    MyWebSocketServer server = new MyWebSocketServer();
+    server.start();
+}
+```
+
+The WebSocket client does not need the `org.java_websocket` library, it only uses the built-in `WebSocket` class in `java.net.http` package.  
+It creates a websocket from the `HttpClient` class with a custom listener implementing the `onText()` method to react when a message is received.
+
+```java
+public static void main(String[] args) throws URISyntaxException, ExecutionException, InterruptedException {
+    // get user name
+    Scanner scanner = new Scanner(System.in);
+    System.out.print("Name : ");
+    String name = scanner.nextLine();
+    // create a websocket
+    URI uri = new URI("ws://localhost:5588?name=%s".formatted(name));
+    HttpClient client = HttpClient.newHttpClient();
+    WebSocket webSocket = client.newWebSocketBuilder()
+            .buildAsync(uri, new WebSocket.Listener() {
+                @Override
+                public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+                    // print the received message in the chat
+                    System.out.println(data);
+                    return WebSocket.Listener.super.onText(webSocket, data, last);
+                }
+            })
+            .join();  // wait for the websocket to be ready
+            
+    // start a chat and write to the websocket when the user writes a line
+    while (true) {
+        String input = scanner.nextLine();
+        if (input .equalsIgnoreCase("exit")) {
+            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "User %s left".formatted(name))
+                     .get();    // wait for close to be completed
+            break;
+        } else {
+            webSocket.sendText(input, true);
+        }
+    }
+}
+```
