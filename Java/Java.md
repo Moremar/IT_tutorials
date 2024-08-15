@@ -3675,3 +3675,94 @@ public static void main(String[] args) throws URISyntaxException, ExecutionExcep
     }
 }
 ```
+
+
+## JUnit
+
+JUnit (version 5 at the moment) is the most popular unit-test framework for Java.  
+It is integrated in IntelliJ, so we can Alt-Enter on a class name and create a JUnit test class for it.  
+It allows to perform some automated tests against our code and throw a `AssertionFailedError` when values are not as expected. 
+
+The test class contains test methods decorated with the `@Test` JUnit annotation.  
+
+Junit exposes several assertion functions like `assertTrue()`, `assertEquals()`, `assertArrayEquals()` ...
+
+```java
+class AnimalTest {
+
+    Animal bill;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setupEach() {
+        bill = new Animal("dog", "Bill", 7);
+    }
+
+    @org.junit.jupiter.api.Test
+    void getAge() {
+        assertEquals(7, bill.getAge(), "Check age field");
+        assertNotEquals(8, bill.getAge());
+        assertTrue(bill.getAge() > 0, "Age must be positive");
+        assertFalse(bill.getAge() < 0);
+    }
+    
+    @org.junit.jupiter.api.Test
+    void otherTest() {
+        int[] a1 = { 1, 2, 3 };
+        int[] a2 = { 1, 2, 3 };
+        assertArrayEquals(a1, a2);  // assert elements equality instead of address equality
+        assertNull(null);
+        assertNotNull(bill);
+    }    
+
+    @org.junit.jupiter.api.Test
+    void futureTest() {
+        fail("Test not implemented yet");
+    }    
+}
+```
+
+The `assertThrows()` method can check if a method throws a specific exception, and returns the exception object for further testing :
+```java
+@org.junit.jupiter.api.Test
+void getName() {
+    var e = assertThrows(NullPointerException.class, () -> {
+        Animal bob = null;
+        bob.getName();
+    });
+    assertTrue(e.getMessage().contains("\"bob\" is null"));
+}
+```
+
+We can create a parametrized test, so JUnit runs it once per value in the parametrized list :
+```java
+@ParameterizedTest
+@ValueSource(strings = {"", "A", "AAA", "!!"})
+void rename(String name) {
+    System.out.println("Test for name = " + name);
+    Animal animal = new Animal("dog", name, 12);
+    assertEquals(name, animal.getName());
+}
+```
+
+To define methods to run once before/after each/every tests, we can use the `@BeforeAll`, `@BeforeEach`, `@AfterAll` and `@AfterEach` annotations :
+```java
+@org.junit.jupiter.api.BeforeAll
+static void setupAll() {
+    System.out.println("setupAll");
+}
+
+@org.junit.jupiter.api.BeforeEach
+void setupEach() {
+    System.out.println("setupEach");
+}
+
+@org.junit.jupiter.api.AfterAll
+static void teardownAll() {
+    System.out.println("teardownAll");
+}
+
+@org.junit.jupiter.api.AfterEach
+void teardownEach() {
+    System.out.println("teardownEach");
+}
+```
