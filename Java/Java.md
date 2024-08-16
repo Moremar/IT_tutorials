@@ -3766,3 +3766,55 @@ void teardownEach() {
     System.out.println("teardownEach");
 }
 ```
+
+## Java Modules
+
+Java 9 introduced modules with the **Java Platform Module System** (JPMS), result of Project Jigsaw.  
+Modules let developers organize their code and resources more efficiently, and manage dependencies between packages better.  
+
+A module is a higher level of aggregation above Java packages.  
+A module is a group of related packages amd resources (images, config files...) along with a module descriptor file.  
+Each module contains the resources it uses, instead of having these resources in a resource folder common to the entire project.
+
+There are 4 types of modules :
+- **system modules** : Java SE and JDK modules, listed by `java --list-modules`, for example `java.sql`
+- **application modules** : custom named modules, defined in the assembled JAR in the `module-info.class` file
+- **automatic modules** : unofficial modules included by adding a JAR file to the module path (module named derived from the JAR name)
+- **unnamed module** : contain all JAR files loaded in the classpath but not in the module path (for backward compatibility)
+
+There can be only one module in a JAR file, so each module has its own JAR file.
+
+Some packages inside a module can be internal, and others can be exported by the module.  
+By default, only the exported packages can be accessed at compile-time and runtime by external modules.  
+A module can be `open` so only exported packages are accessible at compile-time but all packages are accessible at runtime (by reflection).  
+
+Each module has a module descriptor file called **module-info.java** at the module root folder.  
+It contains the module name and metadata about the module (dependencies, exported packages, reflection permissions).
+
+Metadata in the module file descriptor can be any of the following directives :
+- `requires MODULE_NAME` : defines a module required for the current module to work
+  - `requires static MODULE_NAME` : optional compile-time only dependency
+  - `requires transitive MODULE_NAME` : make all users of our module require this module too 
+- `exports PACKAGE_NAME` : expose all public members of a package to users of our module
+  - `exports PACKAGE_NAME to PACKAGE_NAME` : expose all public members of a package to a specific package only
+- `opens PACKAGE_NAME` : make a specific package open at runtime for reflection
+  - `opens PACKAGE_NAME to MODULE_NAME` : make it open at runtime for reflection only to a specific module
+- `provides INTERFACE_NAME with CLASS_NAME` : defines service implementations provided by the current module
+- `uses INTERFACE_NAME` : defines the services that the current module consumes, allowing to load the right implementation with `ServiceLoader`
+
+IntelliJ has integration with Java modules, we can create one with : `File > New > Module`  
+We can call the module `com.myapp.core` for example, and IntelliJ creates the module with a `src` folder in it.  
+In this src folder, we can create the package hierarchy, for example packages `com.myapp.core.mypkg1` and `com.myapp.core.mypkg2`.  
+We can create the `module-info.java` file at the root of the module, for example : 
+```java
+module com.myapp.core {
+    requires javafx.base;
+    requires javafx.controls;
+    requires javafx.graphics;
+    requires javafx.fxml;
+    requires java.sql;
+    
+    exports com.myapp.core.mypkg1 to javafx.graphics, javafx.fxml;
+    opens com.myapp.core.mypkg1 to javafx.fxml;
+}
+```
