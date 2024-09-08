@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<BorderPane fx:id="mainBorderPane"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.sample.todolist.TodoListController"
+            stylesheets="@styles.css" >
+  <top>
+    <VBox>
+      <!-- display the menu as a menu bar -->
+      <MenuBar>
+        <Menu text="File">
+          <items>
+            <MenuItem text="New..." onAction="#showNewItemDialog" />
+            <SeparatorMenuItem />
+            <MenuItem text="Exit" onAction="#handleExit" />
+          </items>
+        </Menu>
+        <Menu text="Help">
+          <items>
+            <MenuItem text="About" />
+            <MenuItem text="License" />
+          </items>
+        </Menu>
+      </MenuBar>
+
+      <!-- Alternative to the MenuBar we could use a toolbar with buttons -->
+      <ToolBar>
+        <Button onAction="#showNewItemDialog">
+          <tooltip>
+            <Tooltip text="New Item" />
+          </tooltip>
+          <graphic>
+            <ImageView fitWidth="20" fitHeight="20">
+              <Image url="@images/new.png" />
+            </ImageView>
+          </graphic>
+        </Button>
+        <ToggleButton fx:id="onlyDueToggleButton"
+                      text="Only show due items"
+                      onAction="#handleToggleChange">
+          <graphic>
+            <ImageView fitWidth="20" fitHeight="20">
+              <Image url="@images/ghost.gif" />
+            </ImageView>
+          </graphic>
+        </ToggleButton>
+      </ToolBar>
+    </VBox>
+  </top>
+  <left>
+    <ListView fx:id="todoListView" onKeyPressed="#handleKeyPressed" />
+  </left>
+  <center>
+    <VBox  style="-fx-background-color: white">
+      <TextArea fx:id="detailsTextArea" VBox.vgrow="ALWAYS" wrapText="true" />
+      <HBox>
+        <Label text="Due: " style="-fx-background-color: white">
+          <font>
+            <Font name="Times New Roman bold" size="20" />
+          </font>
+        </Label>
+        <Label fx:id="deadlineLabel"  style="-fx-background-color: white">
+          <font>
+            <Font name="Times New Roman bold" size="20" />
+          </font>
+        </Label>
+      </HBox>
+    </VBox>
+  </center>
+
+</BorderPane>
+
