@@ -3818,3 +3818,181 @@ module com.myapp.core {
     opens com.myapp.core.mypkg1 to javafx.fxml;
 }
 ```
+
+
+## Building Java Projects
+
+## Manual 
+
+- compile the `.java` files into `.class` in the `./build/classes` folder for the JVM to interpret :
+```shell
+javac -d build/classes src/com/example/*.java
+```
+
+- Create a MANIFEST file under `./src` that specifies the main class of the Java application :
+```
+Main-Class: com.example.MainClass
+```
+
+- Generate the JAR file with the `.class` files and the MANIFEST file :
+```shell
+cd build/classes/
+jar cfm hello.jar ../../src/MANIFEST ./com/example/*.class
+jar -tf hello.jar             # check the JAR content
+```
+
+- Execute the JAR file to run the application :
+```shell
+java -jar build/jar/hello.jar
+```
+
+### Apache Ant
+
+Apache Ant is a Java-based build automation tool, mostly used for Java development.  
+It was developed in 2000 as a platform-independent alternative to CMake.  
+It is no longer used for new Java projects, but is still widely used for legacy projects.  
+
+Ant allows the automation of the build with a `build.xml` file describing the build steps to run.  
+This XML configuration file describes the shell commands required for the build.
+
+To compile a basic Java project with a single Java file `src/com/example/Hello.java`, we can create the following `build.xml` :
+
+```xml
+<project name="hello" default="run" basedir=".">
+    <!-- Clean target -->
+    <target name="clean">
+        <delete dir="build"/>
+    </target>
+
+    <!-- Compile target -->
+    <target name="compile" depends="clean">
+        <mkdir dir="build/classes"/>
+        <javac srcdir="src" destdir="build/classes"/>
+    </target>
+
+    <!-- Jar target -->
+    <target name="jar" depends="compile">
+        <mkdir dir="build/jar"/>
+        <jar destfile="build/jar/hello.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="Main-Class" value="com.example.Hello"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- Run target -->
+    <target name="run" depends="jar">
+        <java jar="build/jar/hello.jar" fork="true"/>
+    </target>
+</project>
+```
+
+It defines the 4 following targets : `clean`, `compile`, `jar` and `run`.  
+Each one has a dependency on the previous one.  
+Each target has a specific XML child tag for each command it needs to run.  
+
+We can then perform each step by calling the Ant CLI :
+```shell
+ant clean
+and compile
+ant jar
+ant run
+```
+
+### Maven
+
+Maven is a tool that was designed as a successor of Ant to build Java programs.  
+It offers built-in support for dependency management.  
+It enforces a standard project structure so all projects follow the same conventions.  
+It has a lot of plugins that can be used to enrich the capabilities of the build.  
+
+To create a basic Maven project, we add the `Hello.java` file under `<PROJECT_ROOT>/src/main/java/com/example/`.  
+Then we create a `pom.xml` file (Project Object Model) in the project root : 
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>Hello</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.example.Hello</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+We can then build the project and run the program with :
+```shell
+mvn clean
+mvn package
+java -jar target/Hello-1.0-SNAPSHOT.jar
+```
+
+
+### Gradle 
+
+Gradle is a modern build tool mostly used to build Java projects, allowing to define tasks in Groovy.  
+It relies on a project structure by default, that can be initialized with `gradle init`.   
+
+It does create : 
+- a `settings.gradle` Groovy file containing the project name
+- the `gradlew` and `gradlew.bat` files for the Gradle wrapper
+- the `app/build.gradle` file defining the build tasks (using the `application` plugin for Java projects)
+
+We can add the `Hello.java` file under `<PROJECT_ROOT>/app/src/main/java/com/example/`.  
+The `build.gradle` file should be updated with the main file : 
+
+```groovy
+plugins {
+    // Apply the application plugin to add support for building a CLI application in Java.
+    id 'application'
+}
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
+dependencies {
+    // Use JUnit test framework.
+    testImplementation 'junit:junit:4.13.2'
+
+    // This dependency is used by the application.
+    implementation 'com.google.guava:guava:30.1.1-jre'
+}
+
+application {
+    // Define the main class for the application.
+    mainClass = 'com.example.Hello'
+}
+```
+
+The project can be built and run with the Gradle CLI (using the Gradle wrapper) :
+```shell
+./gradlew build          # build Java .class files in the <PROJECT_ROOT>/app/build folder 
+./gradlew run
+```
