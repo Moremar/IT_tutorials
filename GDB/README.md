@@ -38,7 +38,7 @@ We can run GDB commands inside the GDB CLI to navigate in the execution.
    nexti                      # go to the next assembly instruction
    step                       # step into the function call at this instruction  (short version : s)
    finish                     # step out of the current function and show return value (short version : fin)
-   break file:line            # set a breakpoint at the a specific line of a file (short version : br)
+   break file:line            # set a breakpoint at a specific line of a file (short version : br)
    break 25 if a == 3         # set a conditional breakpoint
    continue                   # go to the next breakpoint
    info locals                # show the value of local variables
@@ -71,11 +71,11 @@ $>  gcc -g -o invalid_debug invalid.c
 $>  sudo gdb ./invalid_debug
 ```
 
-The program is very short so we can just start from the beginning, go to every line and check the variables.  
+The program is very short, so we can just start from the beginning, go to every line and check the variables.  
 We would use `start`, then `next` to go to the next line or `step` to enter inside the `max()` function.  
 
-By reading the code we can have a feeling that the issue is in the `max()` function.  
-If so, we can use `break 7` so set a breakpoint at the first instruction of this function (line 7).  
+By reading the code, we can have a feeling that the issue is in the `max()` function.  
+If so, we can use `break 7` to set a breakpoint at the first instruction of this function (line 7).  
 Then we can use `run` instead of `start` to reach the breakpoint directly.
 
 At every step, we can run `info args` and `info locals` to see the function arguments and local variables.  
