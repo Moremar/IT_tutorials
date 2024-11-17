@@ -109,7 +109,7 @@ This confirms that the message was not altered in transit, since only the sender
 
 There are multiple possible modes for encryption :
 - **ECB** (Electronic CodeBook) : only use the plaintext and the key for encryption, so 2 similar blocks in plaintext are encoded the same way
-- **CBC** (Cypher Block Chaining) : perform a XOR of the plaintext with the previous encrypted ciphertext before encrypting
+- **CBC** (Cipher Block Chaining) : perform a XOR of the plaintext with the previous encrypted ciphertext before encrypting
 - **CTR** (Counter) : instead of encrypting the plaintext, encrypt a counter and XOR the result with 8-bit of the plaintext, then increment the counter
 - **GCM** (Galois/Counter Mode) : combine CTR with the Galois authentication
 
@@ -135,8 +135,8 @@ The first letter is not shifted, the second is shifted by 1, the third by 2...
 It is a Caesar cipher with K = position of each letter in the message. 
 
 ```commandline
-Message : HELLO
-Encoded : HFNOS
+message   : HELLO
+encrypted : HFNOS
 ```
 
 ### Vigenere cipher
@@ -147,9 +147,9 @@ If the key is ACB, the first letter is shifted by 0, the second by 2, the third 
 The Trithemius cipher is a Vigenere cipher with a key of ABCD...XYZ.
 
 ```commandline
-Message : HELLO
-Key     : ABC
-Encoded : HFNLP
+message   : HELLO
+key       : ABC
+encrypted : HFNLP
 ```
 
 ### Autokey cipher
@@ -157,7 +157,7 @@ Encoded : HFNLP
 The Vigenere cipher is vulnerable to frequency analysis if a short key is repeated.  
 To avoid this weakness, the Autokey cipher appends the plaintext to the key to not repeat the key.  
 
-When we decrypt it, we use the key to decrypt the first letters, and the we use the decrypted letters to decrypt the rest.
+When we decrypt it, we use the key to decrypt the first letters, and we use the decrypted letters to decrypt the rest.
 
 ```commandline
 message   : HELLO
@@ -168,7 +168,7 @@ encrypted : HFNSS
 
 ### Bacon cipher
 
-The Bacon cypher is a type of **steganographic** message, hiding a secret message in a non-suspicious plain text.  
+The Bacon cipher is a type of **steganographic** message, hiding a secret message in a non-suspicious plain text.  
 The secret message is hidden in the message's presentation instead of its content.  
 
 Each letter of the secret is replaced by a group of 5 `a` or `b` characters (A = `aaaaa` to Z = `bbaab`).  
@@ -177,16 +177,16 @@ We use a **carrier** message to carry the secret, by using 2 styles for letters 
 We use one style for letters in the carrier corresponding to positions of `a`, and the other style for positions of `b`.  
 
 ```commandline
-Message   : ABC
+message   : ABC
 a/b       : aaaaa aaaab aaaba
-Carrier   : how are you today my friend ?
-Styles    : lower case (a) / upper case (b)
-Encrypted : how are you TodaY my friend ?
+carrier   : how are you today my friend ?
+styles    : lower case (a) / upper case (b)
+encrypted : how are you TodaY my friend ?
 ```
 
-### ADFGVX cypher (1918)
+### ADFGVX cipher (1918)
 
-The ADFGVX cypher was used by the Germans at the end of WW1 to secure the communication during the attack of Paris.  
+The ADFGVX cipher was used by the Germans at the end of WW1 to secure the communication during the attack of Paris.  
 It was cracked by the French army in June 1918.  
 
 It is a 2-steps code, using a **substitution**, followed by a **transposition**.  
@@ -287,7 +287,7 @@ It breaks the input into 64-bit blocks, and uses transposition and substitution 
 It uses an effective key of 56 bits (8 bytes, with a parity control bit in each byte).  
 It was used a lot until early 2000, but now the key is too short to resist modern computing power brute-force.  
 
-**Triple DES** (or 3DES) is an improvement of DES using 3  separate symmetric keys to encrypt/decrypt the plaintext.  
+**Triple DES** (or **3DES**) is an improvement of DES using 3 separate symmetric keys to encrypt/decrypt the plaintext.  
 It increases the strength of DES, but makes it 3 times slower.  
 
 ### IDEA (International Data Encryption Algorithm)
@@ -320,20 +320,62 @@ RC4 has multiple vulnerabilities and is considered no longer secure.
 **RC5** is a symmetric **block** cipher using a variable key size (40 to 2048-bit).  
 **RC6** is a symmetric block cipher based on RC5, candidate for the replacement of DES but AES was chosen instead.
 
-### DH (Diffie - Hellman)
-
-Diffie-Hellman is an asymmetric public/private key algorithm used to secure symmetric key exchange.  
-It is used for the establishment of a VPN Tunnel when using the IPsec protocols suite.
-
 ### RSA (Rivest - Shamir - Adleman)
 
 RSA is an asymmetric public/private key algorithm, still in used a lot today.  
-Like DH, it is used to securely exchange a symmetric key and switch to a symmetric encryption.  
+It is used to securely exchange a symmetric key and switch to a symmetric encryption.  
 Its name is based on the initials of its 3 creators.  
 It is used by RSA tokens that provide a one-time token for MFA.
 
 RSA supports key sizes from 1024-bits to 4096-bits.  
 It relies on the difficulty to factorize the product of 2 big prime numbers.
+
+Some tools can break weak RSA keys, for example [RsaCtfTool](https://github.com/RsaCtfTool/RsaCtfTool).
+
+#### RSA logic
+
+We choose 2 prime numbers p and q, usually each with 300+ digits.  
+We calculate `n = p * q`.  
+We calculate `phi = n - p - q + 1`.  
+We choose a number e that is relatively prime to phi.  
+We choose a number d so that `e * d = 1 modulo phi`.  
+
+The public key is `(n, e)` and the private key is `(n, d)`.  
+
+Encryption of a number x :  `y = x^e modulo n`  
+Decryption of a number y :  `x = y^d modulo n`
+
+For example, if we choose p = 157 and q = 199, we have `n = p * q = 31243` and `phi = n - p - q + 1 = 30888`   
+We can choose `e = 163` (relatively prime with 30888) and `d = 379` that verifies e * d = 1 modulo phi.  
+The public key is `(31243, 163)` and the private key is `(31243, 379)`.  
+To encrypt x = 13 : `y = 13^163 modulo 31243 = 16341`  
+To decrypt y = 16341 : `x = 16341^379 modulo 31243 = 13`
+
+
+### DH (Diffie - Hellman)
+
+Diffie-Hellman is an asymmetric public/private key algorithm used to secure symmetric key exchange.  
+It is used for the establishment of a VPN Tunnel when using the IPsec protocols suite.
+
+DH is a bit different from RSA, as it does not require both parties to have a public and private key.  
+Both parties choose a **private key** A and B, and they agree on some **common public variables**.  
+Both parties infer their **public key** from their private key and the common public variables.  
+When talking to each other, they send their public key.  
+They both need to combine the received public key with their private key to obtain a **shared secret**.  
+This shared secret can be used for symmetric encryption, as it was agreed without ever sharing it over the network.  
+
+#### DH logic
+
+Both parties agree on public variables (p, g) where p is a large prime number and g a generator smaller than p.  
+Then each party chooses a secret integer key a and b.  
+Then each party infers its public key from its private key and the common variables : `A = g^a mod p and B = g^b mod p`   
+Both parties can exchange their public keys, and infer the same shared secret : `S = B^a mod p = A^b mod p`
+
+For example, we can choose the common public variables (p, g) = (29, 3).  
+The secret keys can be a = 13 and b = 15.  
+The public keys are A = 3^13 mod 29 = 19 and B = 3^15 mod 29 = 26.  
+These public keys are exchanged, and both parties can calculate the shared secret S = 26^13 mod 29 = 19^15 mod 29 = 10.
+
 
 ### ECC (Elliptic Curve Cryptography)
 
@@ -347,8 +389,17 @@ ECC provides better security than an equivalent size RSA key (a 256-bit ECC key 
 PGP uses the IDEA symmetric encryption algorithm for encryption and RSA for digital signature.  
 Symmetric functions use key sizes of 128-bit or more, and asymmetric functions use key size of 512 to 2048 bits.
 
-**GPG** is a fork of the PGP suite using AES for its encryption algorithm (instead of IDEA).  
-It is more modern and cross-platform.
+**GPG** (or GnuPG) is a fork of the PGP suite using AES for its encryption algorithm (instead of IDEA).  
+It is more modern, open-source and cross-platform.  
+
+```shell
+gpg --full-gen-key                         # generate a private/public GPG key pair
+gpg --import aaa.key                       # import a private key into GPG (required to encrypt/decrypt)
+gpg --decrypt message.gpg                  # decrypt a message
+```
+A GPG private key can be protected with a passphrase.  
+A GPG private key passphrase can be broken offline with `gpg2john` and John the Ripper.
+
 
 ## Hashing
 
@@ -374,6 +425,8 @@ We can also use **salting** by adding a prefix to the password to avoid rainbow 
 MD5 is a hashing function created in 1991 giving a 128-bit hash for a message.  
 It is no longer secure, since a vulnerability was discovered in 1996 to create hash collisions easily.
 
+We can get the MD5 hash of a file with the `md5sum` command.
+
 ### RIPEMD (RIPE Message Digest)
 
 RIPEMD is a family of cryptographic hash functions (RIPEMD-128, RIPEMD-160, RIPEMD-256, RIPEMD-320).  
@@ -390,6 +443,8 @@ SHA is a suite of hashing functions replacing MD5 for hash calculation.
   There is no efficient attack so far on SHA-2, but some attacks reduce the number of attempts to brute-force.
 - **SHA-3** was originally called Keccak and won a contest in 2015 for the next SHA hashing function.  
   It is very different from previous SHA functions, and can also generate hashes of size 224, 256, 384 and 512 bits. 
+
+The SHA hashes of a file can be calculated with the `sha1sum`, `sha256sum` and `sha512sum` commands.
 
 ### DSS (Digital Signature Standard)
 

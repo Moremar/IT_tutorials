@@ -137,7 +137,7 @@ DHCP is a network management protocol used to automate the configuration of devi
 A DHCP server automatically assigns an IP address and other network configuration to each new device on the network.  
 
 The steps of the DHCP workflow is **DORA** (Discover - Offer - Request - Ack) :
-- a device joins the network and broadcasts a DISCOVER request to identify DHCP servers
+- a device joins the network and broadcasts a DISCOVER request to identify DHCP servers (with IP address 0.0.0.0)
 - the DHCP server responds with an available IP address OFFER
 - the device responds with a REQUEST for this IP
 - the DHCP server responds with a ACK
@@ -273,13 +273,122 @@ HOST: www.example.com
 
 **netcat** is a more powerful tool to open connections to UDP or TCP ports and send requests.
 
-
 ### SSH (Secure Shell)
 
 SSH is a protocol to create a secure channel between 2 computers or network devices and enable one device to control the other device.  
 It was originally used in Unix, but it is now used in Windows as well as a text-based remote control method (Windows servers, routers, switches...).  
 SSH2 fixes issues with SSH1, and uses Diffie-Hellman for key exchange.
 
+SSH authentication can be performed by user/password or by RSA keys.  
+
+When using RSA keys, a public/private RSA key pair can be generated with `ssh-keygen`, and can be encrypted with a passphrase.  
+The private key should never leave the local machine and should be kept in a secure location.  
+The public key can be sent to the server with `ssh-copy-id`, and added to `~/.ssh/authorized_keys` for the server to allow SSH access.
+
+When an attacker gains access to a server using a reverse shell, he can upgrade his shell by dropping an SSH key in this `authorized_keys` file.  
+This will create a backdoor, by providing access via SSH, instead of the reverse shell with fewer functionalities.  
+
+### FTP (File Transfer Protocol)
+
+FTP is a protocol designed to exchange files between two machines.
+An FTP server listens on port 21 by default. 
+
+We can interact with a FTP server with the `ftp` command-line client : 
+```shell
+ftp 10.10.35.121            # opens an FTP connection to the FTP server (request username + password)
+ls                          # list available files on the FTP server
+type ascii                  # switch to ASCII mode to retrieve text files
+get test.txt                # retrieve a file from the FTP server
+```
+
+When checking with Wireshark the actual network traffic, we see that the client sends the following instructions :
+- `USER myuser`
+- `PASS mypassword`
+- `LIST` : enumerate files on the FTP server
+- `TYPE A` : text mode
+- `RETR test.txt` : get a file from the FTP server
+
+
+### SMTP (Simple Mail Transfer Protocol)
+
+SMTP is used by a client to communicate with a mail server to send an email, and by mail servers to communicate with each other.  
+It uses ports **25** (unencrypted) and **465** (SMTPS - SSL encrypted).
+
+An SMTP client uses the following instructions in its SMTP message to the mail server :
+- `HELO` : initiate the SMTP session
+- `MAIL FROM` : set the sender mail address
+- `RCPT TO` : set the recipient mail address
+- `DATA` : set the content of the email
+- `.` : mark the end of the email
+
+For example, we can manually communicate with a SMTP server listening on port 25 with telnet :
+```shell
+telnet 10.10.35.121 25
+HELO myname
+MAIL FROM: <aaa@example.com>
+RCPT TO: <bbb@example.com>
+DATA
+From: aaa@example.com
+To: bbb@example.com
+Subject: Telnet email test
+
+This email is sent via telnet!
+.
+```
+
+### STARTTLS
+
+STARTTLS is a protocol extension that can be used above SMTP to add SSL/TLS encryption.  
+It is an optimistic encryption method : it starts with a plaintext SMTP connection, and then upgrades to a secure TLS 
+or SSL encrypted connection if both the sending and receiving email servers support STARTTLS.  
+It is more flexible than SMTPS and is slowly replacing it.  
+If a secure connection is established, it uses port **587**.
+
+### POP3 (Post Office Protocol)
+
+POP3 is used to retrieve emails from a mail server.  
+Unlike IMAP, there is no sync process between the POP3 clients and the mail server.  
+When an email is fetched from the mail server, it is deleted from the mail server (so other clients will not see it).  
+POP3 uses ports **110** (unencrypted) and **995** (SSL encrypted).
+
+The POP3 instructions are :
+- `USER myuser` : identify the user
+- `PASS mypassword` : provide the user's password
+- `STAT` : request the number of messages and the total size
+- `LIST` : list the ID and size of all messages
+- `RETR 13` : retrieve the message with ID 13
+- `DELE 13` : delete the message with ID 13
+- `QUIT` : ends the POP3 session
+
+Usually these instructions are set by the mail client (Thunderbird, Outlook...).  
+Similarly to the SMTP example above, it can also be done manually with telnet :
+```shell
+telnet 10.10.35.121 110
+USER myuser
+PASS mypassword
+STAT                    // get number of available messages
+LIST                    // get the ID of all messages
+RETR 4                  // retrieve message with ID 4
+QUIT
+```
+
+### IMAP (Internet Message Access Protocol)
+
+IMAP is an alternative to POP3 to retrieve emails from a mail server.  
+It allows synchronization between multiple client devices accessing the same mail address on the mail server.
+Every action on a mail from a client (read/delete a mail) is performed on the server, and other clients will sync.  
+It allows to use multiple clients (phone and laptop for example) and to see a common state on all of them.  
+It is more recent and more convenient than POP3 for users that check emails on multiple devices.  
+IMAP uses ports **143** (unencrypted) and **993** (SSL encrypted).
+
+IMAP can be manually used with telnet :
+```shell
+telnet 10.10.35.121 143
+A LOGIN myuser mypassword
+B SELECT inbox
+C FETCH 4 body[]                  // get the headers and body of message with ID 4
+D LOGOUT 
+```
 
 ### SSL (Secure Socket Layer) and TLS (Transport Layer Security)
 
@@ -298,7 +407,7 @@ This older TLS version can have known vulnerabilities that the attacker will exp
 To defend against it, we can configure the server to not accept downgrade.
 
 **SSL stripping** is an attack combining an on-path attack and a downgrade attack.  
-The attacker is in the middle of the traffic between the victim and a web server (proxy, rogue Wifi AP...).  
+The attacker is in the middle of the traffic between the victim and a web server (proxy, rogue Wi-fi AP...).  
 It communicates with the victim in clear traffic (HTTP) and with the web server in encrypted traffic (HTTPS).  
 The attacker controls all the communication and can modify messages or steal data.  
 To the victim, it is transparent except HTTP is used instead of HTTPS.
@@ -401,7 +510,7 @@ It is the most common Ethernet standard in today's networks.
 
 - **100-BASE-FX** : 100Mbs Ethernet over fiber optic cables, usually used for network backbones.  
 With multi-mode, max length 412m in half-duplex and 2km in full-duplex.  
-With single mode, max length 10km.  
+With single-mode, max length 10km.  
 Often uses SC or ST connectors.
 
 
@@ -488,15 +597,15 @@ Network administrators use rollover cables to configure and manage the settings 
 needing network connectivity.
 
 
-### Punchdown Blocks
+### Punch-down Blocks
 
-Punchdown blocks are a type of electrical connection used in telephony or to bring Ethernet cables to user's desks.  
+Punch-down blocks are a type of electrical connection used in telephony or to bring Ethernet cables to user's desks.  
 
-A RJ45 cable goes from the desk to the punchdown block in the closet, where individual 8 wires are punched down individually to the block.  
+A RJ45 cable goes from the desk to the punch-down block in the closet, where individual 8 wires are punched down individually to the block.  
 On the other side of the block, another cable brings it to the desired switch.  
-This makes it much easier to setup, as only the part from the block to the switch needs to be updated when the user changes desk.
+This makes it much easier to set up, as only the part from the block to the switch needs to be updated when the user changes desk.
 
-The main punchdown block types are :
+The main punch-down block types are :
 - **66 block** : old analog phone
 - **110 block** : voice and data traffic, in data centers and network wiring closets
 - **Krone block** : european alternative to the 110 block
@@ -809,7 +918,7 @@ It is defined by standard **IEEE 802.3ad** and uses **LACP** (Link Aggregation C
 
 ### Switch Stacking and Switch Clustering
 
-**Cisco StackWise** is a technology of **switch stacking** allowing to turn mutiple physical switches in the same rack into one logical switch.  
+**Cisco StackWise** is a technology of **switch stacking** allowing to turn multiple physical switches in the same rack into one logical switch.  
 It uses a special stacking cable to connect switches to each other in a loop (so it still works if one switch goes down).  
 A single switch is the **master** used for management, other switches are **members** and receive updates from the master.  
 Switch stacking supports up to 9 switches, and they all share the same IP.
@@ -911,14 +1020,14 @@ It supports discontinuous subnets, for ex 172.16.10.0/24 and 172.16.20.0/24 (in 
 Like distance vector protocols, it sends to its neighbors the distance to all its neighbors.  
 Like link-state protocols, it syncs the routing table at startup and on any change (not every X sec).  
 It supports both IPv4 and IPv6.  
-It has efficient neighbors discovery, is easy to setup and it keeps track of more info than distance vector protocols.  
+It has efficient neighbors discovery, is easy to set up, and it keeps track of more info than distance vector protocols.  
 
 
 - **OSPF** (Open Shortest Path First) : most popular interior gateway protocol and main alternative to EIGRP.  
 It has always been open and is available on any router hardware in the market.  
 It is a link-state protocol using bandwidth as a metric.  
 It supports IPv4 and IPv6, classless routing (VLSM) and has the fastest convergence among IGPs.  
-It is more difficult to setup than EIGRP, it requires a hierarchy of routers with a "Area 0" root.
+It is more difficult to set up than EIGRP, it requires a hierarchy of routers with a "Area 0" root.
 
 
 - **IS-IS** (Intermediate System to Intermediate System) : link state IGP similar to OSPF.  
@@ -1114,7 +1223,7 @@ ACLs are a set of rules to control network traffic going through the router and 
 A firewall is a network security device that monitors and controls incoming and outgoing network traffic.  
 It is often used between a trusted network and an untrusted network (the Internet).  
 It serves a similar purpose as the router ACLs but offers more control on the filtering.  
-Some firewalls also provide more features like intrusion detection, anti-virus...
+Some firewalls also provide more features like intrusion detection, antivirus...
 
 - **Packet filtering firewall** : similar to router ACLs, filter based on source/dest IP, port, protocol...
 - **Circuit-level gateway** : monitor TCP handshake, act as a proxy for the internal machine and allow only legitimate session traffic
@@ -1134,7 +1243,7 @@ An IPAM software avoids using spreadsheets to keep track of the IP address of ea
 - integrate with DHCP to show DHCP reservations
 - integrate with DNS, creating A records so machines can be accessed by their hostname
 
-There are free and paid IPAM softwares.  
+There are free and paid IPAM software.  
 A popular one is **SolarWinds IP Address Manager**, and its free version **IP Address Tracker**.
 
 
@@ -1150,7 +1259,7 @@ A variant is the **router on a stick** configuration, where a router is connecte
 
 With a layer 3 switch, the switch itself can route traffic from a VLAN to the other by IP.
 
-A layer 3 switch is more expensive than a layer 2 switch but is easier to setup than a switch and a router for multi-VLAN networks.
+A layer 3 switch is more expensive than a layer 2 switch but is easier to set up than a switch and a router for multi-VLAN networks.
 
 
 ### DMZ (Demilitarized Zone)  
@@ -1165,34 +1274,34 @@ It has 2 routers :
 
 ## Wireless Networks
 
-### Wifi standards
+### Wi-fi standards
 
 **IEEE 802.11** is the set of standards for wireless LAN commonly called Wi-Fi.
 
 
-| Wifi | Standard  |  Freq (GHz)  | Year |  MIMO                       | Max Throughput per stream | Max Throughput total |
-|:----:|:---------:|:------------:|------|-----------------------------|---------------------------|----------------------|
-| 2    |  802.11a  |  5           | 1999 | -                           | 54Mb/s                    | 54Mb/s               |  
-| 1    |  802.11b  |  2.4         | 1999 | -                           | 11Mb/s                    | 11Mb/s               | 
-| 3    |  802.11g  |  2.4         | 2003 | -                           | 54Mb/s                    | 54Mb/s               | 
-| 4    |  802.11n  |  5 / 2.4     | 2009 | 4 x MIMO                    | 150Mb/s                   | 600Mb/s              | 
-| 5    |  802.11ac |  5           | 2014 | 8 x MU-MIMO (download)      | 867Mb/s                   | 6.9Gb/s              |
-| 6    |  802.11ax |  5 / 2.4     | 2021 | 8 x MU-MIMO (bidirectional) | 1201Mb/s                  | 9.6Gb/s              |
+| Wi-fi | Standard  |  Freq (GHz)  | Year |  MIMO                       | Max Throughput per stream | Max Throughput total |
+|:-----:|:---------:|:------------:|------|-----------------------------|---------------------------|----------------------|
+|   2   |  802.11a  |  5           | 1999 | -                           | 54Mb/s                    | 54Mb/s               |  
+|   1   |  802.11b  |  2.4         | 1999 | -                           | 11Mb/s                    | 11Mb/s               | 
+|   3   |  802.11g  |  2.4         | 2003 | -                           | 54Mb/s                    | 54Mb/s               | 
+|   4   |  802.11n  |  5 / 2.4     | 2009 | 4 x MIMO                    | 150Mb/s                   | 600Mb/s              | 
+|   5   |  802.11ac |  5           | 2014 | 8 x MU-MIMO (download)      | 867Mb/s                   | 6.9Gb/s              |
+|   6   |  802.11ax |  5 / 2.4     | 2021 | 8 x MU-MIMO (bidirectional) | 1201Mb/s                  | 9.6Gb/s              |
 
 
-The latest Wifi standard is Wifi 6 (802.11ax) operating both in the 2.4 and 5 Ghz bands and allowing 1.2Gb/s throughput per channel.
+The latest Wi-fi standard is Wifi 6 (802.11ax) operating both in the 2.4 and 5 Ghz bands and allowing 1.2Gb/s throughput per channel.
 
 **MIMO** (Multiple Input Multiple Output) is a wireless technology allowing the use of several antennas on receiver side and transmitter side to increase the data speed.  
 - **SU-MIMO** (Single User MIMO) allows only 1 client device at a time to communicate with the router
 - **MU-MIMO** (Multiple User MIMO) allows several clients in parallel
 
-**Channel Bandwith** : Frequency width of the communication channel, usually ~20Mhz.  
+**Channel Bandwidth** : Frequency width of the communication channel, usually ~20Mhz.  
 We can use **channel bonding** to use several non-overlapping channels to create a bigger bandwidth channel.  
 802.11n can use 2 channels to contiguous channels to create a 40Mhz channel.  
 802.11ac and 802.11ax extend it to 80Mhz, 160MHz and 80+80MHz (2 non-contiguous 80MHz channels).  
 
 
-### Wifi 2.4GHz and 5GHz Bands
+### Wi-fi 2.4GHz and 5GHz Bands
 
 Old routers use Wifi in the 2.4GHz frequency band, which covers a large range (entire house).  
 It causes interferences with other devices also using the same frequencies, like microwaves, cordless phones, Bluetooth devices...  
@@ -1297,7 +1406,7 @@ Its goal is to provide a wireless solution delivering the required coverage, dat
 
 - **Information gathering** : scope of the network, apps, areas, device types to support...
 - **Pre-deployment site survey** : use live APs to check optimal distance and find interference sources
-- **Post-deployment sute survey** : confirm all works well and plan adjustments if needed
+- **Post-deployment site survey** : confirm all works well and plan adjustments if needed
 
 
 ### TKIP (Temporal Key Integrity Protocol)
@@ -1505,7 +1614,7 @@ like EAP-TLS (relying on PKI and digital certificates).
 
 IPsec is a suite of TCP/IP protocols used together to set up encrypted connections between devices on a public network.  
 IPsec provides confidentiality (encryption), integrity (hashing) and authentication (key exchange).  
-IPsec is often used to setup a VPN, encrypting IP packets and ensuring the authenticity of the source.
+IPsec is often used to set up a VPN, encrypting IP packets and ensuring the authenticity of the source.
 
 The method used by IPsec to exchange keys is called **IKE** (Internet Key Exchange).  
 It creates a tunnel by encrypting the connection between authenticated peers.
@@ -1553,14 +1662,14 @@ RADIUS clients contact the RADIUS server using the RADIUS protocol everytime the
 
 If users are already setup in Active Directory, we can enable **LDAP** and configure the RADIUS server to be a client
 using the LDAP server, so users are setup only in Active Directory.
-
+ 
 All RADIUS servers have **AAA capabilities** (Authentication / Authorization / Accounting).
 
 
 ## TACACS+ (Terminal Access Controller Access Control System Plus)
 
 TACACS+ is another AAA protocol used to control access to network devices and services.  
-It is the main alternative to RADIUS, and was developed by Cisco so it is popular in Cisco networks.  
+It is the main alternative to RADIUS, and was developed by Cisco, so it is popular in Cisco networks.  
 It can perform authentication on behalf of APs, RAS servers (Remote Access Service), 802.1x enabled switches...
 
 TACACS+ uses TCP, while RADIUS uses UDP.  
@@ -1586,7 +1695,7 @@ The user/password are never sent to any app, instead we send the TGT provided by
 
 NAC is an approach to computer security restricting unauthorized users and devices from gaining access to a network.  
 It defines a policy to secure access to the network by devices when they initially try to join the network.  
-A machine is not allowed to access the network until it is compliant (credentials, config, anti-virus, updates...).
+A machine is not allowed to access the network until it is compliant (credentials, config, antivirus, updates...).
 
 - **IEEE 802.1X** : standard protocol for NAC providing an authentication mechanism for devices to attach to a LAN/WLAN.
   - the **supplicant** is the external machine trying to access the network
@@ -1626,7 +1735,7 @@ It is much cheaper than the traditional phone lines and usable anywhere with Int
 A **PBX** (Private Branch Exchange) is a hardware used in a private network to provide phone connectivity to the users of the network.  
 Machines connect to the IP-PBX via the LAN, it allows multiple call functionalities : extension dialing, business hours settings to route calls off-hours, customer waiting queues, conference calls...
 
-VoIP can be used by IP phones (like Cisco) or by phone softwares or computers.  
+VoIP can be used by IP phones (like Cisco) or by phone software or computers.  
 
 VoIP service providers perform routing of outgoing and incoming calls.  
 If the recipient also uses VoIP, the call stays entirely on the IP network, it is an **on-net call**.  
@@ -1672,7 +1781,7 @@ the client should be sent back to the remote server.
 
 ## Hypervisor
 
-An hypervisor is a software for the creation and management of virtual machines running an OS.  
+A hypervisor is a software for the creation and management of virtual machines running an OS.  
 The hypervisor runs on the **host machine** and each VM it manages  is a **guest machine**.
 
 There are 2 types of hypervisor :
@@ -1823,7 +1932,7 @@ The **UPS runtime** is the amount of time the UPS can supply power at a given po
 The **UPS capacity** is the max amount of power the UPS can supply at a given time.  
 
 Some UPS can perform **automated graceful shutdown** when they detect a power outage.  
-They can shutdown servers in a pre-determined order to avoid data loss and maintain data integrity.
+They can shut down servers in a pre-determined order to avoid data loss and maintain data integrity.
 
 A **PDU** (Power Distribution Unit) is a device used in electrical and data centers to distribute electric power to
 multiple devices such as servers, networking equipment, and other connected devices. 
@@ -1940,8 +2049,6 @@ Most ISPs offer cable television, Internet access and phone services over the sa
 
 - **route** : edit the route table on a host or server (by default, all traffic goes to the default gateway)
 
-- **iptables** : firewall-like command on Linux, can show the number of received/sent packets or block access to a given IP
-
 - **netstat** : show open connections to and from a server (`-ano` to list open connections and identify backdoors)
 
 - **ss** : more recent, simpler and faster alternative to netstat
@@ -1958,20 +2065,7 @@ Most ISPs offer cable television, Internet access and phone services over the sa
 
 - **nmap** : discover devices and open ports on a network
 
-- **curl** : send a query to an URL and receive the response, support many protocols (HTTP, HTTPS, FTP, SFTP, SCP, IMAP, POP3...)
-```shell
-curl --data "<QUERY BODY>" <QUERY_URL>
-```
-
-- **head / tail** : Linux command to output the first/last 10 lines of a file
-
-- **cat** : Linux command to output the entire content of a file
-
-- **grep** : Linux command to select only the lines in a file matching a specific pattern
-
 - **pdfinfo** : Linux command to read the metadata of a PDF document
-
-- **chmod** : Linux command to change the access permissions of a file (user/group/others for read/write/execute)
 
 - **logger** : Linux command providing an easy way to log data under the `/var/log/syslog` file
 

@@ -111,7 +111,7 @@ sudo do-release-upgrade
 
 If we face some issues with the upgrade (bootloader, kernel...), we may need to use a **live Linux** for troubleshooting.  
 A live Linux distribution is a Linux OS booted from DVD or USB, that does not save anything on disk (all is saved in memory).  
-It allows access to the disk so we can modify some files that could help with the boot.  
+It allows access to the disk, so we can modify some files that could help with the boot.  
 For example, we can modify the GRUB configuration file to show the bootloader menu and allow reboot on the previous OS version.
 
 
@@ -535,7 +535,7 @@ The package manager ensures compatibility between installed software, and handle
 
 The package manager needs to be run with administrative privileges.
 
-### Debian-based distributions (Ubuntu / Debian)
+### Debian-based distributions (Ubuntu / Debian / Kali)
 
 #### dpkg
 
@@ -564,7 +564,7 @@ Additional third-party repositories are stored under `/etc/apt/sources/lists.d/*
 
 Repositories are defined with format `<type> <uri> <distribution> <domain1> <domain2> ...`.  
 For example : `deb http://jp.archive.ubuntu.com/ubuntu/ jammy main restricted`
-- type : either `deb` (binary packages) or `deb-src` (source parckages)
+- type : either `deb` (binary packages) or `deb-src` (source packages)
 - uri : address of the repository (or a mirror)
 - distribution : ubuntu version to download package for
 - component : define if free or paid, and if supported by Canonical (official) of by the Ubuntu community
@@ -611,6 +611,7 @@ Some useful packages to install are :
 - `gparted` : Gnome Partition Editor GUI
 - `htop` : interactive process viewer (improvement of top)
 - `imagemagick` : image editor and image format convertor
+- `john` : John the Ripper password cracking program
 - `links` : in-terminal web browser (useful to see if a web server is reachable for example)
 - `lvm2` : Logical Volume Manager to abstract multiple physical disks behind a single logical volume
 - `neofetch` : system info script printing distribution logo and info on terminal
@@ -625,7 +626,7 @@ Some useful packages to install are :
 - `zsh` : advanced Unix shell (alternative to Bash)
 
 
-### RHEL-based distributions (Fedora, CentOS, Red-Hat Entreprise Linux)
+### RHEL-based distributions (Fedora, CentOS, Red-Hat Enterprise Linux)
 
 #### RPM (Red-Hat Package Manager)
 
@@ -1080,6 +1081,9 @@ When executed, the `sudo` binary asks for the password, checks if the user is an
 executes the requested command.  
 `su` and `mount` commands also use the SUID bit.
 
+The `/bin/passwd` command used to modify the password of the current user also has the SUID bit.  
+It is required, because it needs to modify the user password hash in `/etc/shadow` that is only writable by root.
+
 The SUID mechanism can be a serious security risk, and should be used only on compiled binary files, when absolutely needed.  
 For example, if we set the SUID bit to the `python3` binary, it will allow any user to run any Python script as root !
 
@@ -1179,7 +1183,7 @@ We can emit a signal, and the OS will deliver it to the running process asynchro
 The `kill` command can send signals, that the OS will deliver to a process to interrupt it.
 
 The most popular signal types are :
-- **SIGTERM** (terminate) : tell the process to terminate if possible but allow it to cleanup or ignore the signal
+- **SIGTERM** (terminate) : tell the process to terminate if possible but allow it to clean up or ignore the signal
 - **SIGINT** (interrupt) : tell the process to stop so we can regain control over the terminal (Ctrl-C)
 - **SIGKILL** (kill) : kill the process without giving it a chance to cleanup or ignore the signal, handled by the kernel and the process does not even know about it
 - **SIGHUP** (hang up) : notify a process that the terminal it runs in has been closed, so process should stop if not a daemon
@@ -1600,7 +1604,7 @@ In general, we should prefer the GParted GUI when available.
 When working with a remote machine, we may not have access to a GUI so the parted CLI can be the only way.  
 If we need to include parted commands in scripts, then the in-terminal commands can be considered.
 
-To create an exFAT partition, we need to first create an NTFS partition with `parted` (it does not supports exFAT) :
+To create an exFAT partition, we need to first create an NTFS partition with `parted` (it does not support exFAT) :
 ```shell
 mkpart primary ntfs 2048s 1000   # create a partition with NTFS of 1GB
 ```
@@ -1623,7 +1627,7 @@ A mount point is a connection of a volume to the Linux directory tree.
 It makes the volume readable and writable for users and applications.  
 
 Volumes from external removable medias are usually mounted as a sub-folder of the `/media` folder.  
-In a Ubuntu virtual machine, that is where shared folders and VirtualBox add-on volumes are mounted.
+In an Ubuntu virtual machine, that is where shared folders and VirtualBox add-on volumes are mounted.
 
 Volumes from internal permanent disks are usually mounted as a sub-folder of the `/mnt` folder.  
 
@@ -2126,18 +2130,18 @@ It is primarily based on PHP and MySQL, and is highly customizable with themes a
 
 WordPress can be downloaded from [wordpress.org](https://wordpress.org/) (not [wordpress.com](https://wordpress.com/) that is a commercial company offering WordPress hosting).  
 We can extract the zip and copy all its content to the document root folder configured to be served by our Apache site.  
-For example, if we have setup Apache to serve files in document root `/var/www/html/ubuntu1` :
+For example, if we have set up Apache to serve files in document root `/var/www/html/ubuntu1` :
 ```shell
 sudo rm /var/www/html/ubuntu1/*               # cleanup whatever already exists in the document root
 sudo cp wordpress/* /var/www/html/ubuntu1/    # copy all content of the extracted wordpress archive to the document root
 ```
 
-We can now access the Wordpress setup screen in a browser at `http://ubuntu1/`, and click "Let's go".  
-We can then enter the database name/host and user name/password and press "OK".  
+We can now access the WordPress setup screen in a browser at `http://ubuntu1/`, and click "Let's go".  
+We can then enter the database name/host and username/password and press "OK".  
 This will generate the content of the file `wp-config.php` to save ourselves in the document root folder.  
 When done, click "Start Installation" in the browser.  
 We can then choose the blog name and a new user that would be in charge of editing the blog (not a DB admin) and click "Install".  
-The configuration is complete, we now have a WordPress blog that we can login to.
+The configuration is complete, we now have a WordPress blog that we can log into.
 
 
 ## Firewalld
@@ -2253,7 +2257,7 @@ ls -Z
 These users, roles, types and label are used by SELinux rules to allow or deny access to resources.  
 For example, a web server will only have access to resources with type `httpd_sys_content_t` and `httpd_sys_config_t`.  
 If trying to access a file unrelated to httpd, SELinux will deny access even if the web server has DAC access.  
-This is an implementation of least privilege.
+This is an implementation of the least privilege principle.
 
 By default, a new file inherits the context from its parent directory.  
 We can specify rules in SELinux to override this default, called a **type transition**.
@@ -2312,7 +2316,7 @@ sudo journalctl -t setroubleshoot --sice 14:10   # more detailed info about a vi
 ```
 
 SELinux also manages ports that each process can use.  
-If a process tries to listen to a port outside of its allowed port numbers, SELinux will not allow it.
+If a process tries to listen to a port outside its allowed port numbers, SELinux will not allow it.
 ```shell
 semanage port -l                               # list all port types with the port numbers they include
 semanage port -a -t http_port_t -p tcp 8888    # add port 8888/tcp to the SELinux http_port_t type

@@ -130,7 +130,7 @@
   - `-c` : count the number of lines in which the pattern is found (each line counts only once)
   - `-s` : suppress errors about non-existent files or missing permissions 
   - `-l` : only show the name of the files that have a match
-  - `-v` : invert match, matches lines that do not countain the pattern
+  - `-v` : invert match, matches lines that do not contain the pattern
   - `-q` : check if a pattern is present, exit with code 0 if present, else 1
   - `--color` : highlight the match in color  
   Basic Regular Expression allows the use of the following meta-characters :
@@ -277,6 +277,7 @@ sudo -l                       # show what the current user can do in sudo
 sudo -l -U <USERNAME>         # show what a specific user can do in sudo
 sudo su                       # switch to the root user
 su <USERNAME>                 # switch to a specific user (require password)
+su -l <USERNAME>              # start a login shell with the specified user (inheriting more env variables)
 sudo deluser <USERNAME> sudo  # delete a user from the sudo group
 ```
 
@@ -335,6 +336,10 @@ awk '{ sum += $1 } END { print sum }' file   # sum the first column of each line
 
 
 - `md5sum <FILE>` : calculate the MD5 hash of a file
+```shell
+md5sum test.txt                 # hash of a file
+echo -n "iloveu" | md5sum       # hash of a string
+```
 
 
 - `shasum -a 1 <FILE>` : calculate the SHA-1 hash of a file, we can also use variations of SHA-2.  

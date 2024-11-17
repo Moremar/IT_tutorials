@@ -16,7 +16,7 @@ Hacking aims at breaking it, making the DAD Triad :
 ### Hacking steps
 
 - **Reconnaissance / Fingerprinting** : Gather info about the target, can be either passive or active  
-- **Exploitation** : Take advantage of vulnerabilities to gain access via phishing, social engineering, weak passwords, unpatched softwares...  
+- **Exploitation** : Take advantage of vulnerabilities to gain access via phishing, social engineering, weak passwords, unpatched software...  
 - **Privilege escalation** : Use the gained access to get higher permission (create accounts, get admin access...)  
 - **Establish persistence** : create a backdoor for later remote access control
 - **Attack** : data extraction, data corruption, malware injection
@@ -68,7 +68,7 @@ Main types of viruses :
 - **metamorphic** : advanced version of polymorphic virus rewriting itself entirely before propagation
 - **stealth** : category of viruses hiding themselves to avoid detection
 - **armored** : virus with mechanism to make detection by antivirus harder
-- **hoax** : virus that propagates by making users believe they need to install it to cleanup their machine
+- **hoax** : virus that propagates by making users believe they need to install it to clean up their machine
 
 ### Worm
 
@@ -229,25 +229,25 @@ That is one of the most dangerous types of security issue, and the goal of any a
 
 #### Wardriving
 
-Wardriving is the act of searching for Wifi networks, usually from a moving vehicle (car with antenna).  
+Wardriving is the act of searching for Wi-fi networks, usually from a moving vehicle (car with antenna).  
 It usually uses a smartphone or a laptop, looking for weakly protected networks to crack.
 
 #### De-authentication attack
 
-If we know the wireless network SSID and the MAC address of a machine connected to it, we can send to the Wifi AP 
+If we know the wireless network SSID and the MAC address of a machine connected to it, we can send to the Wi-fi AP 
 a **de-authentication frame** with the spoofed MAC address of the victim to force the disconnection of the machine.  
 This can be used to crack WEP or WPA passwords, as we need to sniff some connection traffic to infer the password.  
 De-authentication lets us force the user to reconnect while we sniff the traffic.
 
 #### Evil Twin
 
-An evil twin is a fraudulent Wifi AP that appears legitimate but is setup to eavesdrop on wireless communications.  
+An evil twin is a fraudulent Wi-fi AP that appears legitimate but is set up to eavesdrop on wireless communications.  
 It is an AP setup with a name similar to an existing valid one.  
 
-Once the evil twin is setup, the attacker de-authenticates all connected clients to force them to reconnect.  
+Once the evil twin is set up, the attacker de-authenticates all connected clients to force them to reconnect.  
 When they connect again, they may use the rogue AP instead, and the attacker has a man-in-the-middle attack giving 
 access to all the victim's traffic.  
-It is often used in places offering a public Wifi (cafés, airports...).
+It is often used in places offering a public Wi-fi (cafés, airports...).
 
 #### Bluetooth Attacks
 
@@ -299,7 +299,7 @@ It is often using fake URLs in phishing emails redirecting to fake login pages :
 - **Vishing** : phishing by phone
 - **Smishing** : phishing by SMS 
 - **Sextortion** : obtain compromising pictures/videos, then used to blackmail the victim
-- **Insider** : the attacker applies for a job in the target company and get hired to gain access to the internal network
+- **Insider** : the attacker applies for a job in the target company and gets hired to gain access to the internal network
 
 Phishing campaigns use some common social engineering principles :  
 - **Urgency / Scarcity**: create a false sense of urgency to get the victim to act in a rush (limited offer...)  
@@ -347,7 +347,7 @@ It was one of the first DoS attacks, but modern OSs are no longer vulnerable to 
 
 #### Teardrop attack
 
-Attack breaking an IP packet into fragments and modifying them so they overlap and go beyond the max size.  
+Attack breaking an IP packet into fragments and modifying them, so they overlap and go beyond the max size.  
 Some machines crash or reboot when trying to re-assemble these fragments.
 
 #### Fork Bomb
@@ -379,7 +379,7 @@ TCP/IP sessions authenticate only in the TCP 3-way handshake, so the attacker ca
 - **Man in the Middle** : the attacker intercepts the network traffic between 2 machines and impersonates both sides.  
 It is a very common attack on unsecure wireless networks.
   - **email hijacking** : the hacker gets control over an email account
-  - **wifi eavesdropping** : hijacking a wifi connection
+  - **Wi-fi eavesdropping** : hijacking a Wi-fi connection
   - **man in the browser** : MitM attack limited to a client browser (trojan infecting the browser) 
 
 
@@ -489,34 +489,13 @@ It usually targets **NTLM** (New Technology LAN Manager) on Windows machines.
 #### Birthday Attack
 
 The birthday attack consists in finding some passwords generating collisions with existing user passwords.  
-This allows to login to the  system using an incorrect password that generates the same hash.  
+This allows to log in to the system using an incorrect password that generates the same hash.  
 To prevent it, we should use a longer digest limiting the collisions (like SHA-256 over MD5 for example).
 
 
 ## Emails
 
 ### Protocols
-
-**IMAP** (Internet Message Access Protocol) is an email reception protocol.  
-IMAP clients can sync their emails from the mail sever.  
-Every action on a mail from a client (read/delete a mail) is performed on the server, and other clients will sync.  
-It allows to use multiple clients (phone and laptop for example) and to see a common state on all of them.  
-It is more recent and more convenient than POP3 for users that check emails on multiple devices.  
-IMAP uses ports **143** (unencrypted) and **993** (SSL encrypted).
-
-**POP3** (Post Office Protocol) is also an email reception protocol.  
-Unlike IMAP, there is no sync process between the POP3 clients and the mail server.  
-When an email is fetched from the mail server, it is deleted from the mail server (so other clients will not see it).  
-POP3 uses ports **110** (unencrypted) and **995** (SSL encrypted).
-
-**SMTP** (Simple Message Transfer Protocol) is a protocol to send emails from a web server to another.  
-It uses ports **25** (unencrypted) and **465** (SMTPS - SSL encrypted).
-
-**STARTTLS** is a protocol extension that can be used above SMTP to add SSL/TLS encryption.  
-It is an optimistic encryption method : it starts with a plaintext SMTP connection, and then upgrades to a secure TLS 
-or SSL encrypted connection if both the sending and receiving email servers support STARTTLS.  
-It is more flexible than SMTPS and is slowly replacing it.  
-If a secure connection is established, it uses port **587**.
 
 **S/MIME** is the Secure Multipurpose Internet Mail Extensions standard providing cryptographic security for electronic messages.  
 S/MIME can encrypt emails and their content... but also potential malwares they contain, making it harder to detect them.
@@ -598,7 +577,7 @@ sudo ufw status                        # see status active/inactive and rules
 sudo ufw default allow outgoing        # set default allow/deny for outgoing traffic
 sudo ufw default deny incoming         # set default allow/deny for incoming traffic
 sudo ufw allow 22/tcp                  # allow traffic on a given port
-sudo ufw deny from 192.168.100.25      # block traffoc from a specific IP
+sudo ufw deny from 192.168.100.25      # block traffic from a specific IP
 sudo ufw enable                        # make the UFW firewall active
 sudo ufw reset                         # reset firewall rules to default
 ```
@@ -621,7 +600,7 @@ Some polymorphic viruses change their code, making it hard to detect their signa
 ### EPP (Endpoint Protection Platform)
 
 An EPP is a software agent and monitoring system performing multiple security tasks at host-level.  
-It can include an anti-virus, data encryption, DLP, firewalls, HIDS/HIPS...  
+It can include an antivirus, data encryption, DLP, firewalls, HIDS/HIPS...  
 There are many on the market, and every year Gartner makes a list of the best EPPs.  
 Leaders are the solutions offered by Microsoft, CrowdStrike and Symantec.
 
@@ -944,7 +923,7 @@ Hardening is the action to take some common sense security measures to protect a
 - change credentials
 - password policy
 - upgrade firmwares
-- patch/update libraries and softwares
+- patch/update libraries and software
 - use secure protocols
 - disable unused ports
 - use key rotation
@@ -965,7 +944,7 @@ These TOS include Windows 8+, MacOS 10.6+, FreeBSD, Red Hat Enterprise Server...
 - Settings > Privacy > Location > Turn off location tracking
 - Settings > Update & Security > Advanced Options > Delivery Optimization > turn off downloads from other PCs
 - Settings > Network & Internet > Windows Firewall > Ensure the firewall is on
-- Settings > Network & Internet > Wifi > Use random hardware address (if supported by the network adapter)
+- Settings > Network & Internet > Wi-fi > Use random hardware address (if supported by the network adapter)
 
 
 ### Pyramid of Pain
@@ -982,7 +961,7 @@ When the **hash** (MD5, SHA) of a malicious program is blocked, it is trivial to
 When the attacker **IP address** is blocked, it is easy to move the C2 infrastructure to a different network server.  
 If the attack is conducted via an anonymous proxy service (like Tor), the IP address of the attacker often varies.
 
-When a **DNS domain or sub-domain name** is blocked, it is simple for the attacker to register another domain name.  
+When a **DNS domain or subdomain name** is blocked, it is simple for the attacker to register another domain name.  
 Legislation standards are often lax, and a registration can be done within a day or two.
 
 **Network artifacts** are pieces on the victim network that can identify malicious activity (URI pattern, C2 info in network protocols...).  
@@ -1006,11 +985,14 @@ CWE is maintained by the MITRE Corporation and is used as a classification syste
 **CVE** (Common Vulnerabilities and Exposures) is a database of known vulnerabilities maintained by the MITRE corporation.  
 It is used by security professionals to keep up to date with the latest securities issues.  
 Hackers use these CVEs to craft exploits that use the vulnerability to attack a system.  
-Keeping softwares patched prevents all these attacks.
+Keeping software patched prevents all these attacks.
 
 **NVD** (National Vulnerability Database) is a publicly accessible database listing CVEs and their remediation.  
 It feeds from the CVE database and exposes a better navigation for the vulnerabilities.  
 It also gives a quantitative score to all vulnerabilities with the **CVSS** (Common Vulnerability Scoring System).
+
+The **Exploit Database** is a public database of exploit codes from various authors on various programs.  
+Some of these exploits are tested and marked as verified.
 
 **AIS** (Automated Indicator Sharing) is a service the CISA (Cybersecurity and Infrastructure Security Agency) provides
 to enable real-time exchange of machine-readable cyber threat indicators and defensive measures between public and
@@ -1043,8 +1025,8 @@ To choose suppliers, we must apply **due diligence**, and check that they have :
 ### Trusted Foundry Program
 
 As part of the supply chain management, the supply of hardware must be also be reviewed.  
-The **DoD** (US Department of Defense) created the **Trusted Foundry Program** for their micro-processor supply.  
-It is a micro-processor manufacturing utility operated by the DoD and part of a validated supply chain.
+The **DoD** (US Department of Defense) created the **Trusted Foundry Program** for their microprocessor supply.  
+It is a microprocessor manufacturing utility operated by the DoD and part of a validated supply chain.
 
 ### Hardware Root of Trust (ROT)
 
@@ -1136,7 +1118,7 @@ Its main weakness is its 24-bit **IV** (Initialization Vector) sent in clear tex
 
 WEP can be cracked in a few minutes by IV attack using **aircrack-ng** or other wireless crackers.  
 
-#### WPA (Wifi Protected Access) 
+#### WPA (Wi-fi Protected Access) 
 
 WPA is an improvement of WEP, is uses **TKIP**, MIC (Message Integrity check) and **RC4** encryption.  
 WPA was a much better standard than WEP, but it had some flaws that WPA2 replaced. 
@@ -1159,7 +1141,7 @@ Instead of all using the same PSK (like with WPA2), each client uses a different
 
 WPA3-Enterprise uses AES with a 256-bits key (128-bits key in WPA2), and Elliptic Curve Diffie-Hellman for the initial handshake. 
 
-WPA3 is supported by Wifi 6 compatible routers.
+WPA3 is supported by Wi-fi 6 compatible routers.
 
 
 ## Domain Name Registrar
@@ -1181,6 +1163,10 @@ Some popular domain name registrars are :
 - **Domain.com** : licensed for all top-level and many country-level extensions
 - **Bluehost** : web hosting provider and WordPress partner, they offer free domain name registration when hosting a site with them
 - **GoDaddy** : major registrar offering many extensions and an easy-to-use interface for domain name management
+
+At domain registration, the registrant is required to provide accurate contact information, available publicly via WHOIS records.  
+It is possible to use privacy services so the contact information do not show publicly.  
+If no privacy service is used, the WHOIS records can be accessed with the `whois example.com` command.
 
 
 ## 5 Eyes (FVEY)
@@ -1323,7 +1309,7 @@ If an attacker manages to send an instruction to the CAN bus, the instruction wi
 There are 3 main ways to do that :
 - attach the exploit to the **OBD-II** (On-Board Diagnostic), the system providing self-diagnosis and reporting capabilities for repair technicians
 - exploit over on-board cellular
-- exploit over on-board Wifi
+- exploit over on-board Wi-fi
 
 
 ### OT (Operational Technology)
@@ -1354,7 +1340,7 @@ This type of OS is used by embedded systems that cannot tolerate reboots or cras
 Common constraints in embedded systems are :
 - low power consumption
 - limited compute capability
-- network (often limited to short-range like Wifi or Bluetooth)
+- network (often limited to short-range like Wi-fi or Bluetooth)
 - cryptography (due to small processor)
 - authentication (some systems are unable to join a network and require local logon)
 
@@ -1474,7 +1460,7 @@ Vulnerabilities can be identified with a vulnerability scanning tool like **Ness
 It is a defined process to identify and classify all vulnerabilities. 
 
 A vulnerability assessment comprises multiple domains :
-- **network scanning** : discover and document physical and logical connectivity in the network (NMap)
+- **network scanning** : discover and document physical and logical connectivity in the network (Nmap)
 - **vulnerability scanning** : identify threats on the network without exploiting them (open ports and program versions)
 - **network sniffing** : capture and analyze the network traffic on the network (WireShark)
 - **password analysis** : try to guess passwords with a password cracker (Cain & Abel, John The Ripper, HashCat)
@@ -1546,7 +1532,7 @@ SOAR are a type of security tools that facilitate incident response, threat hunt
 automated runbooks.
 
 SOAR is a next-gen form of SIEM, it can scan security data, analyze it with ML, enrich it and provision resource in response.  
-For example, it can teardown a VM suspected to contain a malware and create a new VM instead.
+For example, it can tear down a VM suspected to contain a malware and create a new VM instead.
 
 A **playbook** is a higher-level set of procedures that outlines the overall strategy and actions to be taken during an incident.  
 It provides a structured and strategic view of the response process.  
@@ -1578,7 +1564,7 @@ There are multiple tape rotation strategies to decide how long a tape is kept an
 
 
 - **grandfather-father-son** : we use 3 sets of backup tapes called the son (daily), the father (weekly) and the grandfather (monthly) that all rotate separately.  
-  At the end of each day, we backup a new son.  
+  At the end of each day, we back up a new son.  
   At the end of the week, a new father is created with the same value as the son.  
   At the end of the month, a new grandfather is created with the same value as the son.  
   The monthly tapes are usually kept off-site in case the site is destroyed.  
@@ -1602,7 +1588,7 @@ The DRP should contain contact information, impact determination, recovery plan 
 The **BCP** (Business Continuity Plan) is also part of the DRP.  
 It focuses on how to ensure operation are maintained in case of incident or disaster.
 
-**Disaster Recovery exercices** should be scheduled, ideally once a year, to ensure staff knows how to act in case of disaster.
+**Disaster Recovery exercises** should be scheduled, ideally once a year, to ensure staff knows how to act in case of disaster.
 
 
 ### BIA (Business Impact Analysis)
@@ -1689,7 +1675,7 @@ Multiple regulations defining what are PII and how they must be manipulated :
 - **FISMA** (Federal Information Security Management Act) : require federal agencies to develop, document and implement an information security program to protect their data
 - **PCI-DSS** (Payment Card Industry - Data Security Standard) : contractual obligation for organization manipulating client credit card numbers
 - **HAVA** (Help America Vote Act) : regulation governing the security, confidentiality and integrity of PII during the election and voting process
-- **COPPA** (Children's Online Privacy Protection Act) : regulation of information for services targetting children under 13 (especially parental consent)
+- **COPPA** (Children's Online Privacy Protection Act) : regulation of information for services targeting children under 13 (especially parental consent)
 - **FERPA** (Family Educational Rights and Privacy Act) : govern the access to educational records by potential employers, educational institutions, foreign governments...  
 - **SB 1386** : only apply to organization making business in California, require any business storing PII to disclose any breach
 - **GDPR** (General Data Protection Regulation) : European regulation stating that personal data cannot be collected, processed or retained without the individual's informed consent.  

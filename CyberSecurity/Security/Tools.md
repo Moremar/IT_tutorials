@@ -3,6 +3,13 @@
 
 ## Networking Tools
 
+### Remmina
+
+Remmina is an open-source remote desktop client, mostly used in Linux by system administrators.  
+It is written in C and based on the GTK+ toolkit.  
+It supports multiple network protocols, including **RDP**, **VNC** and **SSH**.  
+This makes it a versatile tool for connecting to remote computers and servers.
+
 
 ### NetSpot
 
@@ -11,6 +18,76 @@ It can analyze Wi-fi coverage and performance.
 It runs on Windows and MacOS.  
 It is used to analyze radio signal leaks, map channel use, optimize wireless AP locations...
 
+
+### tcpdump
+
+tcpdump is a console network packet analyzer written in C++.  
+It uses the `libpcap` C++ library to capture the network packets reaching the network cards.  
+
+The `tcpdump` command requires the root privilege to capture packets (either `sudo` or run as root).
+
+```shell
+tcpdump                                     # check that tcpdump is working (but too generic to be useful)
+tcpdump -i eth0                             # listens to a specific network interface ("-i any" to use all interfaces)
+tcpdump -i eth0 -w capture.pcap             # specify the packets capture file to write the packets into
+tcpdump -r capture.pcap                     # read packets from a packets capture file
+tcpdump -c 1234                             # limit the number of captured packets (otherwise, use Ctrl-C to stop the capture)
+tcpdump -n                                  # prevent DNS lookup (show IP instead of resolved domain name)
+tcpdump -nn                                 # prevent both DNS and port lookup (show port number instead of protocol name)
+tcpdump -v                                  # produce more output (also -vv and -vvv for higher verbose levels)
+
+tcpdump -q -r capture.pcap                  # quick output (timestamp + source/dest IP and port)
+tcpdump -e -r capture.pcap                  # print link-level header (source/dest MAC address)
+tcpdump -A -r capture.pcap                  # print the packet data in ASCII
+tcpdump -xx -r capture.pcap                 # print the packet data in hexadecimal
+tcpdump -X -r capture.pcap                  # print the packet header and data in hexadecimal and ASCII side-by-side
+```
+
+We can apply different filters to the captured or displayed packets to only target specific packets.  
+For a complete list of available filters, refer to `man pcap-filter`.
+
+```shell
+# filter by host
+tcpdump host example.com -w capture.pcap        # specific host (src or dst)
+tcpdump src host example.com -w capture.pcap    # specific source host
+tcpdump dst host example.com -w capture.pcap    # specific destination host
+
+# filter by port
+tcpdump port 53 -w capture.pcap                 # specific port (src or dst)
+tcpdump src port 53 -w capture.pcap             # specific source port
+tcpdump dst port 53 -w capture.pcap             # specific destination port
+
+# filter by protocol
+tcpdump icmp -w capture.pcap                    # specific protocol (ip, ipv6, icmp, tcp, udp...)
+
+# filter by size
+tcpdump greater 1000 -r capture.pcap            # packets bigger than 1000
+tcpdump less 1000 -r capture.pcap               # packets smaller than 1000
+
+# multiple filters
+tcpdump icmp or udp -w capture.pcap             # OR logical operator
+tcpdump host 1.1.1.1 and tcp -w capture.pcap    # AND logical operator
+tcpdump not tcp -w capture.pcap                 # NOT logical operator
+```
+
+Some more advanced filtering allow to check some specific bytes in the header of each layer.  
+We use the syntax `PROTOCOL[OFFSET:SIZE]` :
+- `PROTOCOL` : protocol of the header containing the field to filter on : `arp`, `ether`, `icmp`, `ip`, `ip6`, `tcp`, and `udp`
+- `OFFSET` : byte offset before the field to filter on in this header (0 for the first byte)
+- `SIZE` : number of bytes to extract, default to 1
+
+```shell
+ether[0] & 1 != 0               # true if the first bit of the first byte of the Ethernet header is 1 (multicast address)
+```
+
+A built-in version of these filters is available to check TCP flags.  
+`tcp[tcpflags]` gets the byte of the TCP flags, and each indidual flag is accessible with `tcp-syn`, `tcp-ack`, `tcp-fin`, `tcp-rst`, `tcp-push`.
+
+```shell
+tcpdump "tcp[tcpflags] == tcp-syn"                 # TCP packets where only the SYN flag is set
+tcpdump "tcp[tcpflags] & tcp-syn != 0"             # TCP packets where at least the SYN flag is set
+tcpdump "tcp[tcpflags] & (tcp-syn|tcp-ack) != 0"   # TCP packets where at least the SYN or ACK flag is set
+```
 
 ### WireShark
 
@@ -21,7 +98,44 @@ Many people contributed to it to add support for more protocols.
 In 2023, it moved to the WireShark Foundation non-profit corporation that promotes network education and hosts SharkFest
 (WireShark developer and user conferences). 
 
-WireShark can also load packets captured with `tcpdump`.
+WireShark can load packets captures (PCAP) created by WireShark or other packets analyzers (like the `tcpdump` console tool).  
+WireShark lists all captured or received packets, and for each packet it displays the info at each layer, and the original bytes.  
+The packets can be colored (_View > Colorize Packet List_) and the coloring rules can be customized (_View > Coloring Rules_).   
+
+We can start and stop live network sniffing with the Shark button and the red button next to it.  
+We can display information about the currently loaded package, like the capture time, number of packets... (_Statistics > Capture File Properties_).
+
+In a WireShark packets list, we can find packets by string or regex (_Edit > Find Packet_).  
+It lets us choose which frame the requested search should be performed in (Packet list, Packet details or Packet bytes).
+
+A packet can be marked for later review, by right-clicking it in the packet list.  
+It will be displayed in black in the packet list, but the marking only last while the capture file is open.  
+Similarly, a comment can be added to a packet, and it will stay within the captured file.
+
+Specific packets can be exported for later analysis from the Files menu.
+
+By default, WireShark displays the time of each packet in seconds since the beginning of the capture.  
+We can modify that to display UTC date/time for example, from _View > Time Display Format_.
+
+We can display expert info by clicking the small round icon at the bottom left of WireShark.  
+It displays several warnings and errors that could require attention.
+
+#### Filters
+
+WireShark offers powerful filtering capabilities, both for capturing and for displaying packets.
+
+On any cell in the packet list or value in the packet details, we can right-click and select "Apply as Filter".  
+This creates a display filter and only shows the packets that have this specific value in that column.  
+We can also select "Prepare as Filter" to create multiple conditions before actually applying the filter.
+
+We can also filter the displayed packets to a single conversation between 2 machines, by right click > Conversation Filter.
+
+Some columns can be added to the packets list by selecting a value in the packet details and right-click > Apply as Column.
+
+WireShark shows all packets (IP-level PDU) that traverse the network.  
+It allows to reconstruct the streams from these packets, to reconstruct TCP or HTTP exchanges for example.  
+This can reveal some cleartext usernames and passwords for non-encrypted protocols.  
+This reconstruction is performed by _right-clicking a packet > Follow Stream_.
 
 
 ### NetCat
@@ -34,7 +148,7 @@ NetCat can be used in multiple ways :
 - data transfer
 - relay
 - port scanning
-- reverse shell / bakdoor
+- reverse shell / backdoor
 - chat
 
 ```shell
@@ -136,20 +250,26 @@ It is the main element of passive reconnaissance.
 
 Many OSINT resources are categorized in the OSINT framework website : [https://osintframework.com/](https://osintframework.com/)
 
-### NMap (Network Mapper)
 
-NMap is a network scanner used to discover machines on a network.  
-NMap can scan a machine for open ports and detect the version of programs running on these ports.
+### Nmap (Network Mapper)
 
-NMap's default port scan sends packets to the target machines on every port, which can be intrusive.  
+Nmap is a network scanner used to discover machines on a network.  
+Nmap can scan a machine for open ports and detect the version of programs running on these ports.
+
+Nmap's default port scan sends packets to the target machines on every port, which can be intrusive.  
 It may be detected by the IDS of the target, and further requests may be blocked by their firewall.  
-NMap comes with various options to customize the type of scan, with different stealth levels.
+Nmap comes with various options to customize the type of scan, with different stealth levels.
 
-NMap also comes with a collection of scripts used to detect vulnerabilities on the target network.
+Nmap also comes with a collection of scripts used to detect vulnerabilities on the target network.
+
+Nmap should be executed with `sudo` to allow all types of packages (not just ICMP and TCP).  
+
+When targeting a local network, Nmap can identify the MAC address (and manufacturer) of each network card.
 
 ```shell
 nmap                                 # display the help
 nmap 192.168.0.1 -v                  # increase logging level of the result (-vv for even more logging)
+nmap 192.168.0.1 -d                  # debugging mode (thousands of lines)
 
 # TARGET SPECIFICATION
 nmap 192.168.0.1                     # scan a machine by IP (machine discovery + port scan)
@@ -158,34 +278,72 @@ nmap microsoft.com/24                # scan a network by domain name
 nmap -iR 10                          # scan 10 random targets on the internet
 
 # HOST DISCOVERY
-nmap facebook.com/24 -sL             # List scan, only list machines but no port scan (stealth scan - no package sent)
+nmap facebook.com/24 -sL             # List IP addresses to scan (no package sent)
 nmap facebook.com/24 -sn             # Ping scan, only sending a ICMP echo request to each host to know which are up (no port scan)
+
 nmap facebook.com/24 -Pn             # Skip host discovery (ping) and launch port scan assuming all targets are up
+                                     # This is useful because -sS will skip the hosts that did not respond to ICMP during host discovery
+                                     # With the -Pn option, these hosts are scanned anyway and some services may be up 
+                                     # This allows service detection on hosts configured to not respond to ICMP 
 nmap 192.168.1.130 -PS80             # Host discovery using TCP SYN packet to given port(s)
                                      #   -PA[portlist]    alternative using TCP ACK
                                      #   -PU[portlist]    alternative using UDP
 
 # SCAN TECHNIQUES
+nmap 192.168.1.123 -sT               # TCP Connect scan
+                                     #  -> try to complete a full TCP handshake with every port to scan
+                                     #  -> teardown established connections with a RST-ACK packet
+                                     #  -> very slow, more detectable, but no admin right required on source machine)
 nmap 192.168.1.123 -sS               # TCP SYN port scan (default)
-nmap 192.168.1.123 -sT               # TCP Connect port scan (very slow, more detectable, but no admin right required on source machine)
-nmap 192.168.1.123 -sU               # UDP port scan
-nmap 192.168.0.123 -F                # limit the scan to the top 100 ports
+                                     #  -> only performs the first step of the TCP handshake (SYN)
+                                     #  -> reply to the SYN-ACK from the target with a RST 
+nmap 192.168.1.123 -sU               # UDP port scan, to target machines that use UDP-based protocols (DNS, DHCP, NTP, SNMP...)
+
+# PORTS TO SCAN 
+nmap 192.168.0.123 -F                # limit the scan to the top 100 ports (instead of 1000 by default)
 nmap 192.168.0.123 -p68-150          # limit the scan to the specified ports
+nmap 192.168.0.123 -p-25             # limit the scans to ports 1 to 25 when no lower bound specified
+nmap 192.168.0.123 -p-               # scans all ports (1 to 65535) when no bound specified, most time-consuming and thorough scan
+
+# INFO GATHERING
 nmap 192.168.1.123 -O                # enable OS detection
 nmap 192.168.1.123 -sV               # enable service detection on each scanned port
-nmap 192.168.0.123 -sC               # Script Scan, running default NSE (NMap Script Engine) scripts for more info gathering
-nmap 192.168.0.123 --script vuln     # Run a bunch of scripts to detect vulnerabilties on a target system
+nmap 192.168.0.123 -sC               # Script Scan, running default NSE (Nmap Script Engine) scripts for more info gathering
+nmap 192.168.0.123 --script vuln     # Run a bunch of scripts to detect vulnerabilities on a target system
 nmap 192.168.0.123 -A                # Aggressive scan (full port scan, OS and service detection, script scanning, traceroute)
 
 # FIREWALL EVASION
-nmap 192.168.0.123 -f                # fragment packets so firewalls don't know it comes from NMap by the packet size
-nmap 192.168.0.123 --mtu 16          # force a max packet size (multiple of 8) so firewalls don't know it comes from NMap by the packet size
+nmap 192.168.0.123 -f                # fragment packets so firewalls don't know it comes from Nmap by the packet size
+nmap 192.168.0.123 --mtu 16          # force a max packet size (multiple of 8) so firewalls don't know it comes from Nmap by the packet size
 nmap 192.168.0.123 -D 192.168.0.1,192.168.0.3   # use decoys to spoof the source IP address
                                      # the scan appears to come from multiple sources (including us)
                                      # should use live decoys that do not look suspicious to the target
 nmap 192.168.0.123 -g 53             # use a specific source port, should use trusted port numbers like 53 (DNS), 20 (FTP), 67 (DHCP) or 88 (Kerberos)
+
+# FILE OUTPUT
+nmap 192.168.0.123 -oN result.nmap     # save to file in normal human-readable output
+nmap 192.168.0.123 -oX result.xml      # save to file in XML output
+nmap 192.168.0.123 -oG result.gnmap    # save to file in greppable output (most info on one line)
+nmap 192.168.0.123 -oA result          # save output to all above 3 formats
 ```
 
+We can control the speed of the requests sent by Nmap, to get a result very quickly or to slowly send requests to avoid detection.  
+Nmap has 6 speed levels that can be referenced either by ID or by name with the `-T` parameter :
+- level 0 : `paranoid`
+- level 1 : `sneaky`
+- level 2 : `polite`
+- level 3 : `normal`
+- level 4 : `aggressive`
+- level 5 : `insane`
+
+```shell
+nmap 192.168.0.123 -sS -F -T2               # level 2
+nmap 192.168.0.123 -sS -F -T aggressive     # level 4
+
+nmap 192.168.0.123 --min-rate 10 -F         # min number of packets per second
+nmap 192.168.0.123 --max-rate 10 -F         # max number of packets per second
+nmap 192.168.0.123 --host-timeout 100 -F    # specify the max time we can wait for a host to respond
+```
 
 ### Recon-ng
 
@@ -442,11 +600,20 @@ hashcat -a 1 -m 0 hash.txt dict.txt rockyou.txt    # try to find a password in m
 hashcat -a 3 -m 0 hash.txt ?l?l?l?l?l?l            # try to find a password of 6 lower letters
 ```
 
-Note : to get the hash for a given string, we can use an online hash tool or the `Get-FileHash` command from Powershell :
+Note : to get the hash for a given string, we can use an online hash tool, the `md5sum` command in Linux or the `Get-FileHash` PowerShell command :
 ```shell
+# Linux
+md5sum movie.mp4                                                 # MD5 hash of a file
+echo -n "p4ssw0rd" | md5sum                                      # MD5 hash of a string
+
+# PowerShell
 Get-FileHash movie.mp4 | Format-List                              # SHA-256 hash (default)
 Get-FileHash movie.mp4 -Algorithm MD5 | Format-List               # MD5 hash
 ```
+
+Hashcat cannot crack a password hashed with the Yescrypt algorithm that is very CPU-intensive (for example the Debian user passwords).  
+For Yescrypt hashes, we should use John the Ripper instead.
+
 
 
 ### John the Ripper
@@ -454,20 +621,89 @@ Get-FileHash movie.mp4 -Algorithm MD5 | Format-List               # MD5 hash
 John the Ripper is another password cracking tool, offering similar functionalities as HashCat.  
 It comes with a free community edition.
 
-John the Ripper is pre-installed on Kali Linux, and accessible with the `john` command.  
+**Jumbo John** is a version of John the Ripper including many patches, enhancements and extensions.  
+Jumbo John is pre-installed on Kali Linux, and accessible with the `john` command.  
 
-For example, to crack the password of a ZIP or RAR archive, we can run :
+John the Ripper uses some word lists to crack the passwords.  
+A lot of password lists can be found in the [SecLists](https://github.com/danielmiessler/SecLists/tree/master/Passwords) GitHub repo.  
+In Kali, some word lists are available under `/usr/share/wordlists/`, including :
+- `john.lst` : 3'500 most common passwords
+- `nmap.lst` : 5'000 common passwords
+- `wifite.lst` : 200'000 passwords
+- `rockyou.txt` : 14 million leaked passwords
+
+To crack a password with John, we need to specify the type of hash we are cracking (John can guess, but it is unreliable).  
+We can use **HashIdentifier** (installed on Kali) to identify the hashing algorithm from a hash, or the suggestion from HashCat.  
+
 ```shell
-zip2john Test.zip > hash.txt        # create a file with the target hash
-john --format=zip hash.txt          # find the password of the ZIP
+# list all hash formats supported by John
+john --list=formats
+
+# crack some hashes in different formats
+john --wordlist=/usr/share/wordlists/rockyou.txt --format=raw-md5 hash.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt --format=raw-sha256 hash.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt --format=nt hash.txt            # NTLM (windows account)
+```
+#### John Modes
+
+The `--wordlist` mode is shown above and tries to hash a list of passwords and find a match.  
+
+The `--single` mode targets a specific user, using word mangling to try to guess easy passwords.  
+If we know that the username is `simon`, it could find a password like `Sim0n` for example.  
+To use the single mode, the hash needs to be prefixed with the username, for example `simon:ef872391c15c22d8f5c41e91e2756360`.  
+We can create custom rules to transform the username in `/etc/john/john.conf`.
+
+The `--incremental` mode is used to brute-force all combinations of characters.  
+```shell
+john --incremental --format=raw-md5 --max-length=6 hash.txt
 ```
 
+#### Cracking Linux passwords
+
 John the Ripper can also crack the password from Linux users.  
-The password hashes are stored under `/etc/shadow` and can be cracked with :
+The password hashes are stored under `/etc/shadow`, each line contains a comma-separated list of values : 
 ```shell
-useradd -r user2        # create a user
-passwd user2            # set a password for user2
-john /etc/shadow        # crack the password for user2
+tommy:$y$j9T$76aaae1$/OOSg64wefdehgtVPdzqiFang6uZA4QA1pzzegKdVm4:19965:0:99999:7:::
+
+tommy : username
+y : hashing algorithm (yescrypt)
+j9T : parameter sent to the hashing algorithm
+76aaae1 : salt
+/OOSg64wefdehgtVPdzqiFang6uZA4QA1pzzegKdVm4 : password hash
+```
+
+They can be cracked with :
+```shell
+# Create a user and set its password
+useradd -r user2
+passwd user2
+
+# crack the password for user2 (assuming it is yescrypt hash recognized with the $y$ prefix)
+john --wordlist=/usr/share/wordlists/rockyou.txt --format=crypt /etc/shadow
+```
+
+#### John conversion tools
+
+Some passwords need to be converted to a John-specific format to be cracked by John.  
+John exposes many conversion tools for common formats called `***2john`, listed when starting John in Kali.  
+
+A few example of conversion tools are :
+- `zip2john` for password-protected ZIP archives
+- `rar2john` for password-protected RAR archives
+- `ssh2john` for passphrase-protected SSH keys
+
+```shell
+# create a ZIP hash file and crack it with John
+zip2john test.zip > zip_hash.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt zip_hash.txt
+
+# create a RAR hash file and crack it with John
+rar2john test.zip > rar_hash.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt rar_hash.txt
+
+# create a openSSH hash file and crack it with John
+ssh2john id_rsa > ssh_hash.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt ssh_hash.txt
 ```
 
 
