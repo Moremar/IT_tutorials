@@ -465,18 +465,67 @@ It is an alternative to Nessus.
 ### Burp Suite
 
 The Burp suite is a Java-based web application security testing software.  
-It is the industry standard tool for web application and mobile application penetration testing.
+It is the industry standard tool for web application and mobile application penetration testing.  
+Burp is installed by default in Kali Linux, and can be downloaded and installed on other OS from the PortSwigger website.
 
-Burp is configured as a web proxy : it captures and enables manipulation of HTTP/HTTPS traffic between a browser and a web server.  
+Burp acts as a web proxy : it captures and enables manipulation of HTTP/HTTPS traffic between a browser and a web server.  
 It analyzes the traffic, sends its own requests to the web server, and reports all found security vulnerabilities.
 
-The Burp suite comes with a Community, a Professional and an Enterprise edition.  
-The Community edition only includes a proxy and requests history, but a free trial of the Pro edition is available.
+The Burp suite comes in 3 editions : 
+- **Burp Suite Community** : free for non-commercial use, include the Burp proxy, requests history and main Burp functionalities
+- **Burp Suite Professional** : free trial, add an automated vulnerability scanner, a fuzzer with no rate limit, project save, access to Burp extensions...
+- **Burp Suite Enterprise** : mostly used for continuous scanning, installed on a server and constantly scans the target web application for potential vulnerabilities
 
-Burp Suite Professional comes with an automated vulnerability scanner, a fuzzer with no rate limit, access to Burp extensions...
+The main features of Burp are separated into different modules, represented as top-level tabs in the Burp GUI :
+- **proxy** : enable interception and modification of requests and responses between a browser and a web application
+- **repeater** : enable the capture, modification and resending of the same request several times (used for trial and error when crafting a payload)
+- **intruder** : spray endpoints with requests (used for brute-force or fuzzing)
+- **decoder** : decode captured info or encode payloads before sending them to the target
+- **comparer** : compare 2 pieces of data (either at word or byte level)
+- **sequencer** : check the randomness of tokens (like session cookies) to try to infer a pattern
 
-Burp Suite Enterprise is mostly used for continuous scanning.  
-It is installed on a server and constantly scans the target web application for potential vulnerabilities.
+The Burp suite can easily be extended with custom extensions written in Java, Python or Ruby.  
+The **Burp Suite Extender** module allows to load existing extensions.
+
+The PortSwigger website offers extensive trainings and details about Burp.
+
+The Settings button at the right of the GUI allows to configure Burp.   
+Settings are split into **user settings** (persisted) and **project settings** (non-persisted).
+
+#### Burp Proxy
+
+The Proxy tab in the Burp dashboard allows to intercept requests sent from a browser to a website.  
+Once the browser is configured to use the Burp proxy, any HTTP request sent from that browser gets intercepted by the Burp proxy.
+
+Burp ships with a built-in Chromium browser that is already configured to use the Burp proxy.  
+
+We can also use our own browser, but it needs to be manually configured to use the Burp proxy.  
+For example, we can use the **FoxyProxy** Firefox extension and configure a proxy to `127.0.0.1:8080` (see Burp Proxy settings to know the port).  
+
+For HTTPS to be allowed, we need the browser to trust the Burp certificate issued by PortSwigger CA.  
+We can manually add the PortSwigger CA certificate in the trusted certificate :
+- activate the Burp proxy
+- access `http://burp/cert` to download the PortSwigger CA certificate
+- access `about:preference` in Firefox URL > Privacy & Security > Certificates > View Certificates > Import
+
+Each request reaching the proxy is captured in the Intercept tab of the proxy, where it can be viewed, modified and forwarded or dropped.  
+All requests received by Burp are visible in the HTTP History tab of the proxy.  
+On right-click, requests can be sent to other modules (Intruder, Repeater, Sequencer, Comparer...).
+
+In the Intercept tab, we can toggle to interception, so traffic is either forwarded automatically or blocked in the proxy.  
+Even when the proxy does not intercept traffic, it still keeps it in history.
+
+#### Target
+
+In the _Site Map_ tab, the target module builds a map of each accessed website as Burp sees the web traffic.  
+It does not require the proxy to be intercepting the traffic.  
+
+In the _Scope_ tab, we can include or exclude specific IPs or domains, to avoid capturing unnecessary traffic.  
+Requests that are not in the scope will not appear in any Burp tools (Proxy, target, ...).
+
+In the _Issue Definitions_ tab, Burp lists all the possible issues that its scanner can detect.  
+The issue detection is only available in the Professional edition, but the extensive list of potential issues can be seen in the Community edition as well.
+
 
 
 ### ffuf - Fuzz Faster U Fool
@@ -1148,18 +1197,25 @@ Academic Journal from Oxford university offering free articles about Cyber-Secur
 It explains and gives examples of most common web security issues, especially the OWASP Top 10 issues.
 
 
+### OWASP BWA (Broken Web Applications)
+
+OWASP BWA is a project from the OWASP organization (Open Web Application Security Project) focusing on the identification and documentation of vulnerabilities in web applications.  
+It is a virtual machine image that can be launched with VMware, that contains several vulnerable web applications using legacy software versions.  
+
+When started with VMware, we can log to the VM and check its IP, then access the web portal from `http://<VM_IP>`.  
+The portal lists all the broken web applications contained in the project.  
+Some of them contain cyber-security trainings to learn web application vulnerabilities (WebGoat, Ghost...).  
+Others use old version of some CMS that have known vulnerabilities (WordPress, Joomla, ...).  
+Others are created to look more like real modern applications (Google Gruyere, Hackxor...).  
+
+OWASP BWA is a great tool to create a local lab to test cyber-security tools (nmap, burp, metasploit...) on machines we own.
+
+
 ### OWASP Juice Shop
 
 OWASP Juice Shop is a fake e-commerce web application designed with intentional security flaws.  
 It can be deployed locally in a container, and its aim is to teach web vulnerabilities.  
-It contains a score dashboard with a lot of challenges to break the website.
-
-
-### OWASP WebGoat
-
-WebGoat is a security testing software developed by OWASP written on the J2EE (Java 2 Enterprise Edition).  
-It is an intentionally flawed web application containing hundreds of vulnerabilities.  
-It offers courses to understand and exploit all these vulnerabilities.
+It is designed as a hacking game, and contains a score dashboard with a lot of challenges to break the website.
 
 
 ### Altoro Mutual
