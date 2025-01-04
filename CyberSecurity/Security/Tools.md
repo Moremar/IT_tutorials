@@ -697,6 +697,7 @@ sessions                                       # see the Meterpreter shell in th
 - `scanner/smb/smb_enumshares` : enumerate the shares provided by the SMB service
 - `scanner/smb/smb_enumusers` : enumerate the SMB users
 - `scanner/smb/smb_login` : crack an SMB user password from a wordlist (we can then use `smbclient` to access a SMB share)
+- `exploit/multi/fileformat/office_word_macro` : create a MS Word document containing a macro executing a payload when opened
 - `exploit/windows/local/tokenmagic` : UAC bypass to elevate privileges of an existing session to SYSTEM
 - `exploit/windows/smb/ms17_010_eternalblue` : open a Meterpreter shell on a machine vulnerable to EternalBlue
 - `exploit/windows/smb/psexec` : open a Meterpreter (or any other payload) from a machine using SMB username/password
@@ -983,6 +984,36 @@ The `--incremental` mode is used to brute-force all combinations of characters.
 john --incremental --format=raw-md5 --max-length=6 hash.txt
 ```
 
+#### John rules
+
+John allows the creation of custom rules, to try variations of passwords in the word list.  
+The rules can be edited and added in the `/etc/john/john.conf` configuration file.  
+
+In the rule pattern, we use :
+- `A` : position of the original password
+- `c` : try to capitalize the first letter
+- `0[<characters>]` : prefix the word with a character among the list
+- `z[<characters>]` : suffix the word with a character among the list
+
+An example of custom rule that tries to capitalize and add a number or a special character or both is :
+```shell
+[List.Rules:MyRule]
+cAz"[0-9]" 
+cAz"[0-9][0-9]" 
+cAz"[£!$]" 
+cAz"[0-9][£!$]"
+```
+
+The rule can be specified with the `--rules=<RULES_NAME>` parameter, for example :
+```shell
+john --wordlist=/usr/share/wordlists/rockyou.txt --format=raw-md5 --rules=MyRule hash.txt
+```
+
+Some rules are defined by default in the John config file and can be used out-of-the-box :
+- `--rules=Single` : a lot of transformations for single-crack mode (based on user-specific words)
+- `--rules=Wordlist` : common transformations to a base wordlist
+
+
 #### Cracking Linux passwords
 
 John the Ripper can also crack the password from Linux users.  
@@ -1016,6 +1047,7 @@ A few example of conversion tools are :
 - `zip2john` for password-protected ZIP archives
 - `rar2john` for password-protected RAR archives
 - `ssh2john` for passphrase-protected SSH keys
+- `pdf2john.pl` for password-protected PDF files
 
 ```shell
 # create a ZIP hash file and crack it with John
@@ -1175,11 +1207,74 @@ WinHex allows users to view, edit, and analyze binary data on various types of s
 It offers a wide range of features for examining and manipulating data at a low level.
 
 
-### DNSpy (DotNet Spy)
+### DNSpy (DotNet Spy) / ILSpy (Intermediate Language Spy)
 
-DNSpy is an open-source tool designed for the analysis and editing of .NET assemblies.  
+DNSpy is an open-source tool for Windows designed for the analysis and editing of .NET assemblies.  
 It is commonly used for reverse engineering, debugging, and modifying .NET applications. 
 
+ILSpy is a lightweight cross-platform .NET decompiler focused on simplicity.  
+It is easier to use than DNSpy when only decompilation is required or when we use Linux or MacOS.
+
+
+### FLOSS (FLARE Obfuscated String Solver)
+
+[FLOSS](https://github.com/mandiant/flare-floss) is a tool to extract and deobfuscate strings from malware.  
+It is an improvement of the default `strings.exe` on Windows that extracts strings from a binary, but cannot extract obfuscated strings.  
+
+A common way for malware to avoid detection is to execute a base64-encoded command in Powershell with `powershell -EncodedCommand <BASE64_COMMAND>`  
+This way, the malware binary does not contain a readable string of the actual command.  
+FLOSS can decode them, as well as strings constructed on the stack.
+
+
+### CyberChef
+
+[CyberChef](https://gchq.github.io/CyberChef/) is a versatile web-based tool performing a wide range of data manipulation operations.  
+It is very useful in cyber-security, forensics and data analysis.
+
+It provides a user-friendly GUI where we can drag-n-drop one or more available transformations, called recipes.  
+We can paste the input data (string or file) in the input section, "bake" the data and see the result in the output section.
+
+CyberChef can be downloaded and started locally, to avoid the upload of sensitive data on the internet.
+
+Among its many available operations, CyberChef can :
+- encode/decode messages in base64/hex/binary...
+- extract EXIF data from an image
+- apply encryption and hashing algorithms (AES, SHA, MD5...)
+- parse and decode JWT (JSON Web Token)
+- identify file type using its magic byte
+- auto-detect the transformation to apply with its "magic" recipe
+
+
+### Frida
+
+Frida is an open-source dynamic instrumentation toolkit for developers, reverse engineers and security researchers.  
+It allows to inject custom Javascript or Python scripts into applications to inspect or modify their behavior.  
+It is supported on Windows, macOS, Linux, iOS and Android.
+
+Frida is installed with `pip install frida-tools`.
+
+We use the `frida-trace` command to generate the stubs for common library calls :
+```shell
+frida-trace ./main -i '*'
+```
+
+This starts the program, and generates the Javascript stubs under the `__handlers__` folder.  
+We can modify these stubs to log or modify the input/output of each function call, for example :
+```javascript
+defineHandler({
+  onEnter(log, args, state) {
+    log("PARAMETER:" + args[0]);                       // int param
+    log("PARAMETER:" + Memory.readCString(args[1]));   // string param
+  },
+
+  onLeave(log, retval, state) {
+    log("return value: " + retval);
+    retval.replace(ptr(1))                              // modify the return value
+  }
+});
+```
+
+Frida can be used to hack video games or other programs by intercepting and modifying calls to libraries.
 
 
 ## Educational Tools
@@ -1199,7 +1294,7 @@ It explains and gives examples of most common web security issues, especially th
 
 ### OWASP BWA (Broken Web Applications)
 
-OWASP BWA is a project from the OWASP organization (Open Web Application Security Project) focusing on the identification and documentation of vulnerabilities in web applications.  
+OWASP BWA is a project from the OWASP organization (Open Worldwide Application Security Project) focusing on the identification and documentation of vulnerabilities in web applications.  
 It is a virtual machine image that can be launched with VMware, that contains several vulnerable web applications using legacy software versions.  
 
 When started with VMware, we can log to the VM and check its IP, then access the web portal from `http://<VM_IP>`.  

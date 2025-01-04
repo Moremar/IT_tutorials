@@ -1399,6 +1399,22 @@ IoT technologies include :
 - **ANT+** : wireless sensor network technology mainly used for health and activity trackers
 
 
+#### MQTT (Message Queuing Telemetry Transport)
+
+MQTT is a lightweight messaging protocol widely used in IoT applications (home automation, vehicle tracking, industrial IoT...).  
+It is designed for resource-constrained devices, offering efficiency and adding minimal overhead.  
+It is based on a **publish/subscribe model** : client devices public messages to a broker on a given topic, and other clients can subscribe to a topic.
+
+It supports 3 quality of service levels for delivery :
+- **QoS 0** : at most once (fire and forget)
+- **QoS 1** : at least once
+- **QoS 2** : exactly once
+
+MQTT brokers include Mosquitto, HiveMQ, AWS IoT Core, and RabbitMQ (with the MQTT plugin).
+
+MQTT traffic on the network can be captured and analyzed with Wireshark.
+
+
 ### Wireless Site Survey
 
 A wireless site survey is the process of planning and designing a wireless network.  

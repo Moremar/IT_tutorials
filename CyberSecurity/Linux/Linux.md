@@ -1867,6 +1867,20 @@ ip route del 10.0.0.0/24 via 192.168.1.1 dev enp0s5   # remove a route from the 
 `ip` is not available on MacOS, so we should use `ifconfig`, `route` and `netstat` commands instead.  
 We can also install `iproute2mac`(with Homebrew) that offers a wrapper on these commands to use the `ip` syntax.
 
+
+### iw
+
+The `iw` command allows the management of the wireless interfaces.  
+
+```shell
+iw dev                              # list wireless interfaces : name, type, MAC address, configuration
+iw dev wlan0 scan                   # scan for available wireless networks
+iw dev wlan0 connect SSID_NAME      # connect to a wireless network
+iw dev wlan0 disconnect             # disconnect from a wireless network
+sudo iw link set dev wlan2 down     # shutdown a wireless interface, for example to change its type (up to restart)
+iw dev wlan0 set type monitor       # change the interface type to monitor to capture traffic 
+```
+
 ### DHCP
 
 On Ubuntu, by default, the `systemd-networkd` service is in charge of DHCP.  

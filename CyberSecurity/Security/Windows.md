@@ -124,6 +124,8 @@ Get-FileHash -Path .\a.txt                      # calculate the hash of a file (
 
 Invoke-Command -ComputerName ServerA -FilePath ./test.ps1           # execute a Powershell script on a remote server
 Invoke-Command -ComputerName ServerA -ScriptBlock { Get-Culture }   # execute some Powershell cmdlets on a remote server
+
+Invoke-WebRequest -uri 
 ```
 
 Piping is even more powerful in PowerShell than in Bash, because it passes objects to the next command (not strings).  
@@ -137,6 +139,27 @@ Get Child-Item | Select-Object Length,Name                       # select specif
 
 Additional cmdlets can be downloaded online to enrich the capabilities of the Powershell.  
 We can search for modules with the `Find-Module` cmdlet, and install them with the `Install-Module` cmdlet.
+
+Just like Bash, Powershell supports script files that can contain cmdlets, define variables and use them in later instructions.  
+For example, to fetch a JSON file from a URL and save its content to a file :
+```shell
+$url = "https://httpbin.org/get" 
+$response = Invoke-WebRequest -Uri $url
+$json = $response.Content
+$outputFile = "response.txt"
+Set-Content -Path $outputFile -Value $json
+Write-Output "JSON result written to file $outputFile"
+```
+
+To execute a Powershell script, we need to update the execution policy to allow it :
+```shell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy ByPass
+./script.ps1
+```
+
+Powershell keeps an history of commands executed in a session in `%APPDATA%\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt`.  
+This can be a valuable resource when investigating a cybersecurity incident.
+
 
 ## Windows Folders
 
@@ -436,6 +459,14 @@ When editing a GPO, we have multiple tabs :
 
 GPOs are distributed to the network via the network share called **SYSVOL** stored in the DC.  
 All users in the AD domain have access to this network share.
+
+```shell
+# list all GPOs in the AD domain controller
+Get-GPO -All                       
+
+# generate an HTML report with the details of a GPO
+Get-GPOReport -Name "SetWallpaper" -ReportType HTML -Path ".\report.html" 
+```
 
 #### Authentication
 
