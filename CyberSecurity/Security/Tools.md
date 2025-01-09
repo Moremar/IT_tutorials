@@ -391,6 +391,51 @@ run
 ```
 
 
+### Gobuster
+
+Gobuster is an open-source command-line tool to enumerate web URIs, DNS sub-domains, virtual host names and AWS/GCP buckets.  
+It is written in Golang, and can be installed with `sudo apt install gobuster`.
+
+Gobuster checks the existence of each item in a wordlist by sending a request and interpreting the response.  
+It is used by security professionals for penetration testing, bug bounty hunting, and cybersecurity assessments.  
+
+Gobuster can enumerate virtual hosts, which are different from subdomains.  
+Subdomains are a DNS-level concept configured as DNS entries, so Gobuster enumerates them by performing DNS lookups.  
+Virtual hosts are a web-server level concept, allowing to serve different websites depending on the `Host` header of the request.  
+Gobuster enumerates them by sending HTTP requests to the web server.
+
+```shell
+# show the help for a specific command
+# "dir" is the command to enumerate directory and file URIs on a website
+gobuster dir --help
+
+# web directory enumeration with 64 threads
+# each word from the word list is appended to the base URL
+#  -t 64   : number of threads
+#  -w xxx  : wordlist
+#  -o xxx  : output file to store the enumeration result
+#  -x php  : extension, append ".php" to all words
+#  -c xxx  : configure a cookie to pass in every request (session ID for example)
+#  --no-tls-validation : do not check TLS certificate (useful to accept self-signed certificates in CTF events)
+gobuster dir -u "http://www.example.com/" -w list.txt -t 64
+
+# DNS sub-domains enumeration
+#  -d xxx  : domain to search for sub-domains
+#  -w xxx  : wordlist
+#  -c      : show CNAME records
+#  -i      : show IPs
+#  -r xxx  : resolver DNS server
+gobuster dns -d "example.com" -w list.txt
+
+# Vhosts enumeration
+#   -u xxx : the base URL with the IP of the web server
+#   --domain xxx : the domain to append to the items in the list
+#   -w xxx : wordlist
+#   --append-domain : specify to append the domain to the words (for example "test.example.com" for the word "test")
+#   --exclude-length 250-320 : exclude responses of a given length (to exclude 404 errors)
+gobuster vhost -u "http://10.10.187.130" --domain example.thm -w list.txt --append-domain --exclude-length 250-320
+```
+
 ### scanless
 
 scanless is a utility to create an exploitation web server that can perform open port scans in a stealthier manner.  
@@ -1098,11 +1143,13 @@ cewl -d 2 -m 5 -w passwords.txt http://10.10.131.23 --email --email_file emails.
 ### Hydra
 
 Hydra is an open-source password brute-forcing tool for online brute-force attacks.  
-It is designed to operate via network protocols like SSH, RDP, HTTP and HTML forms.  
-It is sending the login attempt one-by-one to the target and checks the response for success.
+It operates via network protocols like SSH, RDP, HTTP (GET/POST), HTTP-FORM (GET/POST)...  
+It sends the login attempts one-by-one to the target and checks the response for success.
 
 Unlike Hashcat or John the Ripper, it is not an offline password cracking tool.  
-It does not check passwords against a target hash, but against a target network system (so it can be detected).
+It does not check passwords against a target hash, but against a target network system (so it can be detected).  
+For common protocol, it can detect automatically if an attempt is successful or not.  
+For HTTP login against a custom website, it needs to know the message to expect in case of failure.  
 
 ```shell
 # try all passwords in a word list to access the target IP in SSH with a given user (login)
@@ -1111,9 +1158,13 @@ It does not check passwords against a target hash, but against a target network 
 hydra -l testuser -P rockyou.txt -f -v <TARGET_IP> ssh
 
 # try all passwords in a word list to access the target IP on a given HTML form
-# no user is needed to access, only a password
-# we specify the login PHP page, the field to use for the password, and the message on error (separated with ":")
+# no user is needed to access, only a password, added to the POST body with the ^PASS^ placeholder
+# we specify the login PHP page, the fields in the POST body, and the message on error (separated with ":")
 hydra -l '' -P pins.txt -f -v 10.10.131.34 http-post-form "/login.php:pin=^PASS^:Access Denied" -s 8000
+
+# try all passwords from a word list to authenticate as a given user to a HTML form
+# similar to the previous example, but with a user, that is added to the POST body with the ^USER^ placeholder
+hydra -l testuser -P rockyou.txt 10.10.131.34 http-post-form "/login:username=^USER^&password=^PASS^:incorrect"
 ```
 
 ### Aircrack-ng
