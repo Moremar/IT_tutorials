@@ -125,13 +125,15 @@ For example, we can modify the GRUB configuration file to show the bootloader me
 echo AAA ; echo BBB
 
 # streams
-ls > output.txt        # redirect stdout to a file
-ls 1> output.txt       # same but explicitly redirect stdout (stream 1)
-ls >> output.txt       # append stdout to a file (instead of replacing)
-ls 2> error.txt        # redirect stderr (stream 2)
+ls > out.txt           # redirect stdout to a file
+ls 1> out.txt          # same but explicitly redirect stdout (stream 1)
+ls >> out.txt          # append stdout to a file (instead of replacing)
+ls 2> err.txt          # redirect stderr (stream 2)
 ls 2> /dev/null        # discard stderr
-ls 2>&1                # redirect stderr to stdout
-ls < input.txt         # redirect stdin (stream 0)
+ls 2>&1                # redirect stderr to stdout (stream 1)
+                       # the operator is >& to redirect to a stream, 2>1 would redirect to a file called "1" !
+ls > out.txt 2>&1      # redirect both stdout and stderr to the file out.txt
+ls < in.txt            # redirect stdin (stream 0)
 
 # <<< is used to pass a string as input to a command
 input=$'line1\nline2\nline3'
@@ -602,12 +604,14 @@ Integrity of files installed by apt can be checked with the `debsums` command :
 
 Some useful packages to install are :
 - `apache2` : HTTPD Apache web server
+- `busybox` : binary combining tiny versions of many common Unix utilities
 - `cmake` : cross-platform build system generator
 - `cmatrix` : infinite program simulating the display from the Matrix in the terminal
 - `debsums` : compare the checksum of deb packages with the ones stored in metadata to ensure they were not tampered with
 - `dialog` : in-shell popup tool used in Bash scripts
 - `firewalld` : popular Linux firewall on top of `iptables` or `nftables` backend
 - `git` : most popular version control system for code and configuration files
+- `gobuster` : enumeration tool for web URIs, DNS sub-domains, virtual hosts and AWS/GCP buckets
 - `gparted` : Gnome Partition Editor GUI
 - `htop` : interactive process viewer (improvement of top)
 - `imagemagick` : image editor and image format convertor

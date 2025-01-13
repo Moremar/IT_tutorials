@@ -138,7 +138,7 @@ This can reveal some cleartext usernames and passwords for non-encrypted protoco
 This reconstruction is performed by _right-clicking a packet > Follow Stream_.
 
 
-### NetCat
+### NetCat / Ncat
 
 NetCat is a command-line utility available on Windows and Linux to read from and write to network connections.  
 It offers a backend for other machines to connect to a machine.  
@@ -158,13 +158,30 @@ nc -l -p 1234
 # from another machine, open a connection to it (for chat for example)
 nc <TARGET_IP> 1234
 
-# start NetCat as a proxy listening on port 1234 and redirecting a a target host/port
+# start Netcat in listening mode and start a bash shell when a client connect
+# -e specifies a program to start on connect, it is used a lot to create backdoors
+nc -lnpv 1234 -e /bin/bash
+
+# start NetCat as a proxy listening on port 1234 and redirecting to a target host/port
 nc -l -p 1234 | nc <TARGET_HOST> <TARGET_PORT>
 
 # use NetCat for scanning ports on a target machine
 # -v is for verbose mode and -z for scanning mode (without sending data)
 nc -v -z <TARGET_HOST> <START_PORT>-<END_PORT>
 ```
+
+We can use the `rlwrap` tool (Readline Wrapper) to enhance the usability of the `nc` command.  
+It adds command history navigation (with up/down arrows) and line editing :
+```shell
+rlwrap nc -lp 1234
+```
+
+An alternative to Netcat is `ncat`, the Netcat enhancement by the Nmap project.  
+It supports for example IPv6, and SSL encryption for the listener with the `--ssl` parameter :
+```shell
+ncat --ssl -lvnp 1234
+```
+
 
 ### OpenSSL
 
