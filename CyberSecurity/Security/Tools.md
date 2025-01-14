@@ -195,6 +195,7 @@ It is commonly used to generate private keys, create CSRs, install an SSL/TLS ce
 It supports many storage technologies, including FTP, SFTP, AWS S3, MS Azure, Google Drive, OneDrive, DropBox... 
 
 
+
 ## Privacy Tools
 
 
@@ -636,6 +637,7 @@ ffuf -w valid_usernames.txt:W1
 ```
 
 
+
 ## Exploiting Tools
 
 
@@ -928,11 +930,41 @@ set session 2
 exploit                             # get the hash of all users on the target machine
 ```
 
+
 ### BeEF (Browser Exploitation Framework)
 
 BeEF is an open-source penetration testing tool designed to focus on the exploitation of web browsers.  
 It is used by ethical hackers, security professionals, and penetration testers to assess the security of web applications and web browsers.  
 It can be used to demonstrate various types of attacks that can be carried out through a web browser.
+
+
+### SqlMap
+
+SqlMap is an automated command-line tool to detect and exploit SQL injection vulnerabilities in web applications.  
+It attempts many SQL injection techniques on a provided URL to find out if it is vulnerable to any of them.  
+
+If it finds a boolean vulnerability, it means it can append a `AND 1=1` condition to a query and get a response.  
+By evaluating boolean queries, it can infer letter by letter the name of any element in the database.  
+If a vulnerability is found, SqlMap can use it to detect the DBMS, list database and table names and dump table contents.  
+It can also run custom SQL queries if the vulnerability allows it.
+
+```shell
+# test many SQLi attacks with the URL GET parameter to see if any is successful 
+sqlmap -u http://example.com/search?type=1
+
+# exploit the found vulnerabilities to list the database names
+sqlmap -u http://example.com/search?type=1 --dbs
+
+# exploit the found vulnerabilities to list the tables in a database
+sqlmap -u http://example.com/search?type=1 -D company --tables
+
+# exploit the found vulnerabilities to dump all rows from a table
+sqlmap -u http://example.com/search?type=1 -D company -T users --dump
+
+# test SQLi attacks on a POST request
+# Instead of the URL, we provide the POST request in a text file (captured with Burp for example) and the POST parameter to target
+sqlmap -r burp_post_request.txt -p tfUPass --dbs
+```
 
 
 ### Havij
@@ -1213,6 +1245,7 @@ aircrack-ng MyHackedTraffic.cap
 ```
 
 
+
 ## Forensics Tools
 
 
@@ -1345,6 +1378,7 @@ defineHandler({
 Frida can be used to hack video games or other programs by intercepting and modifying calls to libraries.
 
 
+
 ## Educational Tools
 
 
@@ -1379,6 +1413,16 @@ OWASP BWA is a great tool to create a local lab to test cyber-security tools (nm
 OWASP Juice Shop is a fake e-commerce web application designed with intentional security flaws.  
 It can be deployed locally in a container, and its aim is to teach web vulnerabilities.  
 It is designed as a hacking game, and contains a score dashboard with a lot of challenges to break the website.
+
+```shell
+# install and start Docker
+sudo apt install docker.io docker-cli
+sudo systemctl enabl docker --now
+
+# download the Juice Shop Docker image and start a container running it in a Node.js web server
+docker pull bkimminich/juice-shop
+docker run --rm -p 127.0.0.1:3000:3000 bkimminich/juice-shop
+```
 
 
 ### Altoro Mutual
