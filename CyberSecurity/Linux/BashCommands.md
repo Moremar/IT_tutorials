@@ -25,6 +25,7 @@
   - `-s` : print the allocated size of each file (in blocks)
   - `-S` : sort by file size
   - `-h` : display the size in human-readable format (K/M/G)
+  - `-R` : recursive list (display files grouped by sub-folder)
   - `--color={auto|always|never}` : use colors for the output
 
 
@@ -116,7 +117,8 @@
 
 
 - `uniq` : remove adjacent duplicate lines on a sorted input
-  - `-d` : only keep the duplicates
+  - `-d` : only keep duplicates
+  - `-u` : only keep unique lines
 
 
 - `grep <PATTERN> <FILE>` : look for a pattern in a file or in stdin
@@ -368,12 +370,23 @@ cat file.json | jq '.hobbies | length'            # print the length of the hobb
 ```
 
 
+- `strings myBinary` : display all the printable strings from a binary file.  
+
+
+- `ltrace ./myBinary` : debugging tool that displays the shared library calls made by the binary and their results.  
+  It is a useful tool to understand what a binary is doing.
+
+
 - `lsof` : list open files on the system
   - `-p 1234` : restrict to a specific process ID
   - `-c <PROCESS_NAME>` : restrict to a specific process name
   - `-u <USER_NAME>` : restrict to a specific user
   - `-i` : restrict to open network connections
   - `-i :53` : restrict to open network connections on a specific port
+
+
+- `base64 file.txt` : encode a file in base64
+  - `-d` : decode the file instead
 
 
 - `hostname` : display the hostname of the machine, to reach it from the local network (with the `.local` suffix) 

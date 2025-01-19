@@ -978,6 +978,8 @@ Identifying and reacting to these TTPs is tough for the attacker, as he needs to
 
 ### Threat Intelligence
 
+Threat Intelligence is the gathering of information about potential enemies to prepare against future attacks.
+
 **CWE** (Common Weakness Enumeration) is a community-developed list of software and hardware weakness types that can 
 lead to vulnerabilities in computer systems and software applications.  
 CWE is maintained by the MITRE Corporation and is used as a classification system for vulnerabilities in software and hardware.
@@ -1752,19 +1754,37 @@ Some enterprise IT security architecture frameworks exist to help with the creat
   - **Reference Architecture** : methodology enabling security architects to assess their cloud IT solution security
 
 
-## Incident Response and Forensics
+## Digital Forensics and Incident Response (DFIR)
+
+Forensics is the application of science to investigate crimes and establish the facts.  
+Digital forensics is the branch of forensics that focuses on the analysis of computers and smartphones.  
+It focuses on cybersecurity crimes, like cyber-espionage, IP theft, ransomware, possession of unauthorized content...  
+The main materials for digital forensics investigation are :
+- file system : analysis of a digital forensics image to reveal installed programs and files (even deleted ones)
+- system memory : analysis of the memory to understand the programs currently running
+- system logs : logs on each machine detailing the activity on this machine
+- network logs : logs on network machines detailing the traffic between machines
+
+The NIST defines the process of digital forensics in 4 phases :
+- **Data Collection** : identify the devices from which to collect data, and guarantee the data was not tampered during collection (using a write blocker for example)
+- **Examination** : filtering and extraction of relevant data
+- **Analysis** : correlate evidences to analyze the data and infer the chronology of events
+- **Reporting** : creation of a detailed report of the methodology and findings
 
 **Incident Response** : set of procedures that an investigator follows when examining a computer security incident.
 
 **Incident management program** : program consisting of the monitoring and detection of security events on a computer
 network and the execution of proper responses.  
-Each company has its own way to conduct it, but it usually follows the same steps :
+Each company has its own way to conduct it, but it usually follows the same steps.
+
+The **SANS incident response framework** (SysAdmin, Audit, Network and Security) has 6 steps (PICERL) :
 - **Preparation** : conduct training, prepare incident response kit, ensure strong security posture
 - **Identification** : recognize whether an event should be classified as incident
-- **Containment** : isolate the incident (close ports, terminate network connection...)
+- **Containment** : isolate the incident (close ports, terminate network connection, disable compromised account...)
 - **Eradication** : remove the threat or attack
 - **Recovery** : restore data and re-enable servers and networks taken off during the incident
 - **Lessons Learned** : document the incident response and decide on how to improve the security posture
+
 
 
 ### SOC (Security Operations Center)
@@ -1772,6 +1792,19 @@ Each company has its own way to conduct it, but it usually follows the same step
 A SOC is a team of cyber-security professionals within an organization responsible for monitoring the network and its systems.  
 The primary goal of a SOC is to detect, respond to, mitigate, and prevent cyber-security incidents.  
 It serves as a hub for cyber-security activities and plays a critical role in maintaining the security posture of the organization.
+
+The 3 pillars of a SOC are :
+- people : identify and prioritize raised alerts
+- process : each SOC member has a specific process to follow : triage (5W : What ? When ? Who ? Why ? Where ?), reporting, incident response...
+- technology : security tools for detection and response (SIEM, EDR, Firewall...)
+
+Common roles in a SOC team :
+- SOC Analysts (L1, L2, L3) : triage alerts, investigate, contain and eradicate detected threats
+- Security Engineer : deploy and configure security solutions
+- Detection Engineer : build security rules to detect harmful activity
+- SOC Manager : coordinate the SOC team, provide support and report to the CISO (Chief Information Security Officer)
+
+
 
 
 ### NIST SP 800-61 (National Institute of Standards and Technology - Special Publication 800-61)
@@ -1810,6 +1843,7 @@ There are multiple sources of data that can be used to conduct the incident resp
 - netflow : Cisco-proprietary network protocol collecting network traffic
 - sflow : open-source sampled version of netflow
 
+
 ### EXIF (Exchangeable Image File Format)
 
 EXIF is a standard for saving metadata to an image file.  
@@ -1818,6 +1852,7 @@ This can include the camera model, the lens details, the date and time of image 
 
 **Exiftool** is a free and open-source program for reading, writing and manipulating images metadata.  
 It can be used to display all metadata embedded in an image.
+
 
 ### Forensic procedures
 
@@ -1843,10 +1878,19 @@ Data collection must take into account the **order of volatility** :
 - HDD, SDD
 - remote logging
 
+**FTK imager** is a popular tool to take disk images of a machine running on Windows and analyze their content.  
+
+**DumpIt** is a command-line utility to take a memory image of a Windows machine.
+
 #### Analysis
 
 Create a copy of the evidence (bit-by-bit hard disk copy) for analysis.  
 Use repeatable methods and tools during analysis.
+
+**Autopsy** is a popular open-source digital forensics platform allowing to import a disk image and analyze it.  
+It offers many features like keyword search, deleted file recovery, file metadata, and extension mismatch detection.
+
+**Volatility** is an open-source tool to analyze memory images, allowing the use of many plugins for different analysis tasks.
 
 #### Reporting
 
