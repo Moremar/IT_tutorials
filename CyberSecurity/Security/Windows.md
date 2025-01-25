@@ -341,6 +341,14 @@ Windows Security is the section in the Settings window to view and manage severa
   - Secure Boot
 
 
+### Windows Defender
+
+Windows Defender is the built-in Windows firewall.  
+It can define customized rules to allow or deny incoming and outgoing network traffic.
+
+Windows Defender can set a different configuration for 2 network profiles : private network and guest or public network.  
+
+
 ### BitLocker
 
 BitLocker is a data protection feature to encrypt entire volumes.  

@@ -1225,11 +1225,38 @@ It is often used between a trusted network and an untrusted network (the Interne
 It serves a similar purpose as the router ACLs but offers more control on the filtering.  
 Some firewalls also provide more features like intrusion detection, antivirus...
 
-- **Packet filtering firewall** : similar to router ACLs, filter based on source/dest IP, port, protocol...
-- **Circuit-level gateway** : monitor TCP handshake, act as a proxy for the internal machine and allow only legitimate session traffic
-- **stateful inspection firewall** : examine data inside the packets and remember if the packet is part of a session (uses network performance)
-- **application-level firewall** : check data validity at application layer (for ex WAF for HTTP)
-- **host-based firewall** : software firewall installed on a computer to protect this computer only, for example Windows 10 built-in host-based firewall, or the "Zone Alarm" 3rd party firewall 
+#### Stateless firewall
+
+A stateless firewall operates on layer 3 and 4 of the OSI model.  
+It filters packets using predetermined rules based on the packet content : source/dest IP, port, protocol...  
+It is very similar to router ACLs, and it does not take into consideration any previous packet in its decision.  
+This means that it does not know if the packet under inspection is part of an ongoing connection or not.  
+This makes it limited but quicker than other types of firewalls.
+
+#### Stateful firewall
+
+A stateful firewall also operates at layer 3 and 4 of the OSI model.  
+It goes beyond the simple filtering based on predetermined rules of the stateless firewall.  
+It also keeps track of ongoing connections in a state table.  
+This allows to deny or allow all subsequent packets for a connection that was already accepted or denied.
+
+#### Proxy firewall
+
+A proxy firewall, also called application-level gateway, operates at layer 7 of the OSI model.  
+It acts as an intermediary between a private network and the Internet, and inspects the content of each packet.  
+It replaces the IP address of the internal machines by its own (acting like a NAT).  
+Some application-level rules can be configured to filter the traffic.  
+
+#### Next-generation firewall (NGFW)
+
+A next-gen firewall is the most advanced type of firewall, operating from layer 3 to layer 7 of the OSI model.  
+It offers deep packet inspection and an intrusion prevention system blocking malicious traffic in real-time.  
+It has SSL/TLS decryption capabilities, so it can inspect encrypted traffic and correlate it with threat intelligence.  
+
+#### Host-based firewall
+
+A host-based firewall is a software installed on a computer to protect this computer only.  
+Common examples are the Windows Defender host-based firewall pre-installed on Windows or the "Zone Alarm" 3rd party firewall.
 
 
 ### IP Address Management (IPAM)
@@ -1565,8 +1592,9 @@ They are placed between the network to protect and the outside, and block suspic
 
 Both IDS and IPS can use 2 types of monitoring techniques :
 
-- **Signature-based** : check traffic against the fingerprints of known attacks
-- **Behavior-based** : establish a baseline of the normal behavior on the network and detect deviations from this baseline 
+- **Signature-based** : check traffic against the fingerprints of known attacks (vulnerable to zero-day attacks)
+- **Behavior-based** : also called anomaly-based IDS, establish a baseline of the normal behavior on the network and detect deviations from this baseline 
+- **hybrid IDS** : combine both signature-based and behavior-based techniques
 
 There are **host-based IDS and IPS** (HIDS and HIPS) that monitor and analyze the activity of individual hosts.
 
@@ -1729,7 +1757,14 @@ They are implemented using HTTP, ICMP or DNS Redirect.
 SIEM are software and services providing real-time view and analysis of the activity on networks or machines.  
 They can receive and monitor metrics and data from network hardware and applications.  
 SIEM help correlate events that occurred on a monitored network.  
-They generate alerts and notifications on potential issues for continuous monitoring.
+They generate alerts and notifications on potential issues for continuous monitoring based on configured rules.  
+SIEM systems can present the data that were ingested in dashboards.
+
+A SIEM system ingests logs from multiple sources using several ingestion technics :
+- agent installed on the endpoint capturing logs and sending them to the SIEM
+- Syslog protocol sending logs in real-time
+- manual upload
+- port forwarding (the SIEM listens on a given port and the endpoint sends to this port)
 
 Popular SIEM solutions are :
 - **Splunk** : big data information gathering and analysis tool, installed locally or as a cloud-based solution

@@ -569,11 +569,13 @@ A host-based firewall is a firewall protecting an individual host.
 Most OS have one by default :
 - **Windows Defender Firewall** for Windows
 - **PF** (Packet Filter) for MacOS managed with the `pfctl` command
-- **iptables** or **nftables** for Linux distributions
-- **ufw** (Uncomplicated Firewall) on Ubuntu to ease the iptables config
+- **iptables** or its successor **nftables** for Linux distributions
+- **ufw** (Uncomplicated Firewall) is a user-friendly wrapper above iptables that offers a better command-line interface
 
 ```shell
 sudo ufw status                        # see status active/inactive and rules
+sudo ufw status numbered               # same but also showing each rule ID
+sudo ufw delete 2                      # delete a rule by ID
 sudo ufw default allow outgoing        # set default allow/deny for outgoing traffic
 sudo ufw default deny incoming         # set default allow/deny for incoming traffic
 sudo ufw allow 22/tcp                  # allow traffic on a given port
@@ -1523,10 +1525,21 @@ netstat -ano              # show current connections with UDP/TCP, IP address an
 
 There are 3 types of logs on a Windows machine accessible in the **Event Viewer** : 
 - **Security logs** : user login, administrative privilege granted...
-- **System logs** : startup and shutdown of the machine, Windows updates, NTP, DNS...
-- **Application logs** : activity of users
+- **System logs** : logs on OS activity, like startup and shutdown of the machine, Windows updates, NTP, DNS...
+- **Application logs** : user interaction, application change, update, error...
 
-An alternative to the Event Viewer is to use a Syslog server gathering all logs and offering a client to browser them.
+Events in the Event Viewer can be filtered by event ID (event type, for example 4624 for Successful Login).
+
+Linux stores logs under the `/var/log/` folder, for example :
+- `/var/log/kern` : kernel related logs
+- `var/log/secure` : authentication related logs
+- `/var/log/cron` : logs of Cron tasks
+
+Web servers also keep access logs containing the details of every received request (timestamp, URI, source IP, status code...).  
+An Apache web server keeps access logs under `/var/log/apache2/` or `/var/log/httpd/`.
+
+A common solution for logs management is to store logs in a SIEM or a Syslog server to gather and correlate them.
+
 
 ### SOAR (Security Orchestration, Automation and Response)
 

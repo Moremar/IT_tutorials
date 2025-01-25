@@ -189,6 +189,27 @@ ncat --ssl -lvnp 1234
 It is commonly used to generate private keys, create CSRs, install an SSL/TLS certificate, and identify certificate information.
 
 
+### Snort
+
+Snort is the most widely used open-source IDS solution.  
+It uses both signature-based and anomaly-based detection to identify threats.  
+It contains many built-in rules containing known attack patterns, and custom rules can be added.
+
+Snort has 3 different modes :
+- **packet sniffer mode** : just read and display network packets in the console without performing analysis (doable with WireShark)
+- **packet logging mode** : similar to packet sniffer but generate a PCAP with the traffic and the detection (doable with WireShark)
+- **NIDS mode** : monitor network traffic in real-time to match known attacks stored as signatures and generate alerts (most popular mode)
+
+It can be installed with `sudo apt install snort`.  
+If run normally, it only captures the traffic intended for its host.  
+To use it as a NIDS or NIPS, we need to turn on the promiscuous mode of the host's network interface (to not discard traffic for other hosts).  
+
+Snort 3 uses LUA for its configuration file in `/etc/snort/snort.lua`.  
+Snort rules are stored in `/etc/snort/rules/`, and custom rules should be added to its `local.rules` file.
+
+Snort can also run its analysis on a PCAP file, and generate the alerts in the terminal.
+
+
 ### CyberDuck
 
 [CyberDuck](https://cyberduck.io/) is a free server and cloud storage browser on Mac and Windows.  
