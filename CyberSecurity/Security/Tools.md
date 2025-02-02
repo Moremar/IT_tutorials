@@ -526,17 +526,38 @@ This can be used to see the content of previous versions of websites.
 
 ### Nessus
 
-Nessus is a commercial vulnerability scanning tool.  
+Nessus is a commercial on-premise vulnerability scanning tool widely used by large enterprises, offering a free and a paid version.  
 It identifies vulnerabilities on a network, classifies them and assigns a severity to each of them.  
 It also keeps track of past vulnerabilities and reports.
 
 Nessus lets us create **scan policies**, that are definitions to describe the vulnerability tests to run.  
-We can provide some credentials to a Nessus policy to perform a credentials scan (and detect vulnerabilities when logged in).  
+We can provide some credentials to a Nessus policy to perform an authenticated scan (and detect vulnerabilities when logged in).  
 Nessus offers many **plugins** that are all potential vulnerabilities to check for.  
 
 To start a scan, we must specify which scan policy to apply, and the targets of the scan.  
 Once completed, the scan generates a report of all detected vulnerabilities for each target server.  
 It provides details on each vulnerability, like the description, the severity, the CWE, the tools that can exploit it...
+
+
+### Qualys
+
+Qualys is a cloud subscription-based vulnerability management solution.  
+It provides continuous vulnerability scanning, compliance check and asset management.  
+
+
+### OpenVAS (Open Vulnerability Assessment System)
+
+OpenVAS is a complete open-source vulnerability assessment solution offering basic vulnerability scanning features.  
+It is less extensive than commercial competitors (Nessus or Qualys) but is a good solution for individuals and small businesses.  
+
+OpenVAS can be started in a container with all its dependencies :
+```shell
+sudo docker run -d -p 443:443 --name openvas mikesplain/openvas
+```
+
+Once started, we can browse to `https://127.0.0.1` to access OpenVAS's login page (default: admin/admin).  
+We can generate a new scan in : `Scan > Task > New Task`  
+OpenVAS creates a report with all found vulnerabilities, their severity and recommended actions to address them.
 
 
 ### sn1per
@@ -1293,24 +1314,36 @@ Its imaging function relies on `dd`, and its analysis function relies on the Sle
 Volatility is a command-line tool used by digital forensics and incident response teams to analyze a memory dump.  
 It is a Python program called `vol.py` that can analyze memory snapshots from Linux, MacOS and Windows.
 
+It has 2 main versions, **vol2** using Python 2 that is deprecated, and its successor **vol3** using Python 3.
+
 Its main functions are :
 - list active and closed network connections
 - list running processes
 - list command line history
 - extract malicious processes for later analysis
 
-It needs to be provided with the profile of the machine from which the memory dump was generated.  
+Vol2 needs to be provided with the profile of the machine from which the memory dump was generated.  
 It is required to know the memory structure of the OS, so Volatility can make sense of the dump.  
 Windows profiles are available by default (see list with `vol.py --info`).  
-Linux profiles must be created by the user and added to the local Volatililty Linux profiles folder.
+Linux profiles must be created by the user and added to the local Volatility Linux profiles folder.  
+Vol3 does not need a memory profile.
+
+Volatility takes the plugin to apply to the dump, defining what it needs to check inside the memory dump.  
 
 ```shell
 vol.py -h                   # display help
 vol.py --info               # display all profiles, commands, plugins...
 
+# Vol2 with some linux plugins
 vol.py -f linux.mem --profile="VistaSP0x64" linux_bash     # check command history file
 vol.py -f linux.mem --profile="VistaSP0x64" linux_pslist   # check running processes
 vol.py -f linux.mem --profile="VistaSP0x64" linux_procdump -D <OUTPUT_FOLDER> -p <PID>  # extract binary of a process
+
+# Vol3 with some windows plugins
+vol3 -f wcry.mem windows.pstree.PsTree         # list running processes in a tree structure
+vol3 -f wcry.mem windows.pslist.PsList         # similar to PsTree but list all running processes in a list
+vol3 -f wcry.mem windows.cmdline.CmdLine       # display the command line arguments of running processes
+vol3 -f wcry.mem windows.malfind.Malfind       # list process memory range potentially containing injected code
 ```
 
 
@@ -1327,6 +1360,48 @@ It is used for digital forensics and data recovery.
 
 WinHex allows users to view, edit, and analyze binary data on various types of storage media, including hard drives, USB drives, memory cards...  
 It offers a wide range of features for examining and manipulating data at a low level.
+
+
+### oledump.py
+
+`oledump.py` is a Python tool to analyze Microsoft OLE2 files (Object Linking and Embedding) like `.doc`, `.xls`, `.ppt`...  
+This tool is a valuable forensics tool to extract malicious macros from these types of files.  
+
+```shell
+# display the different data streams inside the file (sheets, macros...)
+# the data streams with a M symbol are VBA macros 
+./oledump.py file.xlsm
+
+# Display details about a specific data stream as a hex dump
+./oledump.py -s 4 file.xlsm
+
+# Display details about a specific VBA macro and decompress it to make it readable
+./oledump.py -s 4 --vbadecompress file.xlsm
+```
+
+
+### CAPA (Common Analysis Platform for Artifacts)
+
+CAPA is a tool used in cyber-security and incident response.  
+It performs **static analysis** on an executable file to identify its behavior and capabilities without executing it.  
+It applies a set of rules to the executable file to understand its behavior : network communication, file manipulation, process injection...
+
+CAPA splits all its rules into a hierarchy of namespaces.  
+For each lower-level namespace, CAPA has one or more rules, represented by a YAML file (one YAML per rule).  
+
+```shell 
+capa.exe my_executable.bin -vv
+```
+
+The output of a CAPA analysis contains :
+- the hash of the file with common hashing methods (MD5 / SHA-1 / SHA-256)
+- the tactics and techniques from the MITRE ATT&CK framework identified in the binary
+- some MAEC key/value pairs describing the malware (Malware Attribute Enumeration and Characterization), for example "launcher" or "downloader"
+- the MBC objectives and behaviors (Malware Behavior Catalog)
+- flagged capabilities (rules) and their namespace
+
+By increasing the verbose level with `-v` or `-vv`, we can display which part of each rule was matched.  
+This generates a huge output, so we can use the **CAPA Explorer Web** tool to load the JSON output file and display it interactively.
 
 
 ### DNSpy (DotNet Spy) / ILSpy (Intermediate Language Spy)
@@ -1359,9 +1434,10 @@ We can paste the input data (string or file) in the input section, "bake" the da
 CyberChef can be downloaded and started locally, to avoid the upload of sensitive data on the internet.
 
 Among its many available operations, CyberChef can :
-- encode/decode messages in base64/hex/binary...
+- encode/decode messages in morse/base64/URL/hex/binary...
+- extract IP addresses, email addresses or URLs from a text
 - extract EXIF data from an image
-- apply encryption and hashing algorithms (AES, SHA, MD5...)
+- apply encryption and hashing algorithms (Caesar, AES, SHA, MD5...)
 - parse and decode JWT (JSON Web Token)
 - identify file type using its magic byte
 - auto-detect the transformation to apply with its "magic" recipe
@@ -1397,6 +1473,56 @@ defineHandler({
 ```
 
 Frida can be used to hack video games or other programs by intercepting and modifying calls to libraries.
+
+
+### INetSim (Internet Services Simulation Suite)
+
+INetSim is a network service simulator designed to analyze the behavior of malware in a controlled environment.  
+It provides simulated versions of common network services, so the malware can use them and its behavior can be analyzed.  
+INetSim can simulate HTTP, HTTPS, DNS, FTP, SMTP, POP3...
+
+INetSim's configuration in `/etc/inetsim/inetsim.conf` lets us configure which services should be simulated.  
+We can then start the simulated services with the `sudo inetsim` command.  
+When we try to use a simulated service (for example using wget on an HTTPS address), INetSim will return a fake file.
+
+INetSim also generates a report on the captured connection attempt in `/var/log/inetsim/report/`.
+
+
+### REMnux VM
+
+REMnux is a specialized Linux distribution for network forensics, reverse-engineering and Linux/cross-platform malware analysis.    
+It includes tools like Volatility, YARA, WireShark, INetSim, oledump.py, local CyberChef...
+It provides a sandbox-like environment where we can run the analyzed binary without risking damaging our system.
+
+
+### Flare VM (Forensics, Logic Analysis and Reverse Engineering)
+
+FlareVM is a Windows-based virtual machine for reverse-engineering, crafted by FireEye.  
+
+Many tools for reverse engineering and malware analysis are pre-built into Flare VM, including :
+- **Reverse Engineering and Debugging**
+  - Ghidra : open-source reverse engineering suite
+  - x64dbg : open-source debugger for binaries in x32 and x64 format
+  - OllyDbg : debugger for reverse-engineering at assembly level
+- **Disassemblers and Decompiler**
+  - CFF Explorer : text editor to edit and analyze PE files (Portable Executable)
+  - Hopper Disassembler : debugger, disassembler and decompiler
+- **Static and Dynamic Analysis**
+  - PEStudio : static analysis on an executable file without running it
+  - Process Hacker : advanced memory editor and process watcher
+  - PEview : viewer of PE file for analysis
+  - Dependency Walker : tool to display an executable's DLL dependencies
+- **Forensics and Incident Response**
+  - Volatility : RAM dump analysis framework
+  - Rekall : framework for memory forensics in incident response
+  - FTK Imager : forensics tool for disk image creation and analysis
+- **Network Analysis**
+  - WireShark : network protocol analyzer for traffic recording and analysis
+  - Nmap : vulnerability detection and network mapping tool
+  - Netcat : read and write data across network connections
+- **File analysis**
+  - FileInsight : program to look through and edit binary files
+  - Hex Fiend : light Hex editor
 
 
 
@@ -1438,7 +1564,7 @@ It is designed as a hacking game, and contains a score dashboard with a lot of c
 ```shell
 # install and start Docker
 sudo apt install docker.io docker-cli
-sudo systemctl enabl docker --now
+sudo systemctl enable docker --now
 
 # download the Juice Shop Docker image and start a container running it in a Node.js web server
 docker pull bkimminich/juice-shop

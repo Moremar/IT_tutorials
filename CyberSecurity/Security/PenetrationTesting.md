@@ -116,6 +116,13 @@ SSRF vulnerabilities can allow the attacker to enumerate the internal network, a
 and possibly get RCE on other machines in the internal network.
 
 
+## SQLi (SQL Injection)
+
+- `' OR 'a' = 'a` : test if there is a SQLi vulnerability
+- `' UNION SELECT username FROM users WHERE 'a' = 'a` : display a field from another table
+- `sqlite_master` (SQLite < 3.33.0) or `sqlite_schema` (SQLite >= 3.33.0) : built-in table containing all table names and definition in SQLite
+- 
+
 ## XSS Attacks
 
 ### Payload
