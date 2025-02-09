@@ -264,7 +264,8 @@ tar -xzvf data.tgz                 # decompress an archive
   - `-a` : print all matching executables (not only the first)
 
 
-- `ping <IP>` : send ICMP packets to an IP to test the connection
+- `ping <IP>` : send an ICMP Echo packet to a target IP to test the connection, and receive an ICMP Echo Reply packet back.
+  If the ping fails, either the target host is not reachable, or a firewall on the way blocks ICMP packets.  
   - `-c 4` : send 4 ICMP packages (by default send infinitely)
   - `-i 3` : wait 3 seconds between each packet (default to 1 second)
 

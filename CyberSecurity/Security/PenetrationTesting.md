@@ -361,6 +361,15 @@ Microsoft patched Outlook to resolve this vulnerability in February 2024.
 A YARA rule has been created to detect these attack attempts, helping in malware detection and analysis and threat hunting.  
 
 
+### Apache Log4j 2 RCE (CVE-2021-44228 - score 10.0)
+
+Apache Log4j is an open-source logging framework for Java applications.   
+It is used by many Java-based applications and libraries, such as Apache Struts, ElasticSearch, Logstash, Redis, Kafka...  
+It has a critical vulnerability that allows an attacker to get an RCE on the LDAP server.  
+If the attacker controls a logging message, he can force the server to download a payload to open a reverse shell.  
+This vulnerability was very easy to exploit so it got exploited a lot, and massive hunting for vulnerable machines was started.
+
+
 ### EternalBlue (CVE-2017-0144 - score 8.8)
 
 EternalBlue is a Windows exploit created by the NSA.  

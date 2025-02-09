@@ -290,6 +290,85 @@ It is the main element of passive reconnaissance.
 Many OSINT resources are categorized in the OSINT framework website : [https://osintframework.com/](https://osintframework.com/)
 
 
+#### whois
+
+`whois` is a command-line tool to query WHOIS servers to know who a domain is registered to.  
+It gives information about the creation date, registrar, admin organization, name server...
+
+The domain registrar is responsible for maintaining the WHOIS records of the domains it is leasing.  
+These WHOIS records can be queried with the `whois` command or an online WHOIS service.
+
+Querying WHOIS records is part of passive reconnaissance, since it communicates with the registrar and not the target.
+
+```shell
+whois google.com
+```
+
+
+### ICANN Lookup
+
+ICANN Lookup is a centralized database containing public info on registered domain names.  
+It is the reference to obtain official and up-to-date info on a domain name.  
+It usually contains less info than the WHOIS records maintained by the registrar. 
+
+
+#### nslookup / dig
+
+`nslookup` is a command-line tool used to query a DNS server for DNS records.  
+It was the main tool to troubleshoot DNS related issues and verifying the DNS configuration.  
+It is now replaced by `dig` that provides more info (Domain Information Groper).
+
+We can specify a DNS server if we do not want the default one of our ISP :
+- CloudFlare offers `1.1.1.1` and `1.0.0.1`
+- Google offers `8.8.8.8` and `8.8.4.4`
+- Quad9 offers `9.9.9.9` and `149.112.112.112`
+
+DNS lookup is part of passive reconnaissance, since it communicates with public DNS servers outside of the target network.
+
+```shell
+nslookup facebook.com                # query the IPv4 and IPv6 addresses for a domain name
+nslookup 142.250.196.132             # reverse lookup, query the domain name for an IP address
+nslookup -type=MX facebook.com       # query the hostname of the mail server for a domain name
+nslookup -type=SOA facebook.com      # query the SOA data for a domain name (name server, admin email, TTL...)
+nslookup facebook.com 8.8.8.8        # use a custom DNS server (8.8.8.8 is Google's public DNS server)
+
+dig facebook.com                     # query the IPV4 for a domain name
+dig facebook.com MX                  # query the IPV4 of the mail server for a domain name
+dig facebook.com @8.8.8.8            # query the IPV4 for a domain name using a specific DNS server
+```
+
+### dnsenum
+
+dnsenum is a DNS reconnaissance tool for penetration testing.  
+It is used to enumerate all subdomains, name servers, mail servers and DNS records for a given domain.  
+It can perform brute-force subdomain discovery using a wordlist.  
+It supports zone transfer attempt (if the DNS is misconfigured).  
+A zone transfer is a mechanism to sync records between the primary and secondary name servers, exposing all DNS records.  
+
+```shell
+dnsenum --dnsserver 8.8.8.8 example.com
+```
+
+
+## DNSDumpster.com
+
+DNS lookup tools (nslookup / dig) provide info on a domain but cannot find subdomains.  
+[DNSDumpster.com](https://dnsdumpster.com/) is a domain research website that finds subdomains for a given domain.  
+It provides info on each of these domains in a table and a graph.  
+Its free version is limited to 50 subdomain per query.
+
+DNSDumpster also provides an API to use its service programmatically.
+
+
+### Shodan.io Database
+
+The Shodan database is an Internet repository maintaining indexes of all services presented to the Internet.  
+It is used as a search engine for various types of devices (webcam, router, server)...  
+It allows to search devices by keyword, and it lists all devices of every type that matches the search criteria.  
+
+The Shodan.io database is used during the passive reconnaissance phase of penetration testing on a target domain or network.
+
+
 ### Nmap (Network Mapper)
 
 Nmap is a network scanner used to discover machines on a network.  
@@ -333,7 +412,7 @@ nmap 192.168.1.123 -sT               # TCP Connect scan
                                      #  -> try to complete a full TCP handshake with every port to scan
                                      #  -> teardown established connections with a RST-ACK packet
                                      #  -> very slow, more detectable, but no admin right required on source machine)
-nmap 192.168.1.123 -sS               # TCP SYN port scan (default)
+nmap 192.168.1.123 -sS               # TCP SYN port scan (default - stealth scan as it is not very noisy)
                                      #  -> only performs the first step of the TCP handshake (SYN)
                                      #  -> reply to the SYN-ACK from the target with a RST 
 nmap 192.168.1.123 -sU               # UDP port scan, to target machines that use UDP-based protocols (DNS, DHCP, NTP, SNMP...)
@@ -481,23 +560,11 @@ scanless is a utility to create an exploitation web server that can perform open
 If the target notices the scan, it appears as being performed by this web server instead of the actual host.
 
 
-### dnsenum
-
-dnsenum is a DNS reconnaissance tool.  
-It is used to enumerate all DNS servers and DNS entries for a given organization.
-
-
 ### The Harvester
 
 The harvester is a Python script used by red teams during penetration tests to perform OSINT reconnaissance.  
 It can gather emails, subdomains, hosts, employee names, open ports, IPs...  
 It retrieves its information from public sources, like search engines, PGP key servers, the Shodan database...
-
-
-### ICANN Lookup
-
-ICANN Lookup is a website giving public info on registered domain names.  
-This info can be hidden by the domain name registrar (like GoDaddy) when requested.  
 
 
 ### Holehe
@@ -507,11 +574,6 @@ The target email address is not alerted (no mail sent to the address to reset a 
 
 It is a useful tool for **OSINT** (Open-Source INTelligence) to gather information on people.  
 It can be integrated with Maltego for automatic social networks reconnaissance in GUI.
-
-
-### Shodan Database
-
-The Shodan database is a search engine use to search for various types of devices (webcam, router, server)...
 
 
 ### The WayBack Machine
@@ -1209,13 +1271,20 @@ It can detect automatically the hashing method used and give the original value 
 
 ### Crunch
 
-Crunch is a utility that generates a custom word list to provide to a password cracker.  
+Crunch is a utility that generates a custom word list based on a syntax template to provide to a password cracker.  
 We can specify the password min and max size and the allowed characters, and Crunch generates all possibilities.  
+We can use placeholders `%` for a digit, and `@` for a lower-case character.  
 Crunch is available by default in Kali Linux.
 
 ```shell
 # generate the pins.txt file containing all possible PIN numbers of 4 to 6 digits
 crunch 4 6 0123456789 -o pins.txt
+
+# generate in the terminal all passwords of size 10 starting with "password" and ending with 2 digits
+crunch 10 10 -t password%%
+
+# generate all password of size 6 starting with "pass" and ending with 2 lower-case letters
+crunch 6 6 -t pass@@ -o list.txt
 ```
 
 
@@ -1231,6 +1300,23 @@ cewl -d 2 -m 5 -w passwords.txt http://10.10.131.23 --email --email_file emails.
 ```
 
 
+### RSMangler
+
+RSMangler is a command-line program to generate a richer list of passwords from a given list of words.  
+It creates the new passwords by applying some transformation rules to the original words.  
+For example it can add numbers at the end, capitalize the word, adding special characters, using leet replacements...  
+By default, all mangling options are ON, and they can be turned OFF via command-line options.
+
+```shell
+# create a list of passwords from a list of words, with a few transformations disabled :
+#  -a    : create an acronym with all words  
+#  -c    : capitalize each word
+#  --pnb : add 01-09 at the beginning of each word
+#  --nb  - add 1-123 at the beginning of each word
+rsmangler -a -c --pnb --nb --file words.txt --output passwords.txt
+```
+
+
 ### Hydra
 
 Hydra is an open-source password brute-forcing tool for online brute-force attacks.  
@@ -1241,6 +1327,8 @@ Unlike Hashcat or John the Ripper, it is not an offline password cracking tool.
 It does not check passwords against a target hash, but against a target network system (so it can be detected).  
 For common protocol, it can detect automatically if an attempt is successful or not.  
 For HTTP login against a custom website, it needs to know the message to expect in case of failure.  
+
+Hydra has a GTK+ based GUI version called `hydra-gtk`.
 
 ```shell
 # try all passwords in a word list to access the target IP in SSH with a given user (login)
@@ -1578,6 +1666,31 @@ Altoro Mutual is a fake banking website with intentional security flaws.
 It is developed by IBM to demonstrate the efficiency of their security products.  
 
 The application code is open source and available on [GitHub](https://github.com/HCL-TECH-SOFTWARE/AltoroJ).
+
+
+### Labtainers
+
+Labtainers is a fully packaged set of Linux-based cyber-security lab exercises, developed by the Naval Postgraduate School.  
+It offers a VM (either VirtualBox or VMware) to download and start as a fully isolated environment.  
+From inside the VM, we can start or stop a lab, and see the details of each lab in their PDF documentation.  
+When we start a lab, it creates a Docker container and starts a shell inside it.
+
+```shell
+# inside the VM, go to the student workspace
+cd ${LABTAINER_DIR}/scripts/labtainer-student
+
+# list all available labs
+labtainer
+
+# start a lab : it shows the PDF link, starts a Docker container and opens a terminal inside it
+labtainer wireshark-intro
+
+# check that the task of the lab was successfully completed
+checkwork
+
+# stop the currently running lab
+stoplab
+```
 
 
 ### OverTheWire Wargames
