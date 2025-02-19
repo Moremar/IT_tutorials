@@ -604,6 +604,7 @@ Integrity of files installed by apt can be checked with the `debsums` command :
 
 Some useful packages to install are :
 - `apache2` : HTTPD Apache web server
+- `arp-scan` : host discovery tool on a local network using the ARP protocol
 - `busybox` : binary combining tiny versions of many common Unix utilities
 - `cmake` : cross-platform build system generator
 - `cmatrix` : infinite program simulating the display from the Matrix in the terminal
@@ -1864,7 +1865,8 @@ ip link set dev <interface> down               # disable a network interface
 
 ip route show                                         # show the routing table
 ip route get 8.8.8.8                                  # show the route to a given IP address
-ip route add 10.0.0.0/24 via 192.168.1.1 dev enp0s5   # add a route to the routing table 
+ip route add 10.0.0.0/24 via 192.168.1.1 dev enp0s5   # add a route to the routing table
+ip route add default via 192.168.1.1 dev enp0s5       # add a default route to the routing table
 ip route del 10.0.0.0/24 via 192.168.1.1 dev enp0s5   # remove a route from the routing table 
 ```
 

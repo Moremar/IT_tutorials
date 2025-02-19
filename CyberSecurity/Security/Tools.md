@@ -369,6 +369,21 @@ It allows to search devices by keyword, and it lists all devices of every type t
 The Shodan.io database is used during the passive reconnaissance phase of penetration testing on a target domain or network.
 
 
+### arp-scan
+
+arp-scan is a Linux command-line tool that uses the ARP protocol to discover and fingerprint IP hosts on the local network.  
+It is used to identify which machines are active on the local network.  
+It requires sudo privilege to generate ARP packets.
+
+```shell
+# arp-scan can figure out the IPs to try from the network we are connected to
+sudo arp-scan --localnet
+
+# scan a specific subnet on a specific network interface
+sudo arp-scan -I eth0 192.168.1.0/24
+```
+
+
 ### Nmap (Network Mapper)
 
 Nmap is a network scanner used to discover machines on a network.  
@@ -381,87 +396,200 @@ Nmap comes with various options to customize the type of scan, with different st
 Nmap also comes with a collection of scripts used to detect vulnerabilities on the target network.
 
 Nmap should be executed with `sudo` to allow all types of packages (not just ICMP and TCP).  
+When executed by a privileged user (root or user allowed to use sudo), host discovery on a local network uses ARP.  
+On a different network, host discovery uses ICMP echo requests, TCP ACK to port 80 and TCP SYN to port 443.  
+If the user is unprivileged, it can only use a full TCP 3-way handshake to port 80 and 443, that takes more time. 
 
 When targeting a local network, Nmap can identify the MAC address (and manufacturer) of each network card.
+
+Nmap can spoof the source MAC address and IP address with any given value.  
+In that case, the response would be sent to the spoofed IP, so it only makes sense if we can monitor the network.
+
+A good cheat sheet for Nmap arguments is available on [StationX](https://www.stationx.net/nmap-cheat-sheet/).
 
 ```shell
 nmap                                 # display the help
 nmap 192.168.0.1 -v                  # increase logging level of the result (-vv for even more logging)
 nmap 192.168.0.1 -d                  # debugging mode (thousands of lines)
+nmap 192.168.0.1 --reason            # explain the reason why Nmap concluded ports are open/closed/filtered
+```
 
-# TARGET SPECIFICATION
+#### Target Selection
+
+```shell
 nmap 192.168.0.1                     # scan a machine by IP (machine discovery + port scan)
 nmap scanme.nmap.org                 # scan a machine by hostname
 nmap microsoft.com/24                # scan a network by domain name
+nmap -iL target_ips.txt              # scan a list of IPs from a file (one IP per line)
 nmap -iR 10                          # scan 10 random targets on the internet
+```
 
-# HOST DISCOVERY
-nmap facebook.com/24 -sL             # List IP addresses to scan (no package sent)
-nmap facebook.com/24 -sn             # Ping scan, only sending a ICMP echo request to each host to know which are up (no port scan)
+#### Host Discovery
 
-nmap facebook.com/24 -Pn             # Skip host discovery (ping) and launch port scan assuming all targets are up
+Nmap has many different methods to discover which hosts are active.  
+Different methods can be efficient against different networks, to avoid firewalls or IPS.  
+Host discovery parameters start with `-P` for "ping". 
+
+```shell
+nmap 192.168.0.1/24 -sL              # List IP addresses to scan (no package sent)
+nmap 192.168.0.1/24 -sn -PE          # host discovery using an ICMP Echo Request (ICMP type 8) [often blocked by firewalls]
+nmap 192.168.0.1/24 -sn -PP          # host discovery using an ICMP Timestamp Request (ICMP type 13)
+nmap 192.168.0.1/24 -sn -PM          # host discovery using an ICMP Address Mask Request (ICMP type 17)
+nmap 192.168.0.1/24 -sn -PR          # host discovery using ARP (only possible on a local network)
+nmap 192.168.0.1/24 -sn -PS80        # host discovery using TCP SYN to given port(s), expecting SYN-ACK (open port) or RST (closed port)
+nmap 192.168.0.1/24 -sn -PA80        # host discovery using TCP ACK to given port(s) [only works for privileged uses, otherwise full 3-way handshake]
+nmap 192.168.0.1/24 -sn -PU          # host discovery using UDP to given port(s) [expects nothing for open port and ICMP Port Unreachable on closed port]
+nmap 192.168.0.1/24 -Pn              # Skip host discovery and launch port scan assuming all targets are up
                                      # This is useful because -sS will skip the hosts that did not respond to ICMP during host discovery
                                      # With the -Pn option, these hosts are scanned anyway and some services may be up 
                                      # This allows service detection on hosts configured to not respond to ICMP 
-nmap 192.168.1.130 -PS80             # Host discovery using TCP SYN packet to given port(s)
-                                     #   -PA[portlist]    alternative using TCP ACK
-                                     #   -PU[portlist]    alternative using UDP
+nmap 192.168.0.1/24 -n               # prevent the reverse-DNS request on discovered hosts
+nmap 192.168.0.1/24 -R               # query the DNS server for reverse-DNS even for offline hosts
+```
 
-# SCAN TECHNIQUES
-nmap 192.168.1.123 -sT               # TCP Connect scan
+#### Port Scanning Techniques
+
+Nmap can use many types of packets to discover which ports of the target are open.  
+They can use a full TCP handshake (only option if no sudo permission), TCP SYN only, UDP...  
+The packets can be crafted to customize the TCP flags that are set to avoid firewall filtering.  
+Port scanning parameters start with `-s` for "scan".
+
+```shell
+nmap 192.168.0.1 -sn                 # skip port scan (host discovery only)
+nmap 192.168.0.1 -sT                 # TCP Connect scan
                                      #  -> try to complete a full TCP handshake with every port to scan
-                                     #  -> teardown established connections with a RST-ACK packet
-                                     #  -> very slow, more detectable, but no admin right required on source machine)
-nmap 192.168.1.123 -sS               # TCP SYN port scan (default - stealth scan as it is not very noisy)
+                                     #  -> teardown established connections with a RST-ACK packet just after the ACK
+                                     #  -> very slow, more detectable, but only possible port scan without sudo permission
+nmap 192.168.0.1 -sS                 # TCP SYN port scan (default - stealth scan as it is not very noisy)
                                      #  -> only performs the first step of the TCP handshake (SYN)
                                      #  -> reply to the SYN-ACK from the target with a RST 
-nmap 192.168.1.123 -sU               # UDP port scan, to target machines that use UDP-based protocols (DNS, DHCP, NTP, SNMP...)
+                                     #  -> does not complete the 3-way handshake so less likely to be logged
+nmap 192.168.0.1 -sU                 # UDP port scan, to target machines that use UDP-based protocols (DNS, DHCP, NTP, SNMP...)
+                                     # -> expect no response if the port is open or filtered
+                                     # -> expect an ICMP packet type 3 (Port unreachable) if the port is closed
 
+# Nmap can customize the TCP flags on the packets sent to the target
+# There are many variations of these flags available as parameters 
+# If a port is open, it would not respond to a TCP packet without the SYN flag that is not part of an on-going TCP session
+# If a port is closed, the machine would respond with a RST packet 
+# Note that this DOES NOT WORK ON WINDOWS, because Windows return a RST for every non-SYN packet (even for open ports)                                 
+nmap 192.168.0.1 -sN                 # TCP Null scan, with all TCP flags unset (URG / ACK / PSH / RST / SYN / FIN)
+                                     # On open ports, it should not receive any response (because the SYN flag is unset)
+                                     # On closed ports, it should receive a RST TCP packet
+nmap 192.168.0.1 -sF                 # TCP FIN scan, with only the FIN flag set
+                                     # Like the Null scan, no response means either open port or traffic filtered by a firewall
+                                     # on closed port, a RST packet is received if no firewall filtering
+nmap 192.168.0.1 -sX                 # TCP Xmas scan, with the URG / PSH / FIN flags set
+                                     # Like the Null scan and FIN scan, no response means either open port or filtered traffic
+                                     # less stealthy than FIN scan because unusual combination of flags
+                                     # can be useful if single-flag packets are filtered
+nmap 192.168.0.1 -sM                 # TCP Maimon scan, with the FIN and ACK flags set
+                                     # most systems would respond with RST regardless of the port state, which makes it useless.
+                                     # some old systems would respond with a RST only if the port is closed
+nmap 192.168.0.1 -sA                 # TCP ACK scan, with only the ACK flag set
+                                     # it is responded with a RST regardless the state of the port, so it can't tell if a port is open.
+                                     # it is used to detect firewalls, because only the presence of a firewall would cause no response
+                                     # if a firewall filters everything except ports 80 and 22, we can guess that these ports are open
+nmap 192.168.0.1 -sW                 # TCP window scan, similar to ACK scan but checks the window field of the RST response
+nmap 192.168.0.1 --scanflags URGACK  # scan with a custom combination of flags
+                                     # for all flags use URGACKPSHRSTSYNFIN
+
+nmap  -sI <ZOMBIE_IP> 192.168.1.1    # Idle scan - require a host connected to the target network that is idle (no traffic)
+                                     # this scan is used when only an IP in the target network can reach the target machine
+                                     # Nmap spoofs the request to the target with the zombie IP
+                                     # It is done in 3 steps :
+                                     # - send a SYN/ACK to the zombie and receive a RST with the zombie's IP ID
+                                     # - send a TCP SYN to the target spoofed with the zombie IP
+                                     #   if the port is open on the target, the target sends a SYN/ACK to the zombie
+                                     #   in that case the zombie replies with a RST, incrementing its IP ID
+                                     # - send again a SYN/ACK to the zombie, and compare its IP ID to see if it was incremented twice
+```
+
+#### Target ports specification
+
+```shell
 # PORTS TO SCAN 
-nmap 192.168.0.123 -F                # limit the scan to the top 100 ports (instead of 1000 by default)
-nmap 192.168.0.123 -p68-150          # limit the scan to the specified ports
-nmap 192.168.0.123 -p-25             # limit the scans to ports 1 to 25 when no lower bound specified
-nmap 192.168.0.123 -p-               # scans all ports (1 to 65535) when no bound specified, most time-consuming and thorough scan
+nmap 192.168.0.1 -F                  # limit the scan to the top 100 ports (instead of 1000 by default)
+nmap 192.168.0.1 -p68-150            # limit the scan to the specified ports
+nmap 192.168.0.1 -p-25               # limit the scans to ports 1 to 25 when no lower bound specified
+nmap 192.168.0.1 -p-                 # scans all ports (1 to 65535) when no bound specified, most time-consuming and thorough scan
+```
 
-# INFO GATHERING
-nmap 192.168.1.123 -O                # enable OS detection
-nmap 192.168.1.123 -sV               # enable service detection on each scanned port
-nmap 192.168.0.123 -sC               # Script Scan, running default NSE (Nmap Script Engine) scripts for more info gathering
-nmap 192.168.0.123 --script vuln     # Run a bunch of scripts to detect vulnerabilities on a target system
-nmap 192.168.0.123 -A                # Aggressive scan (full port scan, OS and service detection, script scanning, traceroute)
+#### Information gathering
 
-# FIREWALL EVASION
-nmap 192.168.0.123 -f                # fragment packets so firewalls don't know it comes from Nmap by the packet size
-nmap 192.168.0.123 --mtu 16          # force a max packet size (multiple of 8) so firewalls don't know it comes from Nmap by the packet size
-nmap 192.168.0.123 -D 192.168.0.1,192.168.0.3   # use decoys to spoof the source IP address
+```shell
+nmap 192.168.0.1 -O                  # enable OS detection
+nmap 192.168.0.1 -sV                 # enable service detection on each scanned port (requires a full TCP handshake)
+nmap 192.168.0.1 -A                  # Aggressive scan (full port scan, OS and service detection, script scanning, traceroute)
+```
+
+#### Firewall Evasion
+
+```shell
+nmap 192.168.0.1 -S <IP>             # spoof the source IP address
+nmap 192.168.0.1 --spoof-mac <MAC>   # spoof the source MAC address (only make sense when on the local network)
+nmap 192.168.0.1 -f                  # fragment the data into 8-bytes packets so firewalls don't know it comes from Nmap by the packet size
+nmap 192.168.0.1 --mtu 16            # same but with a custom max size (must be a multiple of 8)
+nmap 192.168.0.1 -D 192.168.0.1,192.168.0.3,ME   # use decoys to spoof the source IP address (ME for the local machine)
                                      # the scan appears to come from multiple sources (including us)
                                      # should use live decoys that do not look suspicious to the target
-nmap 192.168.0.123 -g 53             # use a specific source port, should use trusted port numbers like 53 (DNS), 20 (FTP), 67 (DHCP) or 88 (Kerberos)
-
-# FILE OUTPUT
-nmap 192.168.0.123 -oN result.nmap     # save to file in normal human-readable output
-nmap 192.168.0.123 -oX result.xml      # save to file in XML output
-nmap 192.168.0.123 -oG result.gnmap    # save to file in greppable output (most info on one line)
-nmap 192.168.0.123 -oA result          # save output to all above 3 formats
+nmap 192.168.0.1 -g 53               # use a specific source port, should use trusted port numbers like 53 (DNS), 20 (FTP), 67 (DHCP) or 88 (Kerberos)
 ```
 
 We can control the speed of the requests sent by Nmap, to get a result very quickly or to slowly send requests to avoid detection.  
 Nmap has 6 speed levels that can be referenced either by ID or by name with the `-T` parameter :
 - level 0 : `paranoid`
-- level 1 : `sneaky`
+- level 1 : `sneaky` (often used in penetration testing when stealth is important)
 - level 2 : `polite`
-- level 3 : `normal`
-- level 4 : `aggressive`
-- level 5 : `insane`
+- level 3 : `normal` (default)
+- level 4 : `aggressive` (often used in CTF)
+- level 5 : `insane` (increased risk of packet loss)
 
 ```shell
-nmap 192.168.0.123 -sS -F -T2               # level 2
-nmap 192.168.0.123 -sS -F -T aggressive     # level 4
+nmap 192.168.0.1 -sS -F -T2                 # level 2
+nmap 192.168.0.1 -sS -F -T aggressive       # level 4
 
-nmap 192.168.0.123 --min-rate 10 -F         # min number of packets per second
-nmap 192.168.0.123 --max-rate 10 -F         # max number of packets per second
-nmap 192.168.0.123 --host-timeout 100 -F    # specify the max time we can wait for a host to respond
+nmap 192.168.0.1 --min-rate 10 -F           # min number of packets per second
+nmap 192.168.0.1 --max-rate 10 -F           # max number of packets per second
+nmap 192.168.0.1 --host-timeout 100 -F      # specify the max time we can wait for a host to respond
 ```
+
+#### Nmap Scripting Engine (NSE)
+
+The NSE is a Lua interpreter integrated in Nmap that supports the execution of custom Lua scripts.  
+
+The default Nmap installation contains around 600 scripts in the `/usr/share/nmap/scripts` folder.  
+The built-in scripts are divided into multiple categories (a script can be in multiple categories) : 
+- `auth` : authentication related scripts
+- `broadcast` : discover hosts by sending broadcast messages
+- `brute` : bruteforce password cracking
+- `default` : default scripts running with `-sC` (quick, valuable and concise output)
+- `discovery` : scripts retrieving information about the target like database tables and DNS names
+- `dos` : detect Denial of Service vulnerabilities
+- `exploit` : attempt to exploit multiple vulnerable services
+- `external` : checks based on 3rd party services (Geoplugin, VirusTotal...)
+- `fuzzer` : fizzing attacks
+- `intrusive` : intrusive scripts (bruteforce, exploitation...)
+- `malware` : scan for backdoors
+- `safe` : safe scripts that cannot crash the target
+- `version` : retrieve service versions
+- `vuln` : scan for vulnerabilities
+
+```shell
+nmap 192.168.0.1 -sC                    # run the scripts in the default category
+nmap 192.168.0.1 --script vuln          # run the scripts in the vuln category
+nmap 192.168.0.1 --script "http-date"   # run a script by name
+```
+
+#### Nmap output file
+
+```shell
+nmap 192.168.0.1 -oN result.nmap       # save to file in normal human-readable output
+nmap 192.168.0.1 -oX result.xml        # save to file in XML output
+nmap 192.168.0.1 -oG result.gnmap      # save to file in greppable output (most info on one line)
+nmap 192.168.0.1 -oA result            # save output to all above 3 formats
+```
+
 
 ### Recon-ng
 
