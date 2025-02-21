@@ -581,6 +581,25 @@ nmap 192.168.0.1 --script vuln          # run the scripts in the vuln category
 nmap 192.168.0.1 --script "http-date"   # run a script by name
 ```
 
+We can add NSE scripts to enrich Nmap's capabilities, either custom scripts or from online repositories.  
+Popular repositories are `nmap-vulners` and `vulscan`.  
+
+```shell
+# add Nmap scripts from public repositories
+cd /usr/share/nmap/scripts
+git clone https://github.com/vulnersCom/nmap-vulners.git
+git clone https://github.com/scipag/vulscan.git
+
+# run the scripts against a target
+nmap --script nmap-vulners -sV 10.10.0.1
+nmap --script vulscan -sV 10.10.0.1
+        
+# vulscan scripts take very long because they contain many vulnerability DBs (represented by CSV files)
+# we can limit the scan to a single vulnerability DB or a single port
+nmap --script vulscan --script-args vulnscandb=exploitdb.csv -sV 10.10.0.1
+nmap --script vulscan --script-args vulnscandb=exploitdb.csv -sV 10.10.0.1 -p21    # limit to FTP
+```
+
 #### Nmap output file
 
 ```shell
@@ -1198,6 +1217,31 @@ sqlmap -u http://example.com/search?type=1 -D company -T users --dump
 sqlmap -r burp_post_request.txt -p tfUPass --dbs
 ```
 
+### linPEAS.sh (Linux Privilege Escalation Awesome Script)
+
+`linPEAS.sh` is a post-exploitation enumeration tool to identify potential privilege escalation paths on Linux.  
+It scans the system for misconfiguration, weak permissions and exploitable binaries.  
+It can find SUID/GUID binaries, writable configuration (sudoers / cron jobs / PATH variable...), search for SSH keys...  
+It only outputs the potential weaknesses, but does not attempt to exploit them.  
+`WinPEAS` is the equivalent for Windows OS.  
+
+
+### GTFOBins (Get The Fk Out Binaries)
+
+[GTFOBins](https://gtfobins.github.io) is a website catalog of Unix binaries that can be used to break out of restricted shells.  
+It provides commands using all these binaries to escalate privileges, bypass security controls or establish persistence.  
+It can be used in combination with `linPEAS.sh` to exploit discovered configuration weaknesses.  
+
+For example, if `linPEAS.sh` discovered that `find` and `nmap` binaries have SUID set, GTFOBins provides a command to leverage it to get a root shell :
+```shell
+# get a root shell with find that has SUID
+find . -exec /bin/sh -p \; -quit
+
+# get a root shell with nmap that has SUID
+nmap --interactive
+  nmap> !sh
+```
+
 
 ### Havij
 
@@ -1769,6 +1813,21 @@ Others use old version of some CMS that have known vulnerabilities (WordPress, J
 Others are created to look more like real modern applications (Google Gruyere, Hackxor...).  
 
 OWASP BWA is a great tool to create a local lab to test cyber-security tools (nmap, burp, metasploit...) on machines we own.
+
+
+### Metasploitable
+
+Metasploitable is a deliberately vulnerable Linux VM created by Rapid7 (creators of Metasploit) for practising penetration tests.  
+It is commonly used with Metasploit, but can be attacked manually with Nmap, Hydra, Nikto, Burp...  
+- **Metasploitable 2** (2012) : Ubuntu 8.04 VM containing misconfigured services and vulnerable applications
+- **Metasploitable 3** (2016) : Windows Server 2008 or Ubuntu 14.04 VM containing more modern attack scenarios
+
+
+### VulnHub
+
+[VulnHub](www.vulnhub.com) is an online platform providing free and legally accessible vulnerable VMs for security enthusiasts to practice their skills.  
+These VMs are prepackaged as OVA files that can be started with VirtualBox or VMware.  
+There are multiple difficulty levels, and most VMs follow the CTF format (Capture The Flag).  
 
 
 ### OWASP Juice Shop
