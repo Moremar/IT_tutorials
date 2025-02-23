@@ -352,13 +352,14 @@ QUIT
 ### IMAP (Internet Message Access Protocol)
 
 IMAP is an alternative to POP3 to retrieve emails from a mail server.  
-It allows synchronization between multiple client devices accessing the same mail address on the mail server.
+It allows synchronization between multiple client devices accessing the same mail address on the mail server.  
 Every action on a mail from a client (read/delete a mail) is performed on the server, and other clients will sync.  
 It allows to use multiple clients (phone and laptop for example) and to see a common state on all of them.  
 It is more recent and more convenient than POP3 for users that check emails on multiple devices.  
 IMAP uses ports **143** (unencrypted) and **993** (SSL encrypted).
 
-IMAP can be manually used with telnet :
+IMAP can be manually used with telnet.  
+Every command needs to be prefixed with a random string to identify the messages (here we use A, B, C...).
 ```shell
 telnet 10.10.35.121 143
 A LOGIN myuser mypassword
