@@ -321,8 +321,9 @@ awk '{ sum += $1 } END { print sum }' file   # sum the first column of each line
   - `-r` : recursive download, to download links in the target website or sub-folders of the target folder
   - `-p` : download all website pre-requisites like stylesheets, scripts, images... (used when downloading a website)
   - `-k` : converts links in the downloaded website to reference the local files
-  - `-l 5` : set the maximum recusion level to 5
+  - `-l 5` : set the maximum recursion level to 5
   - `-A jpg` : limit the links followed in the recursion to accept only specific extensions (jpg only here)
+  - `-S` : show server headers (HTTP or FTP)
 
 
 - `curl <OPTIONS> <URL>` : fetch and display web pages or API content, supporting multiple protocols (HTTP, HTTPS, FTP, SFTP...)  
@@ -330,6 +331,7 @@ awk '{ sum += $1 } END { print sum }' file   # sum the first column of each line
   It must be installed with `sudo apt install curl`  
   `curl 'https://www.example.com/api.php' -G --data-urlencode 'param1=New York' --data-urlencode 'param2=aaa'`
   - `-v` : verbose
+  - `-I` : fetch the header only (HTTP or FTP), used for banner grabbing
   - `-o <FILE>` : save output to a file
   - `-s` : silent mode (do not show errors or progress bar)
   - `-G` : force an HTTP GET request (default to POST if `--data` or `--data-urlencode` is provided)

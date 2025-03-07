@@ -511,6 +511,18 @@ Browsers need to be updated to trust this private CA, otherwise they would show 
 The **Web of Trust** is a decentralized trust model addressing the issues of public key authentication in a CA-based PKI system.  
 An example of Web of Trust is PGP (Pretty Good Privacy) and its open-source implementation GPG (GNU PGP Guard).  
 
+### Certificate Transparency (CT)
+
+Certificate Transparency is an open framework developed by Google that provides a publicly auditable record of all issued digital certificates.  
+All issued SSL/TLS certificates must be submitted to the CT logs, an append-only record of certificates.  
+The CT logs can be monitored for any suspicious certificates on a given domain.  
+
+CT logs help avoiding maliciously or mistakenly issued certificates to go unnoticed.  
+A hacked or negligent CA can issue certificates for any websites and create a risk of MitM attack.  
+CT logs simplify the detection of such malicious certificates.
+
+CT logs can be used by attackers to identify some subdomains of their target.
+
 
 ## Quantum Cryptography
 

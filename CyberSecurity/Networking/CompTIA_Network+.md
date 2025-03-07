@@ -229,6 +229,7 @@ SNMPv1 and SNMPv2 use a **community string** to access the statistics in the dev
 This community string should be changed as a good practice to prevent unauthorized access to the device's information.  
 SNMPv3 uses user/password authentication and an encryption key instead.
 
+SNMP vulnerabilities can be identified using tools like **SNMPwalk** or **SNMPenum**.
 
 ### Telnet
 

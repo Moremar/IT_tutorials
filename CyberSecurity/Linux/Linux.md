@@ -625,6 +625,7 @@ Some useful packages to install are :
 - `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
 - `shellcheck` : Bash script validation tool
 - `smartmontools` : SMART protocol support for physical drive health monitoring
+- `terminator` : terminal program allowing to split the window horizontally and vertically into multiple consoles
 - `wget` : command-line tool to download files from the Internet
 - `wireshark` : networking traffic analyzer
 - `zenity` : GUI popup tool used in Bash scripts

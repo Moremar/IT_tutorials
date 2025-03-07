@@ -408,7 +408,17 @@ This is used when the victim has a strong defense, but the external service prov
 
 ### DNS Attacks
 
-#### DNS Poisoning
+#### DNS Flood
+
+Attack sending many requests to a DNS server to prevent it to serve legitimate traffic.
+
+#### DNS Amplification
+
+Attack sending small requests to a DNS server that generate a much bigger response.  
+The requests are spoofed with the target's IP as source, so the target will receive all the responses from the DNS server.  
+In 2016, the Mirai botnet launched one of the biggest DNS amplification attacks on the Dyn DNS provider, causing major outages.
+
+#### DNS Cache Poisoning (or DNS Spoofing)
 
 Attack modifying the name resolution information in the cache of a DNS server.  
 It causes the redirection of users to fraudulent websites.  

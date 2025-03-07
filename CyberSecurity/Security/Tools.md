@@ -96,7 +96,8 @@ WireShark is an open-source network packet analyzer offering a GUI to capture, a
 WireShark was first released in 1998 under the name "Ethereal" and renamed to "WireShark" in 2006.  
 Many people contributed to it to add support for more protocols.  
 In 2023, it moved to the WireShark Foundation non-profit corporation that promotes network education and hosts SharkFest
-(WireShark developer and user conferences). 
+(WireShark developer and user conferences).  
+A command-line version of WireShark is also available, called **TShark**.  
 
 WireShark can load packets captures (PCAP) created by WireShark or other packets analyzers (like the `tcpdump` console tool).  
 WireShark lists all captured or received packets, and for each packet it displays the info at each layer, and the original bytes.  
@@ -282,7 +283,7 @@ They can help to remove useless files, clear caches, remove cookies and free up 
 ## Reconnaissance Tools
 
 
-### OSINT
+### OSINT Framework
 
 OSINT tools provide information from free public resources on the Internet.  
 It is the main element of passive reconnaissance.  
@@ -335,6 +336,7 @@ nslookup facebook.com 8.8.8.8        # use a custom DNS server (8.8.8.8 is Googl
 dig facebook.com                     # query the IPV4 for a domain name
 dig facebook.com MX                  # query the IPV4 of the mail server for a domain name
 dig facebook.com @8.8.8.8            # query the IPV4 for a domain name using a specific DNS server
+dig -x 69.63.176.13                  # perform a reverse lookup, same as : dig <IP> PTR
 ```
 
 ### dnsenum
@@ -578,6 +580,7 @@ The built-in scripts are divided into multiple categories (a script can be in mu
 ```shell
 nmap 192.168.0.1 -sC                    # run the scripts in the default category
 nmap 192.168.0.1 --script vuln          # run the scripts in the vuln category
+nmap 192.168.0.1 -sV --script=banner    # run the banner grabbing script
 nmap 192.168.0.1 --script "http-date"   # run a script by name
 ```
 
@@ -610,10 +613,18 @@ nmap 192.168.0.1 -oA result            # save output to all above 3 formats
 ```
 
 
+### Maltego
+
+Maltego is a data-mining tool offering a GUI for linking and visualizing relationships between resources.  
+It can represent many types of resources like people, email, machines, IP addresses...  
+
+Maltego contains many built-in "transforms" that pull data from multiple sources.  
+
+
 ### Recon-ng
 
 Recon-ng is a terminal reconnaissance tool shipped with Kali Linux.  
-It is similar to Maltego, but offering a custom DSL in the terminal instead of a GUI.
+It is similar to Maltego, but it offers a custom DSL in the terminal instead of a GUI.
 
 ```shell
 recon-ng                          # start the Recon-ng DSL
@@ -711,7 +722,39 @@ If the target notices the scan, it appears as being performed by this web server
 
 The harvester is a Python script used by red teams during penetration tests to perform OSINT reconnaissance.  
 It can gather emails, subdomains, hosts, employee names, open ports, IPs...  
-It retrieves its information from public sources, like search engines, PGP key servers, the Shodan database...
+It retrieves its information from around 10 public sources, like search engines, PGP key servers, the Shodan database...
+
+```shell
+# search for information about a domain using a given source
+theHarvester -d example.com -b bing
+```
+
+
+## Spiderfoot
+
+Spiderfoot is an automated reconnaissance tool gathering a lot of data about a target from many public data sources.  
+It gives more information than TheHarvester, and can be used either in CLI or with its web UI.  
+It uses more than 200 public data sources, including WHOIS, Shodan, VirusTotal...  
+
+```shell
+# start the web interface
+spiderfoot -l 127.0.0.1:5001                      # web UI available at http://127.0.0.1:5001
+
+# use the CLI
+spiderfoot -s example.com -o results.html         # full scan with HTML output
+spiderfoot -t example.com -m sfp_shodan           # IP info from Shodan module
+spiderfoot -t example.com -m sfp_email            # email leaks
+spiderfoot -t example.com -m sfp_dnsbrute         # try to bruteforce subdomains like mail.example.com
+```
+
+
+### Hunter.io
+
+[Hunter.io](https://hunter.io/dashboard) is a web-based tool to find and verify professional email addresses.  
+It can search for all emails for a given domain, making it useful for sales, marketing and recruitment teams.  
+It can be used by penetration testers (or attackers) to identify potential targets for social engineering attacks.  
+
+Hunter.io requires an account, and it has a free plan allowing email search by domain limited to 10 results.
 
 
 ### Holehe
@@ -725,8 +768,13 @@ It can be integrated with Maltego for automatic social networks reconnaissance i
 
 ### The WayBack Machine
 
-The WayBack Machine is a website that takes snapshot of websites and allows to see a website as it used to be in the past.  
-This can be used to see the content of previous versions of websites.
+[The WayBack Machine](https://web.archive.org/) is an internet archive that allows to see a website as it was in the past.  
+This can be used to see the content of previous versions of websites.  
+It takes regular snapshots of each website, and we can select a snapshot to view it.  
+This can reveal some hidden pages that are no longer accessible in the current website.  
+
+Note that it does not archive pages that are dynamically generated.  
+Also website owners can request to have their site excluded from the archive.  
 
 
 
@@ -782,13 +830,13 @@ The Burp suite is a Java-based web application security testing software.
 It is the industry standard tool for web application and mobile application penetration testing.  
 Burp is installed by default in Kali Linux, and can be downloaded and installed on other OS from the PortSwigger website.
 
-Burp acts as a web proxy : it captures and enables manipulation of HTTP/HTTPS traffic between a browser and a web server.  
+Burp acts as a web proxy : it captures and enables manipulation of HTTP and HTTPS traffic between a browser and a web server.  
 It analyzes the traffic, sends its own requests to the web server, and reports all found security vulnerabilities.
 
 The Burp suite comes in 3 editions : 
 - **Burp Suite Community** : free for non-commercial use, include the Burp proxy, requests history and main Burp functionalities
 - **Burp Suite Professional** : free trial, add an automated vulnerability scanner, a fuzzer with no rate limit, project save, access to Burp extensions...
-- **Burp Suite Enterprise** : mostly used for continuous scanning, installed on a server and constantly scans the target web application for potential vulnerabilities
+- **Burp Suite Enterprise** : mostly used for continuous scanning, installed on a server and constantly scan the target web application for potential vulnerabilities
 
 The main features of Burp are separated into different modules, represented as top-level tabs in the Burp GUI :
 - **proxy** : enable interception and modification of requests and responses between a browser and a web application
@@ -798,13 +846,12 @@ The main features of Burp are separated into different modules, represented as t
 - **comparer** : compare 2 pieces of data (either at word or byte level)
 - **sequencer** : check the randomness of tokens (like session cookies) to try to infer a pattern
 
-The Burp suite can easily be extended with custom extensions written in Java, Python or Ruby.  
-The **Burp Suite Extender** module allows to load existing extensions.
+The Burp suite can easily be extended with custom extensions written in Java, Python or Ruby.
+
+The Settings button at the right of the GUI allows to configure Burp.  
+Settings are split into **user settings** (persisted) and **project settings** (non-persisted).
 
 The PortSwigger website offers extensive trainings and details about Burp.
-
-The Settings button at the right of the GUI allows to configure Burp.   
-Settings are split into **user settings** (persisted) and **project settings** (non-persisted).
 
 #### Burp Proxy
 
@@ -826,7 +873,7 @@ Each request reaching the proxy is captured in the Intercept tab of the proxy, w
 All requests received by Burp are visible in the HTTP History tab of the proxy.  
 On right-click, requests can be sent to other modules (Intruder, Repeater, Sequencer, Comparer...).
 
-In the Intercept tab, we can toggle to interception, so traffic is either forwarded automatically or blocked in the proxy.  
+In the Intercept tab, we can toggle the requests interception, so traffic is either forwarded automatically or blocked in the proxy.  
 Even when the proxy does not intercept traffic, it still keeps it in history.
 
 #### Target
@@ -840,6 +887,97 @@ Requests that are not in the scope will not appear in any Burp tools (Proxy, tar
 In the _Issue Definitions_ tab, Burp lists all the possible issues that its scanner can detect.  
 The issue detection is only available in the Professional edition, but the extensive list of potential issues can be seen in the Community edition as well.
 
+#### Repeater
+
+The Repeater module can modify and resend intercepted requests to any target.  
+We can use a request captured by the Burp proxy, edit it and send it as many times as needed.  
+Requests can also be manually created from scratch, similar to what `curl` does.
+
+The Repeater provides a user-friendly GUI to craft the requests, and offers several views of the response, including an HTML renderer.  
+
+On the right-side of the Repeater, we can see the inspector section.  
+The inspector extracts the main parts of the raw request and response to make them easier to read.  
+It shows and allows edition of the request attributes, query parameters, body parameters, cookies, headers...
+
+#### Intruder
+
+The Intruder module offers automated request manipulation and is used for fuzzing and bruteforce attack against web applications.  
+It operates on a request that is usually captured from the Proxy module and sent to Intruder.  
+It can then send multiple requests to the target with configured variations between requests.  
+It can be used to bruteforce a login page, or to fuzz a website looking for endpoints, subdirectories, virtual hosts...  
+It offers similar functionality to the `ffuf` command-line fuzzer.
+
+Intruder is very rate-limited in the Burp Community edition, so security professionals often use different tools.  
+
+Intruder has several attack types :
+- **sniper** : one single payload set, Intruder inserts one payload at a time, leaving all other payload positions unchanged (most common)
+- **battering ram** : one single payload set, Intruder inserts the same payload in each payload position 
+- **pitchfork** : one payload set per payload position (up to 20), Intruder iterates over all of them in parallel
+- **cluster bomb** : one payload set per payload position (up to 20), Intruder tries every possible combination
+
+Intruder lets us mark in the request the positions of variable parts of the query, surrounding with the `§` symbol.  
+We can then define the payload that Intruder will insert at these positions.  
+We define the payload type (list, number, date...) and some optional payload processing (filter, prefix, substring...).  
+
+Burp lets us define **macros** in the Settings > Sessions menu.  
+This can be used to send a request and extract from it some headers and parameters and add them to requests in the Intruder.  
+For example, if a form needs to include a CSRF token, this CSRF token will change for each of our queries.  
+We can use a macro to send a GET request, extract the CSRF token, and add it to the requests sent by the intruder.
+
+#### Decoder
+
+The Decoder module is used to encode, decode or hash data.  
+Other modules can send data to its input text area.  
+Operations in the Decoder module can be chained.
+
+Its main uses are :
+- encode / decode Base64
+- encode / decode URL-encoded text (use of ASCII code in hex with % prefix, for example A is %41)
+- generate hash (MD5 / SHA-1 / SHA-256 / ...)
+- convert binary to hex
+- smart decode feature to guess the encoding (like the "magic" operation in CyberChef)
+
+#### Comparer
+
+The Comparer module lets us compare data either at text-level or byte-level.  
+Data can be pasted from the clipboard or uploaded as a file.  
+It shows a comparison result and highlights modified / added / deleted parts.
+
+#### Sequencer
+
+The Sequencer module can determine the entropy between a number of tokens (CSRF tokens, session cookies...).  
+It is used to check if tokens generated by a website are truly random or if there is a logic that can be predicted.  
+
+It supports 2 modes :
+- **manual** : the user needs to upload a list of tokens to be analyzed
+- **live capture** : the user needs to supply a request, and the Sequencer sends thousands of queries to get some tokens
+
+During a live capture, we can stop / pause the capture and display an entropy analysis.  
+
+#### Organizer
+
+The Organizer module lets us store and annotate some HTTP requests for later use.  
+It can be used during a pentest to save requests that we want to revisit or save in a report.  
+Requests in the Organizer are a read-only view of the original request, but it allows to attach notes to each request.  
+
+#### Extensions
+
+Burp allows developers to create and share custom Burp modules.  
+The Extensions interface lists all installed modules and allows to activate or deactivate them.  
+Extensions can be added by file or from the BApp store.  
+The Up/Down buttons control the order the extensions are invoked when processing traffic.  
+When selecting an installed extension, we can view its details, output and errors during execution. 
+
+The **BApp store** lists all official Burp extensions with their name, rating, last update and detailed explanation.  
+Java extensions integrate automatically with Burp, while Python and Ruby extensions require a Java interpreter (Jython or JRuby).  
+To install Jython, download the Jython standalone JAR and reference it in Burp Extensions > Settings > Python environment.
+
+Extension examples : 
+- `Request Timer` : measure the time taken by each request, used to identify timing attacks
+- `Param Miner` : identify hidden and unlinked request parameters, headers and cookies
+- `JSON Web Tokens` : decode and manipulate JSON Web Tokens on the fly
+- `Retire.js` : identify vulnerable JS libraries (require Burp Suite Pro)
+- `Burp Bounty` : improve the active and passive scanner (require Burp Suite Pro)
 
 
 ### ffuf - Fuzz Faster U Fool
