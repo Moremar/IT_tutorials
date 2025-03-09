@@ -334,6 +334,7 @@ nslookup -type=SOA facebook.com      # query the SOA data for a domain name (nam
 nslookup facebook.com 8.8.8.8        # use a custom DNS server (8.8.8.8 is Google's public DNS server)
 
 dig facebook.com                     # query the IPV4 for a domain name
+dig facebook.com +short              # short response of the above command with just the IP address
 dig facebook.com MX                  # query the IPV4 of the mail server for a domain name
 dig facebook.com @8.8.8.8            # query the IPV4 for a domain name using a specific DNS server
 dig -x 69.63.176.13                  # perform a reverse lookup, same as : dig <IP> PTR
@@ -352,7 +353,7 @@ dnsenum --dnsserver 8.8.8.8 example.com
 ```
 
 
-## DNSDumpster.com
+### DNSDumpster.com
 
 DNS lookup tools (nslookup / dig) provide info on a domain but cannot find subdomains.  
 [DNSDumpster.com](https://dnsdumpster.com/) is a domain research website that finds subdomains for a given domain.  
@@ -361,6 +362,24 @@ Its free version is limited to 50 subdomain per query.
 
 DNSDumpster also provides an API to use its service programmatically.
 
+
+### Amass
+
+Amass is an open-source command-line tool developed by OWASP for in-depth DNS subdomains enumeration.  
+It uses multiple techniques to gather information, like passive info gathering, active DNS probing and subdomain brute-force.   
+It integrates with over 80 data sources and API and is regularly updated to stay up-to-date.  
+Amass also checks CT logs to find DNS information.  
+
+```shell
+# the enum command discovers sub-domains of a given domain 
+amass enum -d example.com -src             # simple DNS subdomains enumeration for a target and show the source of each found subdomain
+amass enum -d example.com -passive         # only use passive enumeration (no probe to the target)
+amass enum -d example.com -brute           # try to brute-force sub-domains
+
+# the intel command discovers domain for a target
+amass intel -org "Facebook"                # identify domains for an organization name 
+amass intel -cidr 104.16.0.0/12            # identify domains for a CIDR range
+```
 
 ### Shodan.io Database
 
@@ -623,8 +642,9 @@ Maltego contains many built-in "transforms" that pull data from multiple sources
 
 ### Recon-ng
 
-Recon-ng is a terminal reconnaissance tool shipped with Kali Linux.  
-It is similar to Maltego, but it offers a custom DSL in the terminal instead of a GUI.
+Recon-ng is a command-line reconnaissance tool shipped with Kali Linux.  
+Its purpose is similar to Maltego, but it offers a custom DSL in the terminal instead of a GUI.  
+The terminal interaction is close to Metasploit for exploits, with modules that can be searched, loaded, configured and run. 
 
 ```shell
 recon-ng                          # start the Recon-ng DSL
@@ -632,24 +652,31 @@ help                              # show all available commands of the DSL
 back                              # quit the loaded module or workspace, or exit Recon-ng
 exit                              # quit Recon-ng
 
-marketplace install all           # install all available modules
+marketplace search                                      # list all modules of the marketplace
+marketplace search whois                                # list all modules containing "whois"
+marketplace install all                                 # install all available modules
+marketplace install recon/domains-contacts/whois-pocs   # install a module by name
+
 workspaces list                   # show all workspaces
-workspaces create google          # create a workspace called "google" for a reconnaissance on google.com
+workspaces create google          # create a workspace called "google" and load it
 workspaces load google            # enter inside the "google" workspace
+
 show                              # list all available item types (company, email, ...) in the loaded workspace
 show companies                    # list all companies registered in the workspace
 show contacts                     # list all contacts registered in the workspace
 db insert companies               # insert a new company item in the workspace (prompt for company details)
 db insert domains                 # insert a new domain name in the workspace (prompt for domain details)
+db schema                         # show the database schema for this workspace
 
-marketplace search whois          # search all existing modules for "whois"
-modules load recon/domains-contacts/whois-pocs     # load a module listed by the above command
-info                              # show how to use the currently loaded module
+modules load recon/domains-contacts/whois-pocs     # load a module that was installed from the marketplace
+
+info                              # show how to use the currently loaded module, with required params
 options set SOURCE google.com     # set the SOURCE option of the module to "google.com"
-run                               # find the point of contact (poc) of the SOURCE domain and add it to the contacts table
+run                               # find the points of contact (PoC) of the SOURCE domain and add it to the contacts table
+show contacts                     # display contacts added by the module
 
 marketplace search brute
-modules load recon/domains-hosts/brute_hosts       # load a module listed by the above command
+modules load recon/domains-hosts/brute_hosts       # load the host brute-force module
 info                              # show how to use the currently loaded module
 run                               # try to check subdomain existence using a brute-force from a text file
 
@@ -730,7 +757,7 @@ theHarvester -d example.com -b bing
 ```
 
 
-## Spiderfoot
+### Spiderfoot
 
 Spiderfoot is an automated reconnaissance tool gathering a lot of data about a target from many public data sources.  
 It gives more information than TheHarvester, and can be used either in CLI or with its web UI.  

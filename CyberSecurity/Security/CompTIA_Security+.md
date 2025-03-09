@@ -1001,12 +1001,20 @@ It is used by security professionals to keep up to date with the latest securiti
 Hackers use these CVEs to craft exploits that use the vulnerability to attack a system.  
 Keeping software patched prevents all these attacks.
 
-**NVD** (National Vulnerability Database) is a publicly accessible database listing CVEs and their remediation.  
-It feeds from the CVE database and exposes a better navigation for the vulnerabilities.  
-It also gives a quantitative score to all vulnerabilities with the **CVSS** (Common Vulnerability Scoring System).
-
 The **Exploit Database** is a public database of exploit codes from various authors on various programs.  
+Exploits can be searched by application and version.  
 Some of these exploits are tested and marked as verified.
+
+**NVD** (National Vulnerability Database) is a publicly accessible database listing CVEs and their remediation.  
+It feeds from the CVE database and exposes a better navigation for the vulnerabilities with category and date filters.  
+It also gives the CVSS quantitative score of all vulnerabilities.  
+
+**CVSS** (Common Vulnerability Scoring System) is a popular free framework introduced in 2005 to score vulnerabilities.  
+The score depends on how easy it is to exploit the vulnerability, and whether an exploit is publicly available.
+
+**VPR** (Vulnerability Priority Rating) is an alternative vulnerability scoring system more recent than CVSS.  
+It bases its score on the risk that each vulnerability causes, and is a better metric to prioritize vulnerabilities to fix.  
+VPR is not open-source and can only be used as part of a commercial platform.
 
 **AIS** (Automated Indicator Sharing) is a service the CISA (Cybersecurity and Infrastructure Security Agency) provides
 to enable real-time exchange of machine-readable cyber threat indicators and defensive measures between public and
