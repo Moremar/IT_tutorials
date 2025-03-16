@@ -151,6 +151,53 @@ Set-Content -Path $outputFile -Value $json
 Write-Output "JSON result written to file $outputFile"
 ```
 
+Some common features of the PowerShell language are :
+```shell
+# set a constant variable
+Set-Variable Pi -Option ReadOnly -Value 3.14
+
+# define an array
+$array1 = @()                       # empty array
+$array2 = @('A', 'B', 'C')          # initialized array
+$array2[1]                          # read an element of the array
+
+# define a map
+$map1 = @{}                         # empty map
+$map2 = @{'A': '1', 'B': '2'}       # initialized map
+$map2.name = 'Bob'                  # add a value in the map
+$map2.number = '00-11-22-33'
+$map2.number                        # read a value from the map
+
+# if conditions use C-style syntax
+# comparison operators are similar to Bash
+if ($a -eq $b) {
+  # do something  
+} elseif ($a -gt $b) {
+  # do something
+} else {
+  # do something
+}
+
+# for loop
+for ($i=1; $i -lt 10; $i++) {
+  Write-Host $i
+}
+
+# do-while loop
+Do {
+  # do something
+}
+While ($a -lt $b)
+
+# read and write from/to the host
+Write-Host "Enter your name : "
+Read-Host $Name
+Write-Host "Hi " + $Name
+
+# read from a file
+$FileContent = Get-Content -Path C:\flag.txt
+```
+
 To execute a Powershell script, we need to update the execution policy to allow it :
 ```shell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy ByPass

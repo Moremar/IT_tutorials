@@ -240,6 +240,8 @@ They can also be used for SSRF (Server-Side Request Forgery) to force the target
 
 ## Shells
 
+A lot of reverse and bind shell examples for many languages are available on [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md).
+
 ### Reverse shell
 
 A reverse shell is a connection initiated by the target machine to the local machine.  

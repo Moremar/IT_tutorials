@@ -81,7 +81,7 @@ ether[0] & 1 != 0               # true if the first bit of the first byte of the
 ```
 
 A built-in version of these filters is available to check TCP flags.  
-`tcp[tcpflags]` gets the byte of the TCP flags, and each indidual flag is accessible with `tcp-syn`, `tcp-ack`, `tcp-fin`, `tcp-rst`, `tcp-push`.
+`tcp[tcpflags]` gets the byte of the TCP flags, and each individual flag is accessible with `tcp-syn`, `tcp-ack`, `tcp-fin`, `tcp-rst`, `tcp-push`.
 
 ```shell
 tcpdump "tcp[tcpflags] == tcp-syn"                 # TCP packets where only the SYN flag is set
@@ -381,13 +381,25 @@ amass intel -org "Facebook"                # identify domains for an organizatio
 amass intel -cidr 104.16.0.0/12            # identify domains for a CIDR range
 ```
 
-### Shodan.io Database
+
+### Shodan.io
 
 The Shodan database is an Internet repository maintaining indexes of all services presented to the Internet.  
 It is used as a search engine for various types of devices (webcam, router, server)...  
 It allows to search devices by keyword, and it lists all devices of every type that matches the search criteria.  
+It also allows to configure alerts that trigger when a new device matching some criteria becomes accessible on the Internet.
 
 The Shodan.io database is used during the passive reconnaissance phase of penetration testing on a target domain or network.
+
+
+### Censys.io
+
+Like Shodan, Censys collects and indexes data about connected devices by scanning the internet.  
+It offers powerful querying capabilities, like specific OS version, specific security misconfiguration, specific IP range...  
+It also provides visualization of the distribution and security of devices.  
+For each found device, it lists open ports and detected services (similar info to nmap).  
+
+Censys also offers API access to integrate its search capabilities into custom programs.  
 
 
 ### arp-scan
@@ -452,7 +464,7 @@ Different methods can be efficient against different networks, to avoid firewall
 Host discovery parameters start with `-P` for "ping". 
 
 ```shell
-nmap 192.168.0.1/24 -sL              # List IP addresses to scan (no package sent)
+nmap 192.168.0.1/24 -sL              # List IP addresses to scan and do a reverse DNS lookup (no package sent to the target)
 nmap 192.168.0.1/24 -sn -PE          # host discovery using an ICMP Echo Request (ICMP type 8) [often blocked by firewalls]
 nmap 192.168.0.1/24 -sn -PP          # host discovery using an ICMP Timestamp Request (ICMP type 13)
 nmap 192.168.0.1/24 -sn -PM          # host discovery using an ICMP Address Mask Request (ICMP type 17)
@@ -589,7 +601,7 @@ The built-in scripts are divided into multiple categories (a script can be in mu
 - `dos` : detect Denial of Service vulnerabilities
 - `exploit` : attempt to exploit multiple vulnerable services
 - `external` : checks based on 3rd party services (Geoplugin, VirusTotal...)
-- `fuzzer` : fizzing attacks
+- `fuzzer` : fuzzing attacks
 - `intrusive` : intrusive scripts (bruteforce, exploitation...)
 - `malware` : scan for backdoors
 - `safe` : safe scripts that cannot crash the target
@@ -739,6 +751,7 @@ gobuster dns -d "example.com" -w list.txt
 gobuster vhost -u "http://10.10.187.130" --domain example.thm -w list.txt --append-domain --exclude-length 250-320
 ```
 
+
 ### scanless
 
 scanless is a utility to create an exploitation web server that can perform open port scans in a stealthier manner.  
@@ -802,6 +815,12 @@ This can reveal some hidden pages that are no longer accessible in the current w
 
 Note that it does not archive pages that are dynamically generated.  
 Also website owners can request to have their site excluded from the archive.  
+
+
+### InSSIDer
+
+InSSIDer isa GUI-based Wifi scanner to visualize and analyze wireless networks.  
+It is mostly used to identify signal overlap and channel interference.
 
 
 
@@ -1055,6 +1074,17 @@ ffuf -w valid_usernames.txt:W1
 
 
 ## Exploiting Tools
+
+
+### searchsploit
+
+searchsploit is a command-line tool in Kali Linux to search exploits from the exploit database.  
+Exploit scripts are all saved locally under `/usr/share/exploitdb/exploits/`.  
+
+```shell
+searchsploit "online book store"                            # search for exploits on the Online Book Store application
+cat /usr/share/exploitdb/exploits/php/webapps/47887.py      # show the code of an exploit found
+```
 
 
 ### Metasploit
@@ -1691,9 +1721,21 @@ It is available by default in the Kali Linux distribution.
 
 For example, Aircrack-ng can crack a WEP password in a few minutes by IV attack.    
 
+To use aircrack-ng on a network interface, this interface must be in monitor mode.  
+This allows it to receive all traffic, even packets not intended for it.  
+Some network cards allow monitor mode, but they would default to normal mode discarding all traffic intended to other devices.
+
 ```shell
-# list wireless networks and their encryption, find one using WEP
-# Note down its channel and BSSID
+sudo ip link set wlan0 down                 # turn down the wlan0 interface
+sudo iw dev wlan0 set type monitor          # change the interface type to monitor
+sudo ip link set wlan0 up                   # turn the interface back up, it should be renamed to wlan0mon
+```
+
+Once we have a wireless network interface wlan0mon in monitor mode, we can scan for wireless networks :
+
+```shell
+# list wireless networks accessible by a network interface, with all its data :
+# BSSID / power / number of beacons received / number of packets received / encryption / channel / ESSID (network name)
 airodump-ng wlan0mon
 
 # Start scanning the target wireless network
@@ -1710,7 +1752,6 @@ aireplay-ng --arpreplay -b <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon
 # It may fail if not enough data, it reruns every 5000 data captured by the scan 
 aircrack-ng MyHackedTraffic.cap
 ```
-
 
 
 ## Forensics Tools
