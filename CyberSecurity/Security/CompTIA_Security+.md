@@ -339,6 +339,7 @@ Multiple types of flood can be used :
 - **SYN flood** : initiate many TCP sessions with different spoofed source IPs and never send the ACKs
 - **XMAS attack** : messages have FIN, URG and PSH flags set, which is an unexpected combination that made many servers crash
 - **HTTP flood** (for web servers)
+- **CharGEN flood** : setup a CharGEN server and send it messages with the victim's spoofed IP, the CharGEN server responds with a random number for each received message
 
 #### Ping of Death
 
@@ -450,6 +451,23 @@ If we re-register it right after, we can block a domain name from real users wit
 
 Attack modifying the mapping between IP address and MAC address inside a local network to steal, modify or redirect frames.    
 ARP Poisoning can be avoided by VLAN segmentation and DHCP Snooping.
+
+When ran from the internal network, Nmap can discover the MAC address of every machine using an ARP scan :
+```shell
+nmap -PR -sn <target>  
+```
+
+ARP spoofing can then be conducted on a target machine using `arpspoof` or Metasploit :
+```shell
+# ARP spoofing with arpspoof
+arpspoof -i eth0 -t <TARGET_IP>
+
+# ARP spoofing with Metasploit
+msfconsole
+use auxiliary/spoof/arp/arp_poisoning
+run                                       # need to set to mandatory params first
+```
+
 
 ### SIM Swap Fraud
 
@@ -1016,6 +1034,11 @@ The score depends on how easy it is to exploit the vulnerability, and whether an
 It bases its score on the risk that each vulnerability causes, and is a better metric to prioritize vulnerabilities to fix.  
 VPR is not open-source and can only be used as part of a commercial platform.
 
+**EPSS** (Exploit Prediction Scoring System) is a another vulnerability scoring system.  
+Its score represents the likelihood of an exploit to be used against a given vulnerability.  
+It is based on statistical models using data sources including vulnerability databases, exploit databases and RSS feeds.  
+A vulnerability can have a low CVSS but a high EPSS if some exploits exist for it and are actively used by attackers.  
+
 **AIS** (Automated Indicator Sharing) is a service the CISA (Cybersecurity and Infrastructure Security Agency) provides
 to enable real-time exchange of machine-readable cyber threat indicators and defensive measures between public and
 private-sector organizations.  
@@ -1136,23 +1159,27 @@ The successive protocols to encrypt data over a wireless connection are WEP, WPA
 
 WEP was the original implementation of 802.11 standard.  
 It was approved in 1999, very vulnerable and abandoned in 2004 due to its security flaws.  
+It uses a 40-bit pre-shared encryption key with the RC4 encryption cypher.  
 Its main weakness is its 24-bit **IV** (Initialization Vector) sent in clear text.
 
 WEP can be cracked in a few minutes by IV attack using **aircrack-ng** or other wireless crackers.  
 
 #### WPA (Wi-fi Protected Access) 
 
-WPA is an improvement of WEP, is uses **TKIP**, MIC (Message Integrity check) and **RC4** encryption.  
+WPA is an improvement of WEP, replacing the weak IV by the **TKIP** (Temporal Key Integrity Protocol), which is basically a 48-bit IV.  
+It still uses the RC4 encryption protocol, but adds the MIC (Message Integrity Check).  
 WPA was a much better standard than WEP, but it had some flaws that WPA2 replaced. 
 
 #### WPA2
 
-WPA2 improves WPA by using **CCMP** (Counter-mode CBC MAC Protocol) for encryption, that uses **AES** with a 128-bit key.
+WPA2 improves WPA to add stronger encryption and better integrity.  
+To check the integrity, it replaces MIC by **CCMP** (Counter-mode CBC MAC Protocol).  
+For the encryption, it replaces RC4 with **AES** with a 128-bit key.
 
 #### WPA3
 
 WPA3 was launched in 2018 to strengthen WPA2.  
-WPA3 has 2 modes : **WPA3-Personal** and **WPA3-Enterprise**.
+Like WPA2, WPA3 has 2 modes : **WPA3-Personal** and **WPA3-Enterprise**.
 
 The main improvement in WPA3-Personal is the removal of the PSK (Pre-Shared Key) exchange used for encryption of all messages.  
 It was replaced by **SAE** (Simultaneous Authentication of Equals) where the client and the AP use public/private keys

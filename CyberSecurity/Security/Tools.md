@@ -211,6 +211,38 @@ Snort rules are stored in `/etc/snort/rules/`, and custom rules should be added 
 Snort can also run its analysis on a PCAP file, and generate the alerts in the terminal.
 
 
+### Impacket / Scapy
+
+**Impacket** is a collection of Python classes for working with network protocols.  
+It supports multiple protocols like SMB, MS-RPC and LDAP...  
+It can be used to launch SMB or LDAP relay attacks for example.
+
+**Scapy** is a Python library to craft custom packets at a lower-level.  
+Unlike Impacket, it is not protocol-specific.
+
+```python
+from scapy.all import *
+
+# Create the IP layer of the packet
+ip_layer = IP()
+ip_layer.dst = "192.168.10.1"
+ip_layer.src = "192.168.10.2"   # optional
+
+# Create the TCP layer of the packet
+tcp_layer = TCP()
+tcp_layer.dport = 80
+tcp_layer.sport = 6666     # optional
+tcp_layer.flags = "S"      # SYN flag set
+
+# Create and send the packet
+packet = ip_layer / tcp_layer
+send(packet)
+
+# print packet details
+print(packet.show())
+```
+
+
 ### CyberDuck
 
 [CyberDuck](https://cyberduck.io/) is a free server and cloud storage browser on Mac and Windows.  
@@ -278,6 +310,25 @@ The paid version allows to use a custom domain and get rid of the ProtonMail sig
 CCleaner and BleachBit are two cleaner programs for Windows.  
 They can help to remove useless files, clear caches, remove cookies and free up disk space.
 
+
+### macchanger
+
+**macchanger** is a command-line utility available on Kali to change our MAC address.  
+
+```shell
+# check the MAC address of a network card
+macchanger -s eth0
+ip link show eth0            # alternative with the "ip" command
+
+# use a custom MAC address (to be authorized in a white list for example)
+sudo macchanger -m 00:11:22:33:44:55 eth0
+
+# use a random MAC address
+sudo macchanger -r eth0
+
+# reset the original MAC address
+sudo macchanger -p eth0
+```
 
 
 ## Reconnaissance Tools
@@ -706,10 +757,11 @@ run
 ```
 
 
-### Gobuster
+### Gobuster / DirBuster / DIRB
 
-Gobuster is an open-source command-line tool to enumerate web URIs, DNS sub-domains, virtual host names and AWS/GCP buckets.  
-It is written in Golang, and can be installed with `sudo apt install gobuster`.
+**Gobuster** is an open-source command-line tool to enumerate web URIs, DNS sub-domains, virtual host names and AWS/GCP buckets.  
+It is written in Golang, and can be installed with `sudo apt install gobuster`.  
+It requires Go to be installed on the machine.
 
 Gobuster checks the existence of each item in a wordlist by sending a request and interpreting the response.  
 It is used by security professionals for penetration testing, bug bounty hunting, and cybersecurity assessments.  
@@ -750,6 +802,13 @@ gobuster dns -d "example.com" -w list.txt
 #   --exclude-length 250-320 : exclude responses of a given length (to exclude 404 errors)
 gobuster vhost -u "http://10.10.187.130" --domain example.thm -w list.txt --append-domain --exclude-length 250-320
 ```
+
+**Dirbuster** is a similar directory brute-force tool written in Java.  
+It is not as fast as GoBuster but offers a GUI and a CLI.  
+It supports recursive scanning, while GoBuster cannot automatically scan discovered directories.  
+
+**DIRB** is another similar tool written in C, more lightweight and much slower.  
+It has a simple CLI, and is good for small targets.  
 
 
 ### scanless
@@ -823,6 +882,36 @@ InSSIDer isa GUI-based Wifi scanner to visualize and analyze wireless networks.
 It is mostly used to identify signal overlap and channel interference.
 
 
+### SET (Social Engineering Toolkit)
+
+SET is a program available by default on Kali that helps with the creation of social engineering attacks.  
+SET contains many different tools, that can be selected with the CLI menu.  
+
+For example, we can create a malicious copy of a famous website login page.  
+On login, it captures the email and password, display them in the terminal, and redirect to the original website.    
+_Social-Engineering Attacks > Website Attack Vectors > Credential Harvester Attack Method > Site Cloner > facebook.com_
+
+This can be combined with a SET phishing campaign that sends a phishing email with custom sender and recipient.
+
+
+### Gophish
+
+Gophish is an open-source framework to organize phishing campaigns to assess an organization's exposure to phishing.  
+It simulates real-world phishing attacks, tracks user responses and generate reports.  
+It offers a GUI to create sending profiles, craft the phishing emails and monitor the results.
+
+
+### Evilginx
+
+Evilginx is a tool used for phishing attacks, to capture credentials and bypass MFA by obtaining the session token.  
+It acts as a reverse-proxy between the victim and the website it tries to access.  
+When the victim interacts with the phishing page created by Evilginx, it is forwarded to the real website.  
+Evilginx captures the credentials and MFA token without the victim suspecting anything.  
+
+To use Evilginx, we need to send the malicious URL to the victim by social engineering, pretending that it is the legitimate website.  
+If the victim accesses it and logs in, Evilginx captures the username, password, MFA token and session token.  
+
+
 
 ## Vulnerability Scanning Tools
 
@@ -850,7 +939,7 @@ It provides continuous vulnerability scanning, compliance check and asset manage
 
 ### OpenVAS (Open Vulnerability Assessment System)
 
-OpenVAS is a complete open-source vulnerability assessment solution offering basic vulnerability scanning features.  
+OpenVAS is a complete open-source vulnerability assessment solution developed by Greenbone offering basic vulnerability scanning features.  
 It is less extensive than commercial competitors (Nessus or Qualys) but is a good solution for individuals and small businesses.  
 
 OpenVAS can be started in a container with all its dependencies :
@@ -1024,6 +1113,94 @@ Extension examples :
 - `JSON Web Tokens` : decode and manipulate JSON Web Tokens on the fly
 - `Retire.js` : identify vulnerable JS libraries (require Burp Suite Pro)
 - `Burp Bounty` : improve the active and passive scanner (require Burp Suite Pro)
+
+
+### Nikto
+
+Nikto is an open-source web server scanner written in Perl and available in Kali.  
+It checks for dangerous files, outdated programs (PHP, Perl, Apache...), server misconfiguration, server-specific issues...  
+It can generate an HTML summary of all the identified vulnerabilities.  
+Nikto is not designed to be stealthy, it sends many requests and is easily detected by any IDS/IPS.  
+
+```shell
+# basic scan
+nikto -o result.html -host 172.16.157.131
+
+# use a plugin to identify exposed pages (similar to dirb or gobuster)
+nikto -host 172.16.157.131 -Plugins "dictionary(dictionary:/usr/share/wordlists/dirb/common.txt)"
+```
+
+
+### Trivy
+
+Trivy is an open-source security scanner developed by Aqua Security.  
+It can scan container images, Kubernetes clusters, file systems, Git repositories and IaC (Terraform, Dockerfile...).  
+It is lightweight and fast, offers a simple CLI and can easily be integrated with CI/CD pipelines.   
+
+```shell
+sudo apt install trivy
+
+# pull an old image of Nginx and scan it
+docker pull nginx:1.19
+trivy image nginx:1.19
+
+# scan the local file system
+trivy fs <FOLDER_PATH>
+
+# scan a GitHub repository
+trivy repo <GITHUB_REPO_URL>
+```
+
+**Kube-Hunter** is another vulnerability scanner specialized for Kubernetes environments.  
+It is no longer under active development, so it is missing the latest CVEs, Trivy should be preferred.  
+
+
+### Grype
+
+Grype is a powerful vulnerability scanner designed for container images, file systems and SBOMs (Software Bill of Materials).  
+A SBOM is a detailed list of all components and dependencies in a software application.  
+
+Grype can detect vulnerabilities in the OS packages of a container image.  
+It can also identify vulnerabilities inside an SBOM file.  
+
+```shell
+# scan a container image for vulnerabilities
+sudo grype docker:vulnerable-image
+
+# scan a file system for vulnerable software
+sudo grype dir:<FOLDER>
+
+# scan a SBOM file for vulnerabilities
+sudo grype sbom:sbom.cdx.json
+```
+
+
+### BloodHound
+
+**BloodHound** is a tool designed to visualize Active Directory environments and identify potential vulnerabilities.  
+It uses graph theory to study the connections between users, computers and groups.  
+
+**SharpHound** is the BloodHound component that gathers information from AD about user permissions, group memberships, active sessions...  
+Once the data is collected, it is  imported into BloodHound for analysis.  
+
+BloodHound identifies all the paths an attacker could take to escalate privileges.  
+It makes it easy to query the AD data and identify high-risk configurations.  
+
+
+### TruffleHog
+
+TruffleHog is a tool designed to find sensitive data (like passwords, API keys, secrets...) in source code repositories.  
+It can search in the history of the repositories and find secrets that have been removed since.  
+
+TruffleHog works on many source code repositories : Git, GitHub, GitLab, S3 buckets, Docker images, ...
+
+```shell
+# scan a local Git repository
+trufflehog git <PATH_TO_GIT_REPO>
+
+# scan a remote Git repository
+trufflehog git https://github.com/<REPO_URL>
+```
 
 
 ### ffuf - Fuzz Faster U Fool
@@ -1377,11 +1554,29 @@ exploit                             # get the hash of all users on the target ma
 ```
 
 
+### PowerSploit
+
+PowerSploit is a collection of PowerShell scripts designed to perform various tasks during the post-exploitation phase.  
+It is used after initial access to a target machine to run malicious code, escalate privilege, extract passwords...  
+
+PowerSploit uses PowerShell that is installed by default on every Windows machine.  
+It has various modules, like `Invoke-Mimikatz` to dump passwords from memory, or `Invoke-MS16-032` to exploit vulnerabilities to escalate privileges.  
+
+PowerSploit is no longer supported by its developers, so it is rarely used in real-life penetration testing.  
+
+
 ### BeEF (Browser Exploitation Framework)
 
-BeEF is an open-source penetration testing tool designed to focus on the exploitation of web browsers.  
+BeEF is an open-source penetration testing tool focusing on the exploitation of web browsers.  
 It is used by ethical hackers, security professionals, and penetration testers to assess the security of web applications and web browsers.  
 It can be used to demonstrate various types of attacks that can be carried out through a web browser.
+
+To use BeEF, we first need to hook the target's browser.  
+This is done by making their browser execute some malicious JS code by clicking on a malicious link.  
+This JS code communicates with the BeEF server and allows communication with it.  
+
+BeEF provides a web-based interface to see all the hooked browsers and interact with them.  
+It allows to steal cookies, capture keystrokes, or take screenshots of the hooked browsers.  
 
 
 ### SqlMap
@@ -1436,6 +1631,13 @@ find . -exec /bin/sh -p \; -quit
 nmap --interactive
   nmap> !sh
 ```
+
+### Responder
+
+Responder is a command-line tool to poison NetBIOS, LLMNR and mDNS name resolution requests.  
+It is a post-exploitation tool, because we need to already be in the internal network to use it.  
+
+
 
 
 ### Havij
@@ -1713,6 +1915,7 @@ hydra -l '' -P pins.txt -f -v 10.10.131.34 http-post-form "/login.php:pin=^PASS^
 hydra -l testuser -P rockyou.txt 10.10.131.34 http-post-form "/login:username=^USER^&password=^PASS^:incorrect"
 ```
 
+
 ### Aircrack-ng
 
 Aircrack-ng is an open-source suite of software tools used for assessing and testing the security of Wifi networks.  
@@ -1726,9 +1929,13 @@ This allows it to receive all traffic, even packets not intended for it.
 Some network cards allow monitor mode, but they would default to normal mode discarding all traffic intended to other devices.
 
 ```shell
+# using the ip / iw commands
 sudo ip link set wlan0 down                 # turn down the wlan0 interface
 sudo iw dev wlan0 set type monitor          # change the interface type to monitor
 sudo ip link set wlan0 up                   # turn the interface back up, it should be renamed to wlan0mon
+
+# alternatively we can use airmon-ng to set an interface in monitor mode
+airmon-ng start wlan0
 ```
 
 Once we have a wireless network interface wlan0mon in monitor mode, we can scan for wireless networks :
@@ -1738,8 +1945,12 @@ Once we have a wireless network interface wlan0mon in monitor mode, we can scan 
 # BSSID / power / number of beacons received / number of packets received / encryption / channel / ESSID (network name)
 airodump-ng wlan0mon
 
-# Start scanning the target wireless network
+# Start capturing the traffic on the target wireless network and save it to a file
 airodump-ng --channel <CHANNEL> --bssid <BSSID> --write MyHackedTraffic wlan0mon
+
+# force an authenticated client to deconnect, so we can capture its reconnection traffic
+# authenticated clients are listed by airdump-ng
+aireplay-ng --deauth 10 -a <BSSID> -c <CLIENT_MAC> wlan0mon
 
 # Keep above command running and in another terminal send an auth request
 aireplay-ng --fakeauth 0 -a <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon
@@ -1751,7 +1962,61 @@ aireplay-ng --arpreplay -b <BSSID> -h <wlan0mon MAC ADDRESS> wlan0mon
 # It will try to infer the WEP key from all captured IVs
 # It may fail if not enough data, it reruns every 5000 data captured by the scan 
 aircrack-ng MyHackedTraffic.cap
+
+# try to crack the WPA/WPA2 key using a wordlist
+aircrack-ng -w <WORDLIST> -b <BSSID> MyHackedTraffic.cap 
 ```
+
+
+### Reaver / wash
+
+**Reaver** is a command-line tool to crack the access code for WPA Wifi routers with WPS enabled.  
+It brute-forces the WPS handshaking process to crack WPA networks.  
+It usually takes several hours to complete the attack.
+
+`wash` is Reaver's custom wireless network scanner.  
+It is similar to `airodump-ng`, but it also shows which networks have WPS enabled.  
+
+```shell
+# set the wireless network interface to monitor mode
+airmon-ng start wlan0
+
+# scan for WPA networks with WPS enabled
+wash -i wlan0mon
+
+# attempt to crack the WPS PIN code
+reaver -i wlan0mon -c <CHANNEL> -b <BSSID> -vv
+```
+
+
+### Bully
+
+Bully is an alternative to Reaver to crack a WPS enabled WPA network.  
+
+It can also be used when we know the PIN from Reaver to find the network password. 
+
+```shell
+# get the Wifi password when we already know the WPS PIN
+bully -i wlan0mon -b <BSSID> -c <CHANNEL> -p <PIN>
+```
+
+
+### Wifi-Pumpkin
+
+Wifi-Pumpkin is a framework written in Python to create a fake access point fo an evil twin attack.  
+It can clone the SSID of a target network, create a phishing portal and manipulate DNS settings to redirect the victim.
+
+
+### Kismet
+
+Kismet is an open-source wireless network detector, packet sniffer and intrusion detection system.  
+It supports multiple protocols, like Wifi, Bluetooth, Zigbee...  
+It is often used during the reconnaissance phase of a penetration test to gather information about the wireless environment.  
+
+Kismet works in passive mode, it does not interact with the network.  
+It even shows hidden SSIDs, like rogue access points or corporate networks, by sniffing the beacons and packets exchanged.  
+
+Kismet can capture packets for further analysis with WireShark.
 
 
 ## Forensics Tools
