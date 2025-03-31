@@ -1912,34 +1912,58 @@ sudo resolvectl statistics        # show how many DNS queries were replied, how 
 
 ### SSH
 
-To allow incoming SSH connections to a Linux machine, we need to run an SSH server, for example OpenSSH.
+To allow incoming SSH connections to a Linux machine, we need to run an SSH server.  
+The most popular SSH server is **OpenSSH**, which is open-source, highly configurable and installed by default on Linux server distributions.  
+An alternative is **DropBear-SSH**, a lightweight SSH server/client for environments with limited resources like embedded devices and IoT applications.  
+
 ```shell
 sudo apt install openssh-server           # install OpenSSH and start a server as a Systemd service
 sudo systemctl status ssh                 # check that the OpenSSH server is running
+
+sudo ufw status                           # check if the firewall is active
+sudo ufw allow ssh                        # create a rule to allow SSH through the firewall
+sudo ufw enable                           # enable the firewall if it is disabled
 ```
 
-When the SSH server is running, we can connect to it from an external machine (in the same network) :
+When the SSH server is running, we can connect to it from another machine.  
+If the SSH server has a public IP, it can be accessed from anywhere on the Internet, otherwise only from the internal network :
 ```shell
-ping <MACHINE_IP>              # ensure we can reach the machine (the IP is given by "ip addr show")
-ssh <USERNAME>@<MACHINE_IP>    # open a remote shell on the Linux machine via SSH 
+ping <SERVER>                 # ensure we can reach the machine (the IP is given by "ip addr show")
+ssh <USERNAME>@<SERVER>       # open a remote shell on the Linux machine via SSH 
 ```
 
 Access logs can be checked in `/var/log/auth.log` for suspicious activity.
 
-We can customize some configuration of the SSH server in `/etc/ssh/sshd_config` :
+We can customize the SSH server configuration in `/etc/ssh/sshd_config` (full option list with `man sshd_config`) :
 - `Port 22` : can be changed to another port to avoid automated scans and bruteforce attempts
+- `ListenAddress 0.0.0.0` : listen on all interfaces by default, we can limit it to a single network interface
+- `LoginGraceTime 2m` : the time allowed for a user to enter his credentials
+- `MaxAuthTries 6` : the number of attempts before the session is terminated
 - `PermitRootLogin no` : to prevent root user to directly login through SSH (users would need to sudo from the server)
-- `AllowUsers myuser` : to white-list some users for SSH instead of allowing every user with a password
+- `PubkeyAuthentication yes` : allow authentication with a private/public key pair
 - `PasswordAuthentication no` : only accept login from users using a private/public key pair, not with a password
+- `AllowUser myuser` : white-list some users
+- `DenyUser myuser` : black-list some users
+- `AllowGroup mygroup` : white-list all users in a group
+- `DenyGroup mygroup` : black-list all users in a group
 
 After modification of the SSH configuration, we should restart the SSH server :
 ```shell
 sudo systemctl restart sshd
 ```
 
+Permissions for SSH remote login require the user to have a local account on the server or to use a service directory.  
+If the username on the SSH server is the same as the local machine, it does not need to be explicitly specified.
+
+When a user first connects to an SSH server, he is asked to verify the host fingerprint (hash).  
+Once verified, the fingerprint is added to the `~/.ssh/known_hosts` file.  
+If we connect again later to this server, the fingerprint received from the server is compared to the known one.  
+If they do not match, a warning is shown, as it could mean we are victim of a man-in-the-middle attack.
+
 Instead of connecting to the remote server in SSH using a password, we can use a cryptographic key pair.  
-The remote server needs to know our public key, and we use our private key to connect.  
-We can generate the key pair and transfer the public key to the remote server with :
+The remote server needs to know the public key, and the user uses his private key to connect.  
+When we create a key pair, we can optionally protect the private key with a passphrase, required at every use.  
+
 ```shell
 ssh-keygen -t rsa -b 4096                      # generate a RSA key pair of size 4096 bits
                                                # private key :  ~/.ssh/id_rsa
@@ -1949,6 +1973,7 @@ ssh-copy-id -i <PUBLIC_KEY> <USER>@<SERVER>    # copy the public key to the remo
                                                # this requires a password to access the server in SSH
 
 ssh <USER>@<SERVER>                            # ensure that no password is required anymore
+ssh <USER>@<SERVER> -i ~/.ssh/id_rsa           # specify the key to use (otherwise, all keys in ~/.ssh/ are tried)
 ```
 
 Once the key pair is configured, we can disable the login via password.  
@@ -1958,23 +1983,52 @@ It also forces an attacker to obtain the private key for login AND the user pass
 By default, an SSH connection drops after a certain time of inactivity.  
 To prevent this timeout, we can configure the client (or the server) to send keep-alive packets regularly.  
 On client-side, we can configure it at user-level in `~/.ssh/config` or system-level in `/etc/ssh/ssh_config`.  
-For example to send a keep-alive packet every minute and accept up to 3 successive failure, add : 
+
 ```shell
+# for all hosts, send a keep-alive every minute and allow up to 3 successive failures
 Host *
     ServerAliveInterval 60
     ServerAliveCount 3
+
+# set the user that the SSH client should use for one specific host
+Host 10.10.10.1
+    User user1
+
+# define a server nickname that we can use instead of the IP address
+Host myserver
+    Hostname 10.10.10.2
+    User user1
 ```
 
-When we connect to a remote server in SSH for the first time, the server's fingerprint is added to the `~/.ssh/known_hosts` file.  
-If we connect again later to this server, the fingerprint received from the server is compared to the known one.  
-If they do not match, a warning is shown, as it could mean we are victim of a man-in-the-middle attack.
+When running an SSH client, parameters in the command have priority, then user-level config, then system-wide config.   
+
+Many organizations allow SSH access from the outside only to a single host called **bastion** or **jumpbox**.  
+That machine is hardened and is used as the entry point in the network, from where we can SSH to other internal machines.  
+We can specify the bastion in the SSH client command, so both the keys for the bastion and the internal target server are stored locally (nothing in the bastion).
+```shell
+# specify a bastion to use as a jumpbox to reach the target server (so this command runs 2 SSH commands in a row)
+ssh -J <USER>@<BASTION> <USER>@<SERVER>
+```
+
+The SSH client also supports local, remote and dynamic port binding :
+```shell
+# local port binding : local port 3333 redirects to remote port 3306 over SSH
+ssh -L 3333:localhost:3306 <USER>@<SERVER>
+
+# remote port binding (reverse tunnel) : the remote machine can use its port 3333 to reach our local machine on port 3306
+ssh -R 3333:localhost:3306 <USER>@<SERVER>
+
+# dynamic port binding : open a proxy on port 3000 (that a browser can use) that redirects to the remote server over SSH
+ssh -D 3000 <USER>@<SERVER>
+```
 
 When SSH is configured between a client and a server, it also allows the use of SFTP.  
 SFTP is used in the same way as FTP to transfer files between client and server, and is secured by SSH.  
+Files can also be copied over SSH using the `scp` command :
 ```shell
 scp <USERNAME>@<SERVER>:<FILE_TO_COPY> <LOCAL_DESTINATION>
 ```
-Some GUI applications, like **CyberDuck** on Mac and Windows, allow the file transfer between a client and an SFTP server.
+Some GUI applications, like **WinSCP** or **CyberDuck** on Mac and Windows, allow the file transfer between a client and an SFTP server.
 
 
 ## Web Server using the LAMP Stack
