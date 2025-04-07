@@ -85,7 +85,10 @@ It is open-source and available on Windows / Linux / MacOS.
 PowerShell scripts have the extension `.ps1`.
 
 Windows uses structured data and API, while Unix represents everything as files, which made it difficult to use Unix tools in Windows.  
-Therefore, Microsoft developed an object-oriented approach, allowing administrators to automate tasks by manipulating objects.
+Therefore, Microsoft developed an object-oriented approach, allowing administrators to automate tasks by manipulating objects.  
+PowerShell is deeply integrated with the Windows OS and allows access to System functions.  
+
+#### Cmdlets
 
 Commands in Powershell are called **cmdlets** and return object instances, allowing more advanced data manipulation.  
 Powershell cmdlets follow a Verb-Noun naming convention, like `Get-Content` or `Set-Location`.
@@ -151,6 +154,8 @@ Set-Content -Path $outputFile -Value $json
 Write-Output "JSON result written to file $outputFile"
 ```
 
+#### PowerShell syntax
+
 Some common features of the PowerShell language are :
 ```shell
 # set a constant variable
@@ -206,6 +211,26 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy ByPass
 
 Powershell keeps an history of commands executed in a session in `%APPDATA%\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt`.  
 This can be a valuable resource when investigating a cybersecurity incident.
+
+#### Security Command Examples
+
+```shell
+# Disable the firewall
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+
+# Stop and disable Windows Defender (require admin privileges)
+Stop-Service -Name "WinDefend" -Force
+Set-Service -Name "WinDefend" -StartupType Disabled
+
+# disable Windows Defender real-time monitoring by modifying a value in the Windows registry
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableRealtimeMonitoring" -Value 1 
+```
+
+We can run a PowerShell script on a remote machine using PsExec :
+
+```shell
+psexe //<TARGET_IP> -u <USERNAME> -p <PASSWORD> powershell.exe -ExecutionPolicy ByPass -File <POWERSHELL_FILE>
+```
 
 
 ## Windows Folders

@@ -89,6 +89,7 @@ It is a concise version of the OSI model with only 4 layers.
 |     L2TP     |    1701     |    UDP    |                 Layer 2 Tunnel Protocol                 |   7   | Underlying VPN protocol with no inherent security                                                                                                                                                                                                    |
 |     PPTP     |    1723     | TCP / UDP |             Point to Point Tunnel Protocol              |   7   | Underlying VPN protocol with built-in security                                                                                                                                                                                                       |
 |    RADIUS    | 1812 / 1813 |    UDP    |    Remote Authentication<br/>   Dial-In User Service    |   7   | Protocol allowing authentication and authorization (1812) and accounting (1813).<br/>An alternative set of ports for RADIUS are 1645 / 1646.                                                                                                         |
+|     NFS      |    2049     | TCP / UDP |                   Network File System                   |   7   | Protocol to expose local folders to other computers over the network so they can mount them and access their content as if it was a USB drive.                                                                                                       |
 |     FCIP     |    3225     | TCP / UDP |                    Fiber Channel IP                     |   7   | Protocol to encapsulate Fiber Channel frames inside TCP/IP packets                                                                                                                                                                                   |
 | iSCSI Target |    3260     |    TCP    |                 Target of iSCSI message                 |   7   | Listening port for iSCSI targeted devices when linking data storage facilities over IP.                                                                                                                                                              |
 |    MySQL     |    3306     |    TCP    |                     MySQL Database                      |   7   | MySQL database                                                                                                                                                                                                                                       |
@@ -210,7 +211,6 @@ It is part of the NetBIOS-over-TCP protocol suite, and is used for host name res
 LLMNR is a Windows-only protocol, on Linux we would use **ZeroConf** (relying on systemD) instead.  
 
 
-
 ### SNMP
 
 SNMP is used to collect information and metrics about all devices in a network.  
@@ -244,6 +244,7 @@ SNMPv3 uses user/password authentication and an encryption key instead.
 
 SNMP vulnerabilities can be identified using tools like **SNMPwalk** or **SNMPenum**.
 
+
 ### Telnet
 
 Telnet is a protocol based on TCP used to connect to a remote host's command line interface.  
@@ -264,6 +265,7 @@ HOST: www.example.com
 
 **netcat** is a more powerful tool to open connections to UDP or TCP ports and send requests.
 
+
 ### SSH (Secure Shell)
 
 SSH is a protocol to create a secure channel between 2 computers or network devices and enable one device to control the other device.  
@@ -278,6 +280,7 @@ The public key can be sent to the server with `ssh-copy-id`, and added to `~/.ss
 
 When an attacker gains access to a server using a reverse shell, he can upgrade his shell by dropping an SSH key in this `authorized_keys` file.  
 This will create a backdoor, by providing access via SSH, instead of the reverse shell with fewer functionalities.  
+
 
 ### FTP (File Transfer Protocol)
 
@@ -298,6 +301,15 @@ When checking with Wireshark the actual network traffic, we see that the client 
 - `LIST` : enumerate files on the FTP server
 - `TYPE A` : text mode
 - `RETR test.txt` : get a file from the FTP server
+
+
+### NFS (Network File System)
+
+NFS is a protocol developed by Sun MicroSystems (now Oracle) to allow other computers to access local folders over the network.  
+The NFS client computer can mount the folder exposed by the NFS server to access its content, like a USB drive.  
+NFS usually uses TCP/UDP port 2049.  
+Its configuration is kept in the `/etc/exports` file.  
+It was designed for Unix, but clients also exist for Windows machines.
 
 
 ### SMTP (Simple Mail Transfer Protocol)

