@@ -223,7 +223,10 @@ Stop-Service -Name "WinDefend" -Force
 Set-Service -Name "WinDefend" -StartupType Disabled
 
 # disable Windows Defender real-time monitoring by modifying a value in the Windows registry
-Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableRealtimeMonitoring" -Value 1 
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableRealtimeMonitoring" -Value 1
+
+# look for a file on the C:/ folder, equivalent of Linux command : find / -name flag.txt 2>/dev/null
+Get-ChildItem -Path C:\ -Recurse -Filter flag.txt -ErrorAction SilentlyContinue -Force | Select-Object -ExpandProperty FullName
 ```
 
 We can run a PowerShell script on a remote machine using PsExec :
@@ -310,6 +313,9 @@ Startup programs can be disabled from here, as well as in `Settings > Apps > Sta
 
 The `Service` tab lets us start and stop Windows services.  
 This contains the same information as `services.msc`, the services management console.  
+The same info can be displayed in the terminal with the command `sc qc <SERVICE_NAME>`.  
+It shows the binary used by the service and the account used to start the service.  
+Services information can be seen in the Registry as well, they all have a folder under `Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\LocalKdc`.
 
 The `Users` tab shows all users connected to the machine, and the processes they are running.  
 We can disconnect a user (lock the session) or sign off a user (close the session).
