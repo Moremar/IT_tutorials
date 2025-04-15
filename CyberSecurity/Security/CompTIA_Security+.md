@@ -183,6 +183,8 @@ SQL injections allows **stacked queries** by ending the intended query and runni
 SQL injections can offer a RCE (Remote Code Execution) if the database server has a way to execute code.  
 For example on Microsoft SQL Server, we can stack a `xp_cmdshell` procedure to execute shell commands within SQL Server.
 
+SQL injections are prevented with user input sanitization and prepared statements.
+
 **Havij** is a tool that can detect SQL injection vulnerabilities of a website.
 
 **SQLmap** is another penetration tool that detects SQL injections in web applications.  
@@ -199,15 +201,19 @@ served to the victim (for ex in a post comment).
 The 3 types of XSS attacks are :
 - Stored and Persistent : get the malicious code saved in the DB by the web server
 - Reflected : malicious code executed when the victim clicks on a link on the site
-- DOM-based : exploit the victim's web browser
+- DOM-based : exploit the victim's web browser, using in the script functions like `document.write` or `document.cookie`
 
-#### XSRF (Cross-Site Request Forgery)
+XSS allows the attacker to run custom JS code in the victim's browser by pretending it comes from the trusted website.  
+It is a delivery mechanism used to steal the victim's data, intercept the communication or install malware on his system.
+
+
+#### XSRF or CSRF (Cross-Site Request Forgery)
 
 Unlike XSS, XSRF exploits the trust that the web server has in his user.  
 The attacker forces a user to execute actions on the website for which he is already authenticated.  
 This is done by making the user click on a URL to that site, so his session cookie will be attached to the request.  
 
-XSRF can be avoided by using XSRF tokens in the HTML templates.  
+XSRF can be avoided by using anti-XSRF tokens in the HTML templates.  
 The token is sent with each request and validated on receive, so the forged URL would not have it.
 
 

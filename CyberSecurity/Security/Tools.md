@@ -861,12 +861,29 @@ gobuster dns -d "example.com" -w list.txt
 gobuster vhost -u "http://10.10.187.130" --domain example.thm -w list.txt --append-domain --exclude-length 250-320
 ```
 
-**Dirbuster** is a similar directory brute-force tool written in Java.  
-It is not as fast as GoBuster but offers a GUI and a CLI.  
+**Dirbuster** is a similar directory brute-force tool written in Java and developed by OWASP.  
+It is not as fast as GoBuster but offers a GUI (started with the command `dirbuster`) and a CLI.  
 It supports recursive scanning, while GoBuster cannot automatically scan discovered directories.  
 
 **DIRB** is another similar tool written in C, more lightweight and much slower.  
 It has a simple CLI, and is good for small targets.  
+
+
+### WPScan
+
+WPScan is a specialized tool to scan WordPress installations.  
+It can reveal exposed directories, outdated plugins and weak usernames.
+
+```shell
+# general vulnerability scan on a WordPress site
+wpscan --url www.my-worpress-site.com
+
+# enumerate users
+wpscan --url www.my-worpress-site.com --enumerate u
+
+# enumerate plugins
+wpscan --url www.my-worpress-site.com --enumerate p
+```
 
 
 ### scanless
@@ -1174,6 +1191,23 @@ Extension examples :
 - `SAML Raider` : test SAML infrastructure by intercepting, decoding and altering SAML tokens
 
 
+### OWASP ZAP (Zed Attack Proxy)
+
+OWASP ZAP is an open-source web application vulnerability scanner.  
+It can be used to detect SQL injection, XSS and misconfiguration in the target web application.  
+Just like Burp, ZAP acts as a proxy between the browser and the web application, allowing to intercept and manipulate traffic.  
+It is mostly used via its GUI, but it also has a CLI and an API for automation.
+
+ZAP can run in passive or active mode.  
+In passive mode, it just captures the traffic without sending any intrusive payloads.  
+In active mode, it sends crafted requests to test for vulnerabilities.
+
+ZAP offers a Quick Start Automated Scan, a simple scan running against the target web application by simply entering its URL.  
+It also has a Manual mode where we can navigate manually the website and ZAP finds issues in real-time.
+
+ZAP can be integrated with a CI/CD pipeline to run scans automatically at every new version of the webapp.
+
+
 ### Nikto
 
 Nikto is an open-source web server scanner written in Perl and available in Kali.  
@@ -1184,6 +1218,9 @@ Nikto is not designed to be stealthy, it sends many requests and is easily detec
 ```shell
 # basic scan
 nikto -o result.html -host 172.16.157.131
+
+# preform a credential scan
+nikto -o result.html -host 172.16.157.131 -id "admin:pa$$word" -Format htm
 
 # use a plugin to identify exposed pages (similar to dirb or gobuster)
 nikto -host 172.16.157.131 -Plugins "dictionary(dictionary:/usr/share/wordlists/dirb/common.txt)"
@@ -2469,6 +2506,14 @@ Metasploitable is a deliberately vulnerable Linux VM created by Rapid7 (creators
 It is commonly used with Metasploit, but can be attacked manually with Nmap, Hydra, Nikto, Burp...  
 - **Metasploitable 2** (2012) : Ubuntu 8.04 VM containing misconfigured services and vulnerable applications
 - **Metasploitable 3** (2016) : Windows Server 2008 or Ubuntu 14.04 VM containing more modern attack scenarios
+
+
+### DVWA (Damn Vulnerable Web App)
+
+DVWA is another intentionally insecure web application built with PHP and MySQL for educational purpose.  
+It has many vulnerability types, and a well organized menu to explain each vulnerability.  
+It has 3 levels or security that can be selected : Low, Medium and High.  
+We can even see the source code of each security level for each vulnerability, as well as a fully secure version.
 
 
 ### VulnHub

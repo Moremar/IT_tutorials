@@ -118,7 +118,8 @@ and possibly get RCE on other machines in the internal network.
 
 ## SQLi (SQL Injection)
 
-- `' OR 'a' = 'a` : test if there is a SQLi vulnerability
+- `'` : if we get an exception, there is a SQLi vulnerability
+- `' OR 'a' = 'a` : force the condition to be true (use a string instead of `1 = 1` to use the closing quote)
 - `' UNION SELECT username FROM users WHERE 'a' = 'a` : display a field from another table
 - `sqlite_master` (SQLite < 3.33.0) or `sqlite_schema` (SQLite >= 3.33.0) : built-in table containing all table names and definition in SQLite
 - 
