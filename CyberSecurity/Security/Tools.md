@@ -273,8 +273,22 @@ Snort can also run its analysis on a PCAP file, and generate the alerts in the t
 It supports multiple protocols like SMB, MS-RPC and LDAP...  
 It can be used to launch SMB or LDAP relay attacks for example.
 
+```python
+from impacket.smbconnection import SMBConnection
+
+conn = SMBConnection('10.10.10.2', '10.10.10.2')
+conn.login('guest', '')
+shares = conn.listShares()
+for share in shares:
+    share_name = share['shi1_netname'].strip()
+    share_comment = share['shi1_remark'].strip()
+    print(share_name, share_comment)
+conn.logoff()
+```
+
 **Scapy** is a Python library to craft custom packets at a lower-level.  
-Unlike Impacket, it is not protocol-specific.
+Unlike Impacket, it is not protocol-specific, it exposes classes like IP, TCP, ARP, ...  
+It can be used for example for ARP scanning or TCP SYN Flood attack.
 
 ```python
 from scapy.all import *
@@ -1650,17 +1664,6 @@ exploit                             # get the hash of all users on the target ma
 ```
 
 
-### PowerSploit
-
-PowerSploit is a collection of PowerShell scripts designed to perform various tasks during the post-exploitation phase.  
-It is used after initial access to a target machine to run malicious code, escalate privilege, extract passwords...  
-
-PowerSploit uses PowerShell that is installed by default on every Windows machine.  
-It has various modules, like `Invoke-Mimikatz` to dump passwords from memory, or `Invoke-MS16-032` to exploit vulnerabilities to escalate privileges.  
-
-PowerSploit is no longer supported by its developers, so it is rarely used in real-life penetration testing.  
-
-
 ### BeEF (Browser Exploitation Framework)
 
 BeEF is an open-source penetration testing tool focusing on the exploitation of web browsers.  
@@ -1734,8 +1737,6 @@ Responder is a command-line tool to poison NetBIOS, LLMNR and mDNS name resoluti
 It is a post-exploitation tool, because we need to already be in the internal network to use it.  
 
 
-
-
 ### Havij
 
 Havij is an automated SQL Injection tool that helps penetration testers to find and exploit SQL Injection vulnerabilities on a web page.  
@@ -1749,6 +1750,56 @@ BlackEye is an application on Kali Linux to create a fake login page for popular
 It generates a URL to send to the victim that looks like the original login page.  
 When accessed, info about the victim (IP and browser) get displayed in the Kali Linux console running BlackEye.  
 When the victim enters his username and password, they are displayed to the console, and the victim is redirected to the real site.
+
+
+### Caldera
+
+Caldera is an open-source platform developed by MITRE to automate adversary emulation.  
+It is built on the MITRE ATT&CK framework, and allows to simulate these attacks in a controlled environment.  
+
+It is a **BAS tool** (Breach and Attack Simulation tool).  
+It is designed to mimic the actions of an attacker breaching the network and moving laterally within it.  
+
+It uses an agent installed on the target machines, and automates many types of attacks.  
+For example, it can automate a phishing attack, credentials dumping with Mimikatz and lateral movement using the stolen credentials.  
+
+It generates a detailed report of the results that can be analyzed to find the system's vulnerabilities.  
+
+
+### Infection Monkey
+
+Infection Monkey is another open-source BAS tool (Breach and Attack Simulation) to emulate real-world adversary behaviors.  
+It mimics the behavior of an actual malware, but without causing any damage.  
+
+it is made of 2 components :
+- the **Monkeys** are agents behaving like a malware that can be configured to spread through the network, steal data and deliver payloads
+- the **Monkey Island** is a C2 (Command and Control) server collecting infos about the monkeys to monitor the simulation
+
+The monkeys can be configured to behave like many kinds of malware (worm, ransomware...).  
+From the monkey island, we can see the infection spread, which systems got infected and which data are at risk.  
+
+
+### Atomic Red Team
+
+Atomic Red Team is a library of small focused attack tests that can be run manually or automatically.  
+Each test simulates a real-world attacker behavior against a target system.  
+
+Atomic Red Team is based on the MITRE ATT&CK framework, where each atomic attack tests a specific technique.  
+For example, some atomic tests can perform privilege escalation. lateral movement, data exfiltration...  
+Atomic tests can be invoked with the `Invoke-AtomicTest` PowerShell command.  
+The goal is to simulate an attack and ensure that our system can detect it and prevent it.  
+Tests are referenced by their MITRE ATT&CK technique reference ans their ID within that technique.  
+
+```shell
+# Technique T1003.001 test 1 : simulate an attacker dumping credentials from memory
+Invoke-AtomicTest T1003.001 -TestNumbers 1
+
+# Technique T1059.001 test 2 : simulate an attacker executing a malicious PowerShell script
+Invoke-AtomicTest T1059.001 -TestNumbers 2
+
+# Technique T1053.005 test 1 : simulate an attacker using a scheduled task to maintain persistence
+Invoke-AtomicTest T1053.005 -TestNumbers 1
+```
 
 
 
@@ -2031,6 +2082,69 @@ medusa -h <TARGET_IP> -u testuser -P rockyou.txt -M ftp
 ```
 
 
+## Post-Exploitation Tools
+
+
+### PowerShell Empire
+
+Empire is a popular post-exploitation and C2 framework used in red teaming.  
+It allows attackers to maintain access, escalate privileges and perform lateral movement.  
+It is used a lot in CTF and red teaming labs, but less in real penetration testing due to its growing detection signature.  
+
+Empire lets us run PowerShell agents without the need for PowerShell.exe, to evade detection.  
+On a local attacking machine, we can start the Empire server, a listener waiting for a target to connect :
+```shell
+uselistener http set Host http://<ACCTACKER_IP> execute
+```
+We then need the target to connect to this Empire server.  
+Empire can generate a stager payload in multiple formats.  
+The attacker needs to find a way to deliver this payload and execute it on the target machine (phishing, USB drop, remote exploit...).  
+Once executed, this stager connects to the Empire server to download the full Empire agent that allows remote control.  
+
+For example, for credentials harvesting using Mimikatz :
+```shell
+usemodule credentials/mimikatz/logonpasswords execute
+```
+
+
+### PowerSploit
+
+PowerSploit is a collection of PowerShell scripts designed to perform various tasks during the post-exploitation phase.  
+It is used after initial access to a target machine to run malicious code, escalate privilege, extract passwords...  
+
+PowerSploit uses PowerShell that is installed by default on every Windows machine.  
+It has various modules, like `Invoke-Mimikatz` to dump passwords from memory, or `Invoke-MS16-032` to exploit vulnerabilities to escalate privileges.  
+
+PowerSploit contains the **PowerView** tool used for AD enumeration.  
+It can map an AD environment, including users, groups, computers and the relationship between them.
+
+```shell
+Get-NetUser                                    # identify all AD users in the domain
+                                               # (can identify high-privilege or rarely used users)
+Get-NetGroup                                   # list all AD groups in the domain
+Get-NetGroupMember -GroupName "<GROUP_NAME>"   # find users in a group
+Get-NetComputer                                # identify computers on the AD domain
+Get-NetDomainTrust                             # show trust relationship between this domain and other domains
+Get-NetSession -ComputerName <COMPUTER_NAME>   # show who is currently logged to a specific computer
+```
+
+PowerSploit is no longer supported by its developers, so it is rarely used in real-life penetration testing.  
+
+
+### PowerUpSQL
+
+PowerUpSQL is a collection of PowerShell scripts to automate the discovery and exploitation of SQL servers.  
+
+```shell
+Get-SQLInstanceLocal -Verbose                      # enumerate the SQL server instances on the local network   
+Get-SQLDomainUser -UserState SmartCardRequired     # enumerate users configured to require a smartcard for login (to avoid them)    
+Get-SQLDomainUser -UserState TrustedForDelegation  # enumerate users who can impersonate other users (good targets for privilege escalation)
+Get-SQLServerInfo -Instance "SQLSERVER01"          # get info about a SQL server instance (version, users, roles...)
+Get-SQLServerLoginDefaultPw  -Verbose              # identify SQL server instances using default credentials
+Invoke-SQLEscalatePriv -Instance "SQLSERVER01"     # attempt to escalate privilege on an SQL server instance
+```
+
+
 ### CrackMapExec (CME)
 
 CrackMapExec is a post-exploitation tool used for network enumeration, credential validation an lateral movements on Windows target machines.  
@@ -2128,6 +2242,35 @@ Seatbelt.exe autoruns
 
 PowerShell ISE is a user-friendly GUI script development environment for PowerShell.  
 It is available by default on Windows machines and can be used to easily run PowerShell commands to elevate privileges.
+
+
+### LaZagne
+
+[LaZagne](https://github.com/AlessandroZ/LaZagne) is an open-source Python post-exploitation tool to recover stored credentials from various applications.  
+It can recover credentials stored in browsers, in Git or Wifi access codes.  
+It is available for Windows, Linux and Mac.
+
+```shell
+# install LaZagne from source
+git clone <REPO>
+cd LaZagne
+python3 -m venv myvenv
+source myvenv/bin/activate
+pip3 install -r requirements.txt
+
+# retrieve credentials stored in browsers
+python3 LaZagne.py browsers
+
+# retrieve wifi passwords
+python3 LaZagne.py wifi
+
+# cleanup the venv
+deactivate
+rm -rf myvenv
+```
+
+
+## Wireless Tools
 
 
 ### Aircrack-ng

