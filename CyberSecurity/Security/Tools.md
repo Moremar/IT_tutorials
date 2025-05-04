@@ -341,7 +341,7 @@ It blocks fingerprinting, ads and ad-trackers by default.
 It can be installed as a plugin on most popular browsers (Chrome, Firefox, Edge, Safari, Opera).
 
 
-### Tor browser
+### Tor browser (The Onion Router)
 
 Tor is a web browser transferring the incoming traffic through a network of computers to provide anonymity and untraceability.  
 Requests sent to Tor go to 3 Tor relays before being sent to the target website.  
@@ -366,6 +366,31 @@ All transactions on the darkweb are settled in bitcoin.
 
 We can use a VPN to connect to Tor, it hides to the ISP that we access Tor, and it prevents the Tor network entry point
 to see our real IP (but the VPN provider knows it).
+
+```shell
+sudo apt install tor
+sudo systemctl start tor
+```
+
+### ProxyChains
+
+ProxyChains is a Linux tool that forces any TCP connection by a given application to go through a chain of proxy servers.  
+It improves anonymity and can bypass network restrictions.  
+
+We can customize the settings via the configuration file `/etc/proxychains4.conf`.  
+We usually add `socks5 127.0.0.1 9050` so it can use the Tor service on the local machine (running on port 9050 by default).  
+
+```shell
+# install ProxyChains
+sudo apt install proxychains4
+
+# edit the configuration file to setup the proxies to use
+sudo vim /etc/proxychains4.conf
+
+# check the IP address
+curl ifconfig.me                     # show real IP address
+proxychains4 curl ifconfig.me        # show the IP address of a Tor node
+```
 
 
 ### ProtonMail
