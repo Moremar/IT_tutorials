@@ -8,7 +8,7 @@
 Cyber-security aims at protecting the CIA Triad.  
 Hacking aims at breaking it, making the DAD Triad :
 
-- **Disclosure** : break confidentiality by gaining accessed to resources that should not be accessed
+- **Disclosure** : break confidentiality by gaining access to resources that should not be accessed
 - **Alteration** : break integrity by modifying the content or behavior of resources
 - **Denial** : break availability by preventing legitimate users to access resources
 
@@ -223,7 +223,7 @@ An IDOR is a reference to an object without proper validation of the object owne
 This allows a malicious user to access data that he should not have permission to access.  
 
 A common example is a user-specific page access with an ID in its URL (user ID, product ID, order ID...).  
-The backend need to properly validate that the requested page is allowed for the logged user, otherwise it is an IDOR.
+The backend needs to properly validate that the requested page is allowed for the logged user, otherwise it is an IDOR.
 
 
 ### RCE (Remote Code Execution)
@@ -1040,7 +1040,7 @@ The score depends on how easy it is to exploit the vulnerability, and whether an
 It bases its score on the risk that each vulnerability causes, and is a better metric to prioritize vulnerabilities to fix.  
 VPR is not open-source and can only be used as part of a commercial platform.
 
-**EPSS** (Exploit Prediction Scoring System) is a another vulnerability scoring system.  
+**EPSS** (Exploit Prediction Scoring System) is another vulnerability scoring system.  
 Its score represents the likelihood of an exploit to be used against a given vulnerability.  
 It is based on statistical models using data sources including vulnerability databases, exploit databases and RSS feeds.  
 A vulnerability can have a low CVSS but a high EPSS if some exploits exist for it and are actively used by attackers.  
@@ -1075,7 +1075,7 @@ To choose suppliers, we must apply **due diligence**, and check that they have :
 
 ### Trusted Foundry Program
 
-As part of the supply chain management, the supply of hardware must be also be reviewed.  
+As part of the supply chain management, the supply of hardware must also be reviewed.  
 The **DoD** (US Department of Defense) created the **Trusted Foundry Program** for their microprocessor supply.  
 It is a microprocessor manufacturing utility operated by the DoD and part of a validated supply chain.
 
@@ -1136,7 +1136,7 @@ This includes documents, emails, electronic records, hard drives, computers...
 ### Chain of Custody
 
 The chain of custody refers to the chronological documentation showing the seizure, custody, control, transfer,
-analysis, and disposition of physical or electronic evidence during the course of an investigation.  
+analysis, and disposal of physical or electronic evidence during the course of an investigation.  
 The chain of custody is required to guarantee that the evidence has not been tampered with, so it is admissible in a court of law.
 
 
@@ -1926,8 +1926,8 @@ The **RFC 3227** (Guideline for Evidence Collection and Archiving) gives a good 
 
 #### Identification
 
-In the Identification step, we ensure the scene is safe, and evidences are secured from contamination.  
-We also identify the scope of evidences to collect.
+In the Identification step, we ensure the scene is safe, and pieces of evidence are secured from contamination.  
+We also identify the scope of evidence to collect.
 
 #### Collection
 

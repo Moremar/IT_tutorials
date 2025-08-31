@@ -1071,7 +1071,7 @@ The sticky bit is used for the `/tmp` directory, so every user can read and writ
 umask 0022              # set the umask with a default sticky bit of 0
 
 chmod +t mydir          # set the sticky bit
-chmod 1777 mydir        # set permission and the sticky bit (see below)
+chmod 1777 mydir        # set permission and the sticky bit
 ```
 
 #### SUID and SGID
@@ -1231,7 +1231,7 @@ Jobs running in the background still display their output in the shell (if not r
 
 A job can also be run with `nohup`, to keep it running even when the shell session is closed.  
 It will create a `nohup.out` file in the current directory for its output.  
-When the shell is closed, the parent process of the process running with `nohub` becomes process 1 (systemd).
+When the shell is closed, the parent process of the process running with `nohup` becomes process 1 (systemd).
 
 ```shell
 ping -c 10 google.com > a.txt &                 # run a job in the background
