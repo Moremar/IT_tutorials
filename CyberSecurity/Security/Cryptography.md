@@ -511,6 +511,20 @@ Browsers need to be updated to trust this private CA, otherwise they would show 
 The **Web of Trust** is a decentralized trust model addressing the issues of public key authentication in a CA-based PKI system.  
 An example of Web of Trust is PGP (Pretty Good Privacy) and its open-source implementation GPG (GNU PGP Guard).  
 
+### OCSP Stapling
+
+When a browser makes an HTTPS connection to a web server, it performs an OCSP check with the CA that issued the certificate for that web server.  
+This confirms that the certificate is valid and has not been revoked.  
+This check against the CA may cause some delay in the SSL handshake.
+
+OCSP stapling is a technique to speed up this process by removing the need to query the CA.  
+It consists in storing a copy of the digitally-signed and time-stamped OSCP response of the CA directly on the webserver.  
+This response is refreshed at regular interval, so it always has a recent timestamp.  
+This response is included with the initial SSL handshake, so the browser does not need to perform the external call to the CA.
+
+OSCP stapling is not yet supported by all browsers.  
+On browsers not supporting it, it automatically reverts to the usual OSCP check with the CA.
+
 ### Certificate Transparency (CT)
 
 Certificate Transparency is an open framework developed by Google that provides a publicly auditable record of all issued digital certificates.  

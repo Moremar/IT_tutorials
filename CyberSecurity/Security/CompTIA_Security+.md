@@ -143,15 +143,39 @@ We call **spimming** the spam using IM chat (Whatsapp, Messenger, SMS...).
 
 ### Malware Delivery Methods
 
-Malwares can be delivered to the victim in multiple ways :
+Malware can be delivered to the victim in multiple ways :
 - **autorun** on external media mount : USB / CD / Floppy Disk
 - **phishing link** : drive-by installation, download links...
 - **auto-execution** of downloaded executables : (py, vbs, bat, exe)
 - **VBA macro** triggered when a Word/Excel document is open
 
-Many modern malwares are fileless : they either attach to an existing executable, or store their file in a 
+Modern malware are often fileless : they either attach to an existing executable, or store their file in a 
 temporary directory and then remove the files.  
 This makes it harder for antivirus to detect them by signature.
+
+### Malware Analysis
+
+Malware can be either **targeted** (like StuxNet against Iran nuclear plant) or **mass campaigns** (like the Wannacry ransomware).
+
+Malware usually perform 4 steps to infect a system :
+- **Delivery** : the malware enters the target system (USB, PDF attachment...)
+- **Execution** : the malware runs to execute the malicious code
+- **Persistence** : the malware maintains its persistence to survive reboot and hide its presence
+- **Propagation** : the malware propagates to other machines
+
+A malware infection leaves some evidence in the infected system, that security analysts identify to understand the malware behavior.  
+Malware are classified based on the evidence they leave on each step of their life cycle.  
+
+Malware can leave 2 types of evidence :
+- **host-based signatures** : encrypted files, installed programs, modified services, registry values, environment variables...
+- **network-based signatures** : networking communication during delivery, execution and propagation
+
+There are 2 types of malware analysis :
+- **static analysis** : high level analysis without executing the program (signature, strings check...)
+  - MD5 checksum (against VirusTotal for example)
+  - SysinternalsSuite `strings` command to identify suspicious strings
+- **dynamic analysis** : detailed analysis by executing the program in a controlled environment and analysing its behavior
+
 
 ## Attack Types
 
@@ -254,6 +278,13 @@ Once the evil twin is set up, the attacker de-authenticates all connected client
 When they connect again, they may use the rogue AP instead, and the attacker has a man-in-the-middle attack giving 
 access to all the victim's traffic.  
 It is often used in places offering a public Wi-fi (cafés, airports...).
+
+#### Karma attack
+
+A karma attack is a variant of the evil-twin attack.  
+It exploits the behavior of a wireless client trying to connect to its preferred network list.  
+The client beacons to determine if its preferred networks are within range, including the preferred network SSID.  
+In a karma attack, the attacker's machine receives this beacon and dynamically sets up a Wi-fi with this SSID.
 
 #### Bluetooth Attacks
 
