@@ -1059,6 +1059,13 @@ To start a scan, we must specify which scan policy to apply, and the targets of 
 Once completed, the scan generates a report of all detected vulnerabilities for each target server.  
 It provides details on each vulnerability, like the description, the severity, the CWE, the tools that can exploit it...
 
+Nessus has a free version called Nessus Essentials that can be downloaded upon registration.  
+It offers multiple types of scans, for example :
+- **host discovery** : shallow scan to discover live hosts
+- **basic network scan** : full TCP/UDP port scanning + basic vulnerability check**
+- **credentialed patch audit** : check for missing updates (configured with valid credentials)
+- **web application tests** : vulnerability check on a web application
+
 
 ### Qualys
 
@@ -1773,8 +1780,13 @@ nmap --interactive
 
 ### Responder
 
-Responder is a command-line tool to poison NetBIOS, LLMNR and mDNS name resolution requests.  
+Responder is a command-line tool to poison NetBIOS, LLMNR and mDNS name resolution requests on a local network.  
 It is a post-exploitation tool, because we need to already be in the internal network to use it.  
+
+Responder also hosts several servers (SMB, HTTP, SQL...) to capture the requests resulting from the poisoning of the name resolution.  
+It captures these requests and forces authentication to obtain the credentials.
+
+Responder can be run on a network interface with `sudo responder -I <interface>`
 
 
 ### Havij
@@ -2219,18 +2231,28 @@ crackmapexec smb <TARGET_IP> -u testuser -p qwerty --sam
 
 ### Mimikatz
 
-Mimikatz is an open-source post-exploitation tool to extract authentication credentials from a Windows target machine.  
-It is used to extract NTLM hashes and Kerberos tickets from the target's memory.
+Mimikatz is an open-source post-exploitation tool to interact directly with the Windows system memory and authentication APIs.  
+It is used to extract NTLM hashes and Kerberos tickets from a Windows machine's memory.  
+It can also be used to perform privilege escalation or launch a pass-the-hash attack.
 
 ```shell
-# extract the NTLM hashes from memory
+# enable SeDebugPrivilege, required for Mimikatz to access LSASS and extract credentials
+mimikatz # privilege:debug
+
+# try to obtain high-level privilege (SYSTEM) via token impersonation
+mimikatz token:elevate
+
+# extract the plaintext passwords, NTLM hashes and Kerberos tickets from memory
  mimikatz # sekurlsa::logonpasswords
 
-# dump all password hashed from the SAM database
+# dump all password hashes of local accounts from the SAM database
 mimikatz # lsadump::sam
 
+# stop token impersonation (required before a pass-the-hash attack to revert to the original identity)
+mimikatz # token:revert
+
 # pass-the-hash attack to access the administrator account from a dumped hash
-mimikatz # sekurlsa:pth /user:Administrator /domain:example.com /ntlm:<ADMIN_HASH> /run:cmd.exe
+mimikatz # sekurlsa:pth /user:<ADMIN_USERNAME> /domain:example.com /ntlm:<ADMIN_HASH> /run:cmd.exe
 
 # extract from memory the Kerberos tickets present on the machine
 mimikatz # kerberos::list /export
@@ -2652,6 +2674,18 @@ Many tools for reverse engineering and malware analysis are pre-built into Flare
   - FileInsight : program to look through and edit binary files
   - Hex Fiend : light Hex editor
 
+
+## Malware Analysis tools
+
+
+### PEiD
+
+PEiD is a Windows tool that can detect packers, cryptors and compilers used to modify or protect executable files,
+usually Portable Executables (PE) like .exe or .dll.  
+For this detection, it examines the executable headers, code patterns and entry points.  
+It matches them with an internal database of signature.  
+
+It was popular among reverse engineering and malware analysts before it stopped being supported in 2008.  
 
 
 ## Educational Tools

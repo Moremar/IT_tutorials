@@ -2,7 +2,7 @@
 
 
 #
-# Decode the HTML-encoded strings received from the Open Trivial Database API
+# Decode the HTML-encoded strings received from the Open Trivia Database API
 #
 function decode {
   local decoded

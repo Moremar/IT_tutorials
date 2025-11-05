@@ -419,9 +419,18 @@ To the victim, it is transparent except HTTP is used instead of HTTPS.
 
 ### LDAP (Lightweight Directory Access Protocol)
 
-LDAP is a database used to centralize information about clients and objects on the network.  
+LDAP is an open standard protocol used to access and manage directory services (hierarchical databases of users, groups, computers, printers, etc.).  
+It sits on top of TCP/IP and allows clients to perform operations on a directory server (store/retrieve data, authenticate clients, ...).  
 LDAP is cross-platform, and Microsoft created a proprietary version of it called **AD** (Active Directory).  
+It uses port 389 for unencrypted communication and port 636 for LDAP over an SSL/TLS channel (LDAPS).  
 LDAP is a lightweight implementation of the **X.500 standards** defining a framework for directory services.
+
+An application using LDAP to authenticate to AD often uses a dedicated AD user account to retrieve data from AD.  
+To authenticate a user, it gets the user credentials and does a **simple bind**, using the user's credentials to authenticate to AD.  
+
+LDAP authentication is a popular mechanism for non-Microsoft applications integrating with AD.  
+These can include Jenkins, printers, VPNs, custom webapps...
+
 
 ## Types of Networks
 
@@ -1416,7 +1425,9 @@ IoT technologies include :
 
 - **Bluetooth** : headphones, health trackers, wireless speakers... (part of **IEEE 802.15** standard for PAN)
 
-- **NFC** (Near-Field Communication) : very close wireless communication (up to 10cm), used by Apple Pay, contactless payment cards, commuter pass...
+- **NFC** (Near-Field Communication) : very close wireless communication (up to 10cm), used by Apple Pay, contactless payment cards, commuter pass...  
+  A common attack against NFC is **eavesdropping**, using a powerful antenna within 1m to capture the communication.   
+  Credit cards using NFC often use encryption, making eavesdropping useless.
 
 - **RFID** (Radio-Frequency Identification) : method to store and retrieve data by using RFID tags.  
    RFID tags are microchips with an antenna to reply to RFID readers.  

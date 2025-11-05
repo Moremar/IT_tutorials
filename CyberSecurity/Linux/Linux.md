@@ -300,7 +300,7 @@ export MY_ENV=val            # define a new env variable in the current shell se
 MY_ENV=val2                  # override an existing env variable
 unset MY_ENV                 # remove an env variable 
 
-MY_ENV=aaa <CMD>             # set an anv variable just for the execution of a command
+MY_ENV=aaa <CMD>             # set an env variable just for the execution of a command
 ```
 
 Some common environment variables are :
@@ -610,6 +610,7 @@ Some useful packages to install are :
 - `cmatrix` : infinite program simulating the display from the Matrix in the terminal
 - `debsums` : compare the checksum of deb packages with the ones stored in metadata to ensure they were not tampered with
 - `dialog` : in-shell popup tool used in Bash scripts
+- `fastfetch` : system info script printing distribution logo and info on terminal (successor of Neofetch)
 - `firewalld` : popular Linux firewall on top of `iptables` or `nftables` backend
 - `git` : most popular version control system for code and configuration files
 - `gobuster` : enumeration tool for web URIs, DNS sub-domains, virtual hosts and AWS/GCP buckets
@@ -619,7 +620,6 @@ Some useful packages to install are :
 - `john` : John the Ripper password cracking program
 - `links` : in-terminal web browser (useful to see if a web server is reachable for example)
 - `lvm2` : Logical Volume Manager to abstract multiple physical disks behind a single logical volume
-- `neofetch` : system info script printing distribution logo and info on terminal
 - `nmap` : network scanner (machines and open ports)
 - `openssh-server` : SSH server to accept incoming SSH connections
 - `screen` : terminal multiplexer, allowing the share of a single terminal by multiple processes
@@ -1492,7 +1492,7 @@ WantedBy=multi-user.target
   We can see that it was executed with `systemctl status myservice.service`  
   It shows status inactive, because it completed and exited.  
 
-- We can enable the service so it is starts automatically on boot with `systemctl enable myservice.service`
+- We can enable the service so it starts automatically on boot with `systemctl enable myservice.service`
 
 ##### Timer on the previous service
 
@@ -2387,7 +2387,7 @@ That is useful for security monitoring, but also to debug SELinux permission iss
 ```shell
 sudo cat /var/log/audit/audit.log                # show all SELinux policy violations
 sudo ausearch -ts recent                         # more user-friendly view of last 10min violations (including timestamp)
-sudo journalctl -t setroubleshoot --sice 14:10   # more detailed info about a violation
+sudo journalctl -t setroubleshoot --since 14:10  # more detailed info about a violation
 ```
 
 SELinux also manages ports that each process can use.  
